@@ -8,4 +8,4 @@ __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
 
 my_tree = ET.parse('sumoTrace_test.xml')
-
+root = my_tree.getroot()

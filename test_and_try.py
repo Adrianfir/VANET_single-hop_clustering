@@ -1,5 +1,9 @@
-import xml.etree.ElementTree as ET
+import xml.dom.minidom
 
-my_tree = ET.parse("/Users/pouyafirouzmakan/Desktop/project/sumoTrace.xml")
+my_tree = xml.dom.minidom.parse("sumoTrace_test.xml")
 
-a = 2
+fcd = my_tree.documentElement
+
+times = fcd.getElementsByTagName('timestep')
+
+print
