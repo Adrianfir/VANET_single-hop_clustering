@@ -5,6 +5,9 @@ so called 'chain structure'
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
 
+from LinkedList import Node, LinkedList
+
+
 class HashTable():
 
     # size is the size of the Hash_Table and it should be a prime number
@@ -29,6 +32,22 @@ class HashTable():
     def set_item(self, key, value):
         index = self.__hash(key)
         if self.data_map[index] is None:
-            self.data_map[index] = value
-        else:
+            self.data_map[index] = LinkedList(None)
+        self.data_map[index].append(key, value)
+
+    def get_item(self, key):
+        """
+
+        :param key: for example 'bus0' or 'vehicle36'
+        :return: the values related to each car
+        """
+        # Here, the values are trying to get retrieved from linkedlist inside the Hash_Table
+        index = self.__hash(key)
+        if self.data_map[index]:
+            temp = self.data_map[index].head
+            while temp:
+                if temp[0] is key:
+                    return temp[1]
+                temp = temp.next
+            return None
 
