@@ -1,6 +1,6 @@
 """
-This Class is for building Hash_Table to store the data from XML file. The Hash-Table is a an array of LinekdList
-so called 'chain structure'
+This Class is for building Hash_Table to store the data from XML file obtained from SUMO.
+The Hash-Table is an array of 'LinekdList' so called 'chain structure'
 """
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
