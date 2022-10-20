@@ -8,7 +8,7 @@ __all__ = []
 import LinkedList
 
 
-class HashTable():
+class HashTable:
 
     # size is the size of the Hash_Table and it should be a prime number
     # to increase the randomness
@@ -25,17 +25,13 @@ class HashTable():
             my_hash = (my_hash + ord(letter) * 31) % len(self.data_map)
         return my_hash
 
-    def print_hash_table(self):
-        for i, val in enumerate(self.data_map):
-            print(f"{i} : {val}")
-
     def set_item(self, key, value):
         index = self.__hash(key)
         if self.data_map[index] is None:
             self.data_map[index] = LinkedList.LinkedList(None)
         self.data_map[index].append(key, value)
 
-    def get_item(self, key):
+    def car_values(self, key):
         """
 
         :param key: for example 'bus0' or 'vehicle36'
@@ -51,7 +47,7 @@ class HashTable():
                 temp = temp.next
             return None
 
-    def keys(self):
+    def cars_id(self):
         """
 
         :return: this method will return all the cars id
@@ -64,3 +60,7 @@ class HashTable():
                     all_keys.append(temp[0])
                     temp = temp.next
         return all_keys
+
+    def print_hash_table(self):
+        for i, val in enumerate(self.data_map):
+            print(f"{i} : {self.data_map.print_list}")
