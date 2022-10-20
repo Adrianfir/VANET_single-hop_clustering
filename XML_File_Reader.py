@@ -7,6 +7,7 @@ The output Data Structure is :....
 
 import xml.dom.minidom
 
+
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
 
