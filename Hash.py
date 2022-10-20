@@ -5,7 +5,7 @@ so called 'chain structure'
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
 
-from LinkedList import Node, LinkedList
+import LinkedList
 
 
 class HashTable():
@@ -32,7 +32,7 @@ class HashTable():
     def set_item(self, key, value):
         index = self.__hash(key)
         if self.data_map[index] is None:
-            self.data_map[index] = LinkedList(None)
+            self.data_map[index] = LinkedList.LinkedList(None)
         self.data_map[index].append(key, value)
 
     def get_item(self, key):
@@ -51,3 +51,16 @@ class HashTable():
                 temp = temp.next
             return None
 
+    def keys(self):
+        """
+
+        :return: this method will return all the cars id
+        """
+        all_keys = []
+        for i in range(len(self.data_map)):
+            if self.data_map[i]:
+                temp = self.data_map[i].head
+                while temp:
+                    all_keys.append(temp[0])
+                    temp = temp.next
+        return all_keys
