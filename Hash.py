@@ -70,13 +70,15 @@ class HashTable:
         return all_keys
 
     def print_hash_table(self):
-        for index, val in enumerate(self.data_map):
+        for index in range(self.data_map.__len__()):
             if self.data_map[index]:
-                print(f"{index} : {self.data_map[index].print_list()}")
+                print(f"{index}:")
+                print(f"{self.data_map[index].print_list()}")
 
 
-table = HashTable(10)
-table.set_item('bus0', {'x': 12, 'y': 13})
-table.set_item('bus0', {'x': 15, 'y': 14})
-table.print_hash_table()
+# table = HashTable(10)
+# table.set_item('bus0', {'x': 12, 'y': 13})
+# table.set_item('bus0', {'x': 15, 'y': 14})
+# table.set_item('bus1', {'x': -1, 'y': 1})
+# print(table.car_values('bus1'))
 

@@ -19,9 +19,11 @@ class LinkedList:
 
     def print_list(self):
         temp = self.head
-        while temp is not None:
+        while temp:
             print(f"{temp.key}: {temp.value}")
             temp = temp.next
+            if temp is None:
+                return {'length':self.length}
 
     def append(self, key, value):
         new_node = Node(key, value)
@@ -131,4 +133,5 @@ class LinkedList:
 # my_list.append('bus1', {'x': 1, 'y': 134})
 # my_list.append('bus2', {'x': 1, 'y': 134})
 # my_list.print_list()
+#
 # print(my_list.length)
