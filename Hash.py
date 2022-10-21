@@ -15,7 +15,7 @@ class HashTable:
     def __init__(self, size):
         self.data_map = [None] * size
 
-    def __hash(self, key):
+    def hash_index(self, key):
         """
         :param key: is the index that we want to refer to it in order to generate index in Hash_Table
         :return: my_hash which is the generated key related to the Hash_Table
@@ -26,10 +26,17 @@ class HashTable:
         return my_hash
 
     def set_item(self, key, value):
-        index = self.__hash(key)
+        """
+
+        :param key: is the car_id
+        :param value: details about the relevant car
+        :return: True if it is correct
+        """
+        index = self.hash_index(key)
         if self.data_map[index] is None:
-            self.data_map[index] = LinkedList.LinkedList(None)
+            self.data_map[index] = LinkedList.LinkedList(key, value)
         self.data_map[index].append(key, value)
+        return True
 
     def car_values(self, key):
         """
@@ -38,12 +45,12 @@ class HashTable:
         :return: the values related to each car
         """
         # Here, the values are trying to get retrieved from linkedlist inside the Hash_Table
-        index = self.__hash(key)
+        index = self.hash_index(key)
         if self.data_map[index]:
             temp = self.data_map[index].head
             while temp:
-                if temp[0] is key:
-                    return temp[1]
+                if temp.key is key:
+                    return temp.value
                 temp = temp.next
             return None
 
@@ -57,10 +64,18 @@ class HashTable:
             if self.data_map[i]:
                 temp = self.data_map[i].head
                 while temp:
-                    all_keys.append(temp[0])
+                    all_keys.append(temp.key)
                     temp = temp.next
         return all_keys
 
     def print_hash_table(self):
-        for i, val in enumerate(self.data_map):
-            print(f"{i} : {self.data_map.print_list}")
+        for index, val in enumerate(self.data_map):
+            if self.data_map[index]:
+                print(f"{index} : {self.data_map[index].print_list()}")
+
+
+table = HashTable(10)
+table.set_item('bus0', {'x': 12, 'y': 13})
+table.set_item('bus0', {'x': 15, 'y': 14})
+table.print_hash_table()
+

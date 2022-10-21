@@ -4,14 +4,15 @@ This cass is for define a LinkedList to be sed in Hash_Table
 
 
 class Node:
-    def __init__(self, value):
+    def __init__(self, key, value):
+        self.key = key
         self.value = value
         self.next = None
 
 
 class LinkedList:
-    def __init__(self, value):
-        new_node = Node(value)
+    def __init__(self, key, value):
+        new_node = Node(key, value)
         self.head = new_node
         self.tail = new_node
         self.length = 1
@@ -19,11 +20,11 @@ class LinkedList:
     def print_list(self):
         temp = self.head
         while temp is not None:
-            print(temp.value)
+            print(f"{temp.key}: {temp.value}")
             temp = temp.next
 
-    def append(self, value):
-        new_node = Node(value)
+    def append(self, key, value):
+        new_node = Node(key, value)
         if self.length == 0:
             self.head = new_node
             self.tail = new_node
@@ -38,7 +39,7 @@ class LinkedList:
             return None
         temp = self.head
         pre = self.head
-        while (temp.next):
+        while temp.next:
             pre = temp
             temp = temp.next
         self.tail = pre
@@ -49,8 +50,8 @@ class LinkedList:
             self.tail = None
         return temp
 
-    def prepend(self, value):
-        new_node = Node(value)
+    def prepend(self, key, value):
+        new_node = Node(key, value)
         if self.length == 0:
             self.head = new_node
             self.tail = new_node
@@ -86,14 +87,14 @@ class LinkedList:
             return True
         return False
 
-    def insert(self, index, value):
+    def insert(self, index, key, value):
         if index < 0 or index > self.length:
             return False
         if index == 0:
-            return self.prepend(value)
+            return self.prepend(key, value)
         if index == self.length:
-            return self.append(value)
-        new_node = Node(value)
+            return self.append(key, value)
+        new_node = Node(key, value)
         temp = self.get(index - 1)
         new_node.next = temp.next
         temp.next = new_node
@@ -125,3 +126,7 @@ class LinkedList:
             temp.next = before
             before = temp
             temp = after
+
+my_list = LinkedList('bus0', {'x': 12, 'y': 13})
+my_list.append('bus1', {'x': 1, 'y': 134})
+my_list.print_list()
