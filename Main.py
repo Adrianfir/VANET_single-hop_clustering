@@ -17,7 +17,9 @@ my_tree = xml.dom.minidom.parse("sumoTrace_test.xml")
 fcd = my_tree.documentElement
 times = fcd.getElementsByTagName('timestep')
 
-car_tabel = hash
+number_of_cars = 10000
+car_table = Hash.HashTable(number_of_cars)
+
 for each_second in times[0:11]:
     print('-------------------')
     print(f"Second: {each_second.getAttribute('time')}")
