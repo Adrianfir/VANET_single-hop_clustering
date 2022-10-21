@@ -35,6 +35,7 @@ class HashTable:
         index = self.hash_index(key)
         if self.data_map[index] is None:
             self.data_map[index] = LinkedList.LinkedList(key, value)
+            return True
         self.data_map[index].append(key, value)
         return True
 

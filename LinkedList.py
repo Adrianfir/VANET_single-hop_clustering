@@ -25,7 +25,7 @@ class LinkedList:
 
     def append(self, key, value):
         new_node = Node(key, value)
-        if self.length == 0:
+        if self.head is None:
             self.head = new_node
             self.tail = new_node
         else:
@@ -127,6 +127,8 @@ class LinkedList:
             before = temp
             temp = after
 
-my_list = LinkedList('bus0', {'x': 12, 'y': 13})
-my_list.append('bus1', {'x': 1, 'y': 134})
-my_list.print_list()
+# my_list = LinkedList('bus0', {'x': 12, 'y': 13})
+# my_list.append('bus1', {'x': 1, 'y': 134})
+# my_list.append('bus2', {'x': 1, 'y': 134})
+# my_list.print_list()
+# print(my_list.length)
