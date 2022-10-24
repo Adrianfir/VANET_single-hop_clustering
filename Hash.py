@@ -25,13 +25,15 @@ class HashTable:
             my_hash = (my_hash + ord(letter) * 31) % len(self.data_map)
         return my_hash
 
-    def set_item(self, key, value):
+    def set_item(self, key: object, value: object) -> object:
+
         """
 
         :param key: is the car_id
-        :param value: details about the relevant car
+        :param value: details about the relevant car (depending on being 'bus' or 'car' as a Dictionary
         :return: True if it is correct
         """
+
         index = self.hash_index(key)
         if self.data_map[index] is None:
             self.data_map[index] = LinkedList.LinkedList(key, value)
