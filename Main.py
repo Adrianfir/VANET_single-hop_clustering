@@ -20,7 +20,8 @@ number_of_cars = 1000
 
 
 class DataTable:
-
+    # This class is determined for defining the hash_table, updating data, routing messages,
+    # and defining IP addresses
     def __init__(self, xml_tree, n_cars):
         self.table = Hash.HashTable(n_cars)
         for veh in xml_tree.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
@@ -51,9 +52,12 @@ class DataTable:
                                          IP=None)
                                     )
 
+    def print_table(self):
+        self.table.print_hash_table()
+
         def print_table(self):
             self
 
 
 my = DataTable(my_tree, number_of_cars)
-my.table.print_hash_table()
+my.print_table()
