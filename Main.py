@@ -12,8 +12,9 @@ import Hash
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
 
-my_tree = xml.dom.minidom.parse("sumoTrace_test.xml")
-fcd = my_tree.documentElement
+sumoTrace_address = input("Please Input sumoTrace file's address: ")
+sumo_trace = xml.dom.minidom.parse(sumoTrace_address)      # this file is the sumoTrace.xml file extracted from SUMO
+fcd = sumo_trace.documentElement
 times = fcd.getElementsByTagName('timestep')
 
 number_of_cars = 1000
@@ -22,9 +23,9 @@ number_of_cars = 1000
 class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
     # and defining IP addresses
-    def __init__(self, xml_tree, n_cars):
+    def __init__(self, sumo_trace, n_cars):
         self.table = Hash.HashTable(n_cars)
-        for veh in xml_tree.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
+        for veh in sumo_trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.table.set_item(veh.getAttribute('id'),
                                     dict(x=veh.getAttribute('x'),
@@ -59,5 +60,5 @@ class DataTable:
             self
 
 
-my = DataTable(my_tree, number_of_cars)
+my = DataTable(sumo_trace, number_of_cars)
 my.print_table()
