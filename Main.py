@@ -12,20 +12,34 @@ import Hash
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = []
 
-sumoTrace_address = input("Please Input sumoTrace file's address: ")
-sumo_trace = xml.dom.minidom.parse(sumoTrace_address)      # this file is the sumoTrace.xml file extracted from SUMO
-fcd = sumo_trace.documentElement
-times = fcd.getElementsByTagName('timestep')
+sumoTrace_address = input("Please Input sumoTrace.xml file's address: ")
+osmPoly_address = input("Please Input osm.poly.xml file's address: ")
+
+# this file is the sumoTrace.xml file extracted from SUMO
+sumo_trace = xml.dom.minidom.parse(sumoTrace_address)
+fcd = sumo_trace.documentElement                           # Floating Car Data (FCD) from sumoTrace.xml
+times = fcd.getElementsByTagName('timestep')               # includes data for all seconds
+
+# for extracting min_long, min_lat, max_long. max_lat
+osm_poly = xml.dom.minidom.parse(osmPoly_address)
+location = osm_poly.documentElement.getElementsByTagName('location')[0].\
+    getAttribute('origBoundary')                           # receives a string
+location = location.split(",")                             # split the string to a list of strings
+location = [float(x) for x in location]                    # float the strings in the list
+min_long = location[1]
+min_lat = location[0]
+max_long = location[3]
+max_lat = location[2]
 
 number_of_cars = 1000
 
 
 class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
-    # and defining IP addresses
-    def __init__(self, sumo_trace, n_cars):
+    # and defining IP addresses by using trace (which is sumo_trace) and poly(which is osm_poly)
+    def __init__(self, trace, n_cars):
         self.table = Hash.HashTable(n_cars)
-        for veh in sumo_trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
+        for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.table.set_item(veh.getAttribute('id'),
                                     dict(x=veh.getAttribute('x'),
