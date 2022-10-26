@@ -36,7 +36,8 @@ number_of_cars = 1000
 
 class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
-    # and defining IP addresses by using trace (which is sumo_trace) and poly(which is osm_poly)
+    # and defining IP addresses by using trace (which is sumo_trace) and location information
+    # obtained from osm.poly.xml file
     def __init__(self, trace, n_cars):
         self.table = Hash.HashTable(n_cars)
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
