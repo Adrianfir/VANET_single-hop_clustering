@@ -5,6 +5,7 @@ This Module is coded for extracting data from XML file related to ..., ..., ....
 The output Data Structure is :....
 """
 
+## /Users/pouyafirouzmakan/Desktop/VANET/small _data_RichMond Hill/sumoTrace.xml
 import xml.dom.minidom
 
 import Hash
