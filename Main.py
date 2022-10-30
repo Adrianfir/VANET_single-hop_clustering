@@ -5,7 +5,8 @@ This Module is coded for extracting data from XML file related to ..., ..., ....
 The output Data Structure is :....
 """
 
-## /Users/pouyafirouzmakan/Desktop/VANET/small _data_RichMond Hill/sumoTrace.xml
+# /Users/pouyafirouzmakan/Desktop/VANET/small_data_Richmondhill/sumoTrace_geo.xml
+# /Users/pouyafirouzmakan/Desktop/VANET/small_data_Richmondhill/osm.poly.xml
 import xml.dom.minidom
 
 import Hash
@@ -44,8 +45,8 @@ class DataTable:
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.table.set_item(veh.getAttribute('id'),
-                                    dict(x=veh.getAttribute('x'),
-                                         y=veh.getAttribute('y'),
+                                    dict(long=veh.getAttribute('x'),
+                                         lat=veh.getAttribute('y'),
                                          angle=veh.getAttribute('angle'),
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
@@ -59,8 +60,8 @@ class DataTable:
                                     )
             else:
                 self.table.set_item(veh.getAttribute('id'),
-                                    dict(x=veh.getAttribute('x'),
-                                         y=veh.getAttribute('y'),
+                                    dict(long=veh.getAttribute('x'),
+                                         lat=veh.getAttribute('y'),
                                          angle=veh.getAttribute('angle'),
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
@@ -71,9 +72,6 @@ class DataTable:
 
     def print_table(self):
         self.table.print_hash_table()
-
-        def print_table(self):
-            self
 
 
 my = DataTable(sumo_trace, number_of_cars)
