@@ -20,15 +20,15 @@ osmPoly_address = input("Please Input osm.poly.xml file's address: ")
 
 # this file is the sumoTrace.xml file extracted from SUMO
 sumo_trace = xml.dom.minidom.parse(sumoTrace_address)
-fcd = sumo_trace.documentElement  # Floating Car Data (FCD) from sumoTrace.xml
-times = fcd.getElementsByTagName('timestep')  # includes data for all seconds
+fcd = sumo_trace.documentElement                # Floating Car Data (FCD) from sumoTrace.xml
+times = fcd.getElementsByTagName('timestep')    # includes data for all seconds
 
 # for extracting min_long, min_lat, max_long. max_lat
 osm_poly = xml.dom.minidom.parse(osmPoly_address)
 location = osm_poly.documentElement.getElementsByTagName('location')[0]. \
-    getAttribute('origBoundary')  # receives a string
-location = location.split(",")  # split the string to a list of strings
-location = [float(x) for x in location]  # float the strings in the list
+    getAttribute('origBoundary')            # receives a string
+location = location.split(",")              # split the string to a list of strings
+location = [float(x) for x in location]     # float the strings in the list
 min_long = location[1]
 min_lat = location[0]
 max_long = location[3]
