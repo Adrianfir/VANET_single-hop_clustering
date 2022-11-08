@@ -35,6 +35,12 @@ min_lat = location[0]
 max_long = location[3]
 max_lat = location[2]
 
+# Min and Max Latitude and Longitude of the area to define zones
+min_lat_area = 43.586568
+min_long_area = -79.540771
+max_lat_area = 44.012923
+max_long_area = -79.238069
+
 number_of_cars = 1000
 
 
@@ -44,10 +50,6 @@ def mac_address():
            random.randint(0x00, 0xff),
            random.randint(0x00, 0xff)]
     return ':'.join(map(lambda x: "%02x" % x, mac))
-
-
-def region(lowest_long, lowest_lat, highest_long, highest_lat):
-    area = geopy.distance.geodesic((lowest_long, 0), (highest_long, 0)).km * geopy.distance.geodesic((lowest_lat, 0), (highest_lat, 0)).km
 
 
 class DataTable:
@@ -88,6 +90,10 @@ class DataTable:
                                          # using mac_address method
                                          )
                                     )
+
+
+    def ipv6(self):
+
 
     def print_table(self):
         self.table.print_hash_table()
