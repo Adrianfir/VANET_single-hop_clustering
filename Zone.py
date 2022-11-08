@@ -27,9 +27,11 @@ def det_zones(min_lat, min_long, max_lat, max_long):
     cols = np.linspace(min_long, max_long, num=np.floor(y_area))  # # dividing latitude by the 1km length
     zone_hash = Hash.HashTable(np.ceil(area))
     z = 0  # zone counter
-    for i in range(rows):
-        for j in range(cols):
+    for r in range(len(rows) - 1):
+        for c in range(len(cols) - 1):
             zone_hash.set_item('zone' + str(z),
-                               (i, j)  # (i: latitude, j: longitude)
+                               [(rows[r], cols[c]),
+                                (rows[r + 1], cols[c + 1])]
                                )
+            z += 1
     return zone_hash
