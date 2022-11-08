@@ -12,6 +12,7 @@ import xml.dom.minidom
 import geopy.distance
 
 import Hash
+from Zone import det_zones
 
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = ["mac_address"]
@@ -40,6 +41,8 @@ min_lat_area = 43.586568
 min_long_area = -79.540771
 max_lat_area = 44.012923
 max_long_area = -79.238069
+zone_hash = det_zones(min_lat_area, min_long_area,
+                      max_lat_area, max_long_area)
 
 number_of_cars = 1000
 
@@ -90,10 +93,6 @@ class DataTable:
                                          # using mac_address method
                                          )
                                     )
-
-
-    def ipv6(self):
-
 
     def print_table(self):
         self.table.print_hash_table()
