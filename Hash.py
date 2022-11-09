@@ -83,4 +83,3 @@ class HashTable:
 # table.set_item('bus0', {'x': 15, 'y': 14})
 # table.set_item('bus1', {'x': -1, 'y': 1})
 # print(table.car_values('bus1'))
-

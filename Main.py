@@ -3,6 +3,7 @@
 
 This Module is coded for extracting data from XML file related to ..., ..., ....
 The output Data Structure is :....
+
 """
 
 # /Users/pouyafirouzmakan/Desktop/VANET/small_data_Richmondhill/sumoTrace_geo.xml
@@ -12,7 +13,7 @@ import xml.dom.minidom
 import geopy.distance
 
 import Hash
-from Zone import det_zones
+from Zone import zones, det_zone
 
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = ["mac_address"]
@@ -41,7 +42,7 @@ min_lat_area = 43.586568
 min_long_area = -79.540771
 max_lat_area = 44.012923
 max_long_area = -79.238069
-zone_hash = det_zones(min_lat_area, min_long_area,
+zone_hash = zones(min_lat_area, min_long_area,
                       max_lat_area, max_long_area)
 
 number_of_cars = 1000
@@ -61,7 +62,7 @@ class DataTable:
     # obtained from osm.poly.xml file
 
     def __init__(self, trace, n_cars):
-        self.table = Hash.HashTable(n_cars)
+        self.table = Hash.HashTable(n_cars*100)
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.table.set_item(veh.getAttribute('id'),
@@ -88,6 +89,7 @@ class DataTable:
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
                                          caluster_head={},
+                                         zone=det_zone(veh.getAttribute('y'), veh.getAttribute('x')),
                                          IP=None,
                                          MAC=mac_address()  # The mac address of each car is determined
                                          # using mac_address method

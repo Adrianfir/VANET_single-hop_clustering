@@ -10,7 +10,7 @@ import haversine as hs
 import Hash
 
 
-def det_zones(min_lat, min_long, max_lat, max_long):
+def zones(min_lat, min_long, max_lat, max_long):
     """
     # first the x and y based on km is calculated to determine the area (hear greater Toronto Area (GTA) and some
     # cities around it. Then the area will be devided into several zones (almost 1km^2 for each zone)
@@ -36,6 +36,14 @@ def det_zones(min_lat, min_long, max_lat, max_long):
             z += 1
     return zone_hash
 
+def det_zone(lat,long,zone_hash):
+    """
+    this function is designed to determine the zone of vehicles based on their location
+    :param lat: latitude of vehicle
+    :param long: longitude of vehicle
+    :param zone_hash: hash tabe including all the zones
+    :return: zone id that the vehicle is in it
+    """
 
 # min_lat_area = 43.586568
 # min_long_area = -79.540771
