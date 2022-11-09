@@ -41,11 +41,11 @@ class HashTable:
         self.data_map[index].append(key, value)
         return True
 
-    def car_values(self, key):
+    def values(self, key):
         """
 
-        :param key: for example 'bus0' or 'vehicle36'
-        :return: the values related to each car
+        :param key: for example 'bus0' or 'vehicle36' or 'zone233', ...
+        :return: the values related to each id
         """
         # Here, the values are trying to get retrieved from linkedlist inside the Hash_Table
         index = self.hash_index(key)
@@ -57,10 +57,10 @@ class HashTable:
                 temp = temp.next
             return None
 
-    def cars_id(self):
+    def ids(self):
         """
 
-        :return: this method will return all the cars id
+        :return: this method will return all the ids
         """
         all_keys = []
         for i in range(len(self.data_map)):
