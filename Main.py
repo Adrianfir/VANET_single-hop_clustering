@@ -19,31 +19,30 @@ __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = ["mac_address"]
 
 sumoTrace_address = input("Please Input sumoTrace.xml file's address: ")
-osmPoly_address = input("Please Input osm.poly.xml file's address: ")
+# osmPoly_address = input("Please Input osm.poly.xml file's address: ")
 
 # this file is the sumoTrace.xml file extracted from SUMO
 sumo_trace = xml.dom.minidom.parse(sumoTrace_address)
-fcd = sumo_trace.documentElement                # Floating Car Data (FCD) from sumoTrace.xml
-times = fcd.getElementsByTagName('timestep')    # includes data for all seconds
+fcd = sumo_trace.documentElement  # Floating Car Data (FCD) from sumoTrace.xml
+times = fcd.getElementsByTagName('timestep')  # includes data for all seconds
 
 # for extracting min_long, min_lat, max_long. max_lat
-osm_poly = xml.dom.minidom.parse(osmPoly_address)
-location = osm_poly.documentElement.getElementsByTagName('location')[0]. \
-    getAttribute('origBoundary')            # receives a string
-location = location.split(",")              # split the string to a list of strings
-location = [float(x) for x in location]     # float the strings in the list
-min_long = location[1]
-min_lat = location[0]
-max_long = location[3]
-max_lat = location[2]
+# osm_poly = xml.dom.minidom.parse(osmPoly_address)
+# location = osm_poly.documentElement.getElementsByTagName('location')[0]. \
+#     getAttribute('origBoundary')            # receives a string
+# location = location.split(",")              # split the string to a list of strings
+# location = [float(x) for x in location]     # float the strings in the list
+# min_long = location[1]
+# min_lat = location[0]
+# max_long = location[3]
+# max_lat = location[2]
 
 # Min and Max Latitude and Longitude of the area to define zones
-min_lat_area = 43.586568
-min_long_area = -79.540771
-max_lat_area = 44.012923
-max_long_area = -79.238069
-zone_hash = zones(min_lat_area, min_long_area,
-                      max_lat_area, max_long_area)
+area = dict(min_lat= 43.586568,
+            min_long= -79.540771,
+            max_lat= 44.012923,
+            max_long= -79.238069)
+area_zones = zones(area)         # This is a hash table including all zones and their max and min lat and longs
 
 number_of_cars = 1000
 
@@ -61,8 +60,9 @@ class DataTable:
     # and defining IP addresses by using trace (which is sumo_trace) and location information
     # obtained from osm.poly.xml file
 
-    def __init__(self, trace, n_cars):
-        self.table = Hash.HashTable(n_cars*100)
+    def __init__(self, trace, n_cars, all_zones):
+        self.area_zones = all_zones
+        self.table = Hash.HashTable(n_cars * 100)
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.table.set_item(veh.getAttribute('id'),
@@ -72,6 +72,7 @@ class DataTable:
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
+                                         zone=det_zone(veh.getAttribute('y'), veh.getAttribute('x'), self.area_zones),
                                          message_dest={},
                                          message_source={},
                                          MAC=mac_address(),
@@ -89,7 +90,6 @@ class DataTable:
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
                                          caluster_head={},
-                                         zone=det_zone(veh.getAttribute('y'), veh.getAttribute('x')),
                                          IP=None,
                                          MAC=mac_address()  # The mac address of each car is determined
                                          # using mac_address method
