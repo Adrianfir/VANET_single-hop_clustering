@@ -37,6 +37,12 @@ def zones(area):
 
 
 def det_zone(lat, long, area_zones):
+    rows = np.linspace(area["min_lat"], area["max_lat"],
+                       num=int(np.floor(y_area)))  # dividing longitude by almost 1km length
+    cols = np.linspace(area["min_long"], area["max_long"],
+                       num=int(np.ceil(x_area)))  # dividing latitude by almost 1km length
+
+
     """
     this function is designed to determine the zone of vehicles based on their location
     :param lat: latitude of vehicle

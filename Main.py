@@ -38,10 +38,10 @@ times = fcd.getElementsByTagName('timestep')  # includes data for all seconds
 # max_lat = location[2]
 
 # Min and Max Latitude and Longitude of the area to define zones
-area = dict(min_lat= 43.586568,
-            min_long= -79.540771,
-            max_lat= 44.012923,
-            max_long= -79.238069)
+area = dict(min_lat=43.586568,
+            min_long=-79.540771,
+            max_lat=44.012923,
+            max_long=-79.238069)
 area_zones = zones(area)         # This is a hash table including all zones and their max and min lat and longs
 
 number_of_cars = 1000
