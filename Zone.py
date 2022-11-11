@@ -10,6 +10,23 @@ import haversine as hs
 import Hash
 
 
+def middle_zone(u_row, l_row,
+                u_col, l_col):
+    """
+
+    :param u_row: The upper row id +1
+    :param l_row: The lower row id +1
+    :param u_col: The upper col id +1
+    :param l_col: The lower col id +1
+    :return:
+    """
+    # the almost centre zone id will be obtained here
+    middle_row = np.round((u_row - l_row) / 2)
+    middle_col = np.round((u_col - l_col) / 2)
+    middle_zone_id = ((middle_row - 1) * len(u_col - l_col)) + middle_col - 1
+    return "zone" + str(middle_zone_id), middle_row, middle_col
+
+
 class ZoneID:
 
     def __init__(self, area):
@@ -17,6 +34,9 @@ class ZoneID:
 
         :param area: includes the min and max of lat and long of the area (coordinates of the area)
         """
+        self.centre_col = None
+        self.centre_row = None
+        self.centre_zone = None
         self.zone_hash = None
         self.area = area
         self.x_area = None
@@ -38,11 +58,13 @@ class ZoneID:
                                 num=int(np.floor(self.y_area)))  # dividing longitude by almost 1km length
         self.cols = np.linspace(self.area["min_long"], self.area["max_long"],
                                 num=int(np.ceil(self.x_area)))  # dividing latitude by almost 1km length
+
+        # Here we are going to have a Hash Table for zones
         self.zone_hash = Hash.HashTable(int(np.ceil(area_surface)) * 100)
         z = 0  # zone counter
         for r in range(len(self.rows) - 1):
             for c in range(len(self.cols) - 1):
-                self.zone_hash.set_item('zone' + str(z),
+                self.zone_hash.set_item("zone" + str(z),
                                         [(self.rows[r], self.cols[c]),
                                          (self.rows[r + 1], self.cols[c + 1])]
                                         )
@@ -54,11 +76,33 @@ class ZoneID:
         :param long: current longitude of the vehicle
         :return: the zone that the car is in it
         """
-        centre_row = round(len(self.rows) / 2)
-        centre_col = round(len(self.cols) / 2)
+        temp, tem_row, temp_col = middle_zone(len(self.rows),1, len(self.cols),1) # middle_zone_id, its row+1, its col+1
+        temp_prev, tem_row_prev, temp_col_prev = temp, tem_row, temp_col
+        i = 0
+        while temp:
 
-        centre_zone_id = ((centre_row - 1) * len(self.cols)) + centre_col - 1
-        
+            if ((lat >= self.zone_hash(temp)["min_lat"]) & (long >= self.zone_hash(temp)["min_long"])) & \
+                    ((lat < self.zone_hash(temp)["max_lat"]) & (long < self.zone_hash(temp)["max_long"])):
+                return temp
+
+            if (lat < self.zone_hash(temp)["min_lat"]) & (long < self.zone_hash(temp)["min_long"]):
+                if i is 0:
+                    temp_prev, tem_row_prev, temp_col_prev = 'zone0', 1, 1
+
+                temp_row = int(np.round(temp_row/2))
+                temp_col = int(np.round(temp_col/2))
+                temp, tem_row, temp_col = middle_zone(temp_row,),
+                                                      temp_col))  # middle_zone_id, its row+1, its col+1
+            elif (lat < self.zone_hash(temp)["min_lat"]) & (long < self.zone_hash(temp)["min_long"]):
+
+
+
+
+
+
+
+
+
 
 # area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
 # a = ZoneID(area)
