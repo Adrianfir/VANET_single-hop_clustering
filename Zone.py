@@ -37,10 +37,23 @@ def zones(area):
 
 
 def det_zone(lat, long, area_zones):
-    rows = np.linspace(area["min_lat"], area["max_lat"],
-                       num=int(np.floor(y_area)))  # dividing longitude by almost 1km length
-    cols = np.linspace(area["min_long"], area["max_long"],
-                       num=int(np.ceil(x_area)))  # dividing latitude by almost 1km length
+    """
+
+    :param lat:  current latitude of the vehicle
+    :param long: current longitude of the vehicle
+    :param area_zones: all the zones of the area
+    :return: the zone that the car is in it
+    """
+    min_lat = area_zones(area_zones.ids()[0])[0]
+    min_long = area_zones(area_zones.ids()[0])[1]
+    max_lat = area_zones(area_zones.ids()[-1])[2]
+    max_long = area_zones(area_zones.ids()[-1])[3]
+    # calculating the latitude and longitude of the centre
+    centre_lat = np.average([min_lat, max_lat])
+    centre_long = np.average([min_long, max_long])
+
+
+
 
 
     """
