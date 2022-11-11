@@ -10,63 +10,57 @@ import haversine as hs
 import Hash
 
 
-def zones(area):
-    """
-    # first the x and y based on km is calculated to determine the area (hear greater Toronto Area (GTA) and some
-    # cities around it. Then the area will be devided into several zones (almost 1km^2 for each zone)
-    :param area: includes the min and max of lat and long of the area
-    :return: a hash table including the zones' ids as keys and (lat , long) as values
-    """
-    x_area = hs.haversine((area["min_long"], 0), (area["max_long"], 0), unit=hs.Unit.KILOMETERS)
-    y_area = hs.haversine((area["min_lat"], 0), (area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
-    area_surface = x_area * y_area
-    rows = np.linspace(area["min_lat"], area["max_lat"],
-                       num=int(np.floor(y_area)))  # dividing longitude by almost 1km length
-    cols = np.linspace(area["min_long"], area["max_long"],
-                       num=int(np.ceil(x_area)))  # dividing latitude by almost 1km length
-    zone_hash = Hash.HashTable(int(np.ceil(area_surface)) * 100)
-    z = 0  # zone counter
-    for r in range(len(rows) - 1):
-        for c in range(len(cols) - 1):
-            zone_hash.set_item('zone' + str(z),
-                               [(rows[r], cols[c]),
-                                (rows[r + 1], cols[c + 1])]
-                               )
-            z += 1
-    return zone_hash
+class ZoneID:
 
+    def __init__(self, area):
+        """
 
-def det_zone(lat, long, area_zones):
-    """
+        :param area: includes the min and max of lat and long of the area (coordinates of the area)
+        """
+        self.zone_hash = None
+        self.area = area
+        self.x_area = None
+        self.y_area = None
+        self.cols = None
+        self.rows = None
 
-    :param lat:  current latitude of the vehicle
-    :param long: current longitude of the vehicle
-    :param area_zones: all the zones of the area
-    :return: the zone that the car is in it
-    """
-    min_lat = area_zones(area_zones.ids()[0])[0]
-    min_long = area_zones(area_zones.ids()[0])[1]
-    max_lat = area_zones(area_zones.ids()[-1])[2]
-    max_long = area_zones(area_zones.ids()[-1])[3]
-    # calculating the latitude and longitude of the centre
-    centre_lat = np.average([min_lat, max_lat])
-    centre_long = np.average([min_long, max_long])
+    def zones(self):
+        """
 
+        # first the x and y based on km is calculated to determine the area (hear greater Toronto Area (GTA) and some
+        # cities around it. Then the area will be devided into several zones (almost 1km^2 for each zone)
+        :return: a hash table including the zones' ids as keys and (lat , long) as values
+        """
+        self.x_area = hs.haversine((self.area["min_long"], 0), (self.area["max_long"], 0), unit=hs.Unit.KILOMETERS)
+        self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
+        area_surface = self.x_area * self.y_area
+        self.rows = np.linspace(self.area["min_lat"], self.area["max_lat"],
+                                num=int(np.floor(self.y_area)))  # dividing longitude by almost 1km length
+        self.cols = np.linspace(self.area["min_long"], self.area["max_long"],
+                                num=int(np.ceil(self.x_area)))  # dividing latitude by almost 1km length
+        self.zone_hash = Hash.HashTable(int(np.ceil(area_surface)) * 100)
+        z = 0  # zone counter
+        for r in range(len(self.rows) - 1):
+            for c in range(len(self.cols) - 1):
+                self.zone_hash.set_item('zone' + str(z),
+                                        [(self.rows[r], self.cols[c]),
+                                         (self.rows[r + 1], self.cols[c + 1])]
+                                        )
+                z += 1
 
+    def det_zone(self, lat, long):
+        """
+        :param lat:  current latitude of the vehicle
+        :param long: current longitude of the vehicle
+        :return: the zone that the car is in it
+        """
+        centre_row = round(len(self.rows) / 2)
+        centre_col = round(len(self.cols) / 2)
 
+        centre_zone_id = ((centre_row - 1) * len(self.cols)) + centre_col - 1
+        
 
-
-    """
-    this function is designed to determine the zone of vehicles based on their location
-    :param lat: latitude of vehicle
-    :param long: longitude of vehicle
-    :param area_zones: hash tabe including all the zones
-    :return: zone id that the vehicle is in it
-    """
-
-# area["min_lat"]_area = 43.586568
-# area["min_long"]_area = -79.540771
-# area["max_lat"]_area = 44.012923
-# area["max_long"]_area = -79.238069
-# a = det_zones(area["min_lat"]_area, area["min_long"]_area, area["max_lat"]_area, area["max_long"]_area)
-# a.print_hash_table()
+# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+# a = ZoneID(area)
+# a.zones()
+# a.zone_hash.print_hash_table()

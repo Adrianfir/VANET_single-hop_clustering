@@ -13,7 +13,7 @@ import xml.dom.minidom
 import geopy.distance
 
 import Hash
-from Zone import zones, det_zone
+from Zone import ZoneID
 
 __author__ = "Adrian (Pouya) Firouzmakan"
 __all__ = ["mac_address"]
@@ -42,7 +42,7 @@ area = dict(min_lat=43.586568,
             min_long=-79.540771,
             max_lat=44.012923,
             max_long=-79.238069)
-area_zones = zones(area)         # This is a hash table including all zones and their max and min lat and longs
+area_zones = ZoneID(area).zones()         # This is a hash table including all zones and their max and min lat and longs
 
 number_of_cars = 1000
 
@@ -60,8 +60,16 @@ class DataTable:
     # and defining IP addresses by using trace (which is sumo_trace) and location information
     # obtained from osm.poly.xml file
 
-    def __init__(self, trace, n_cars, all_zones):
-        self.area_zones = all_zones
+    def __init__(self, trace, n_cars, area_coordinate, all_zones):
+        """
+
+        :param trace:
+        :param n_cars: number of cars
+        :param area_coordinate: coordination of the area
+        :param all_zones: ZoneID(area).zones()
+        """
+        # self.area = area_coordinate
+        # self.area_zones = ZoneID(self.area).zones()         # Using ZoneID class to determine the zone IDs
         self.table = Hash.HashTable(n_cars * 100)
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
@@ -72,7 +80,8 @@ class DataTable:
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
-                                         zone=det_zone(veh.getAttribute('y'), veh.getAttribute('x'), self.area_zones),
+                                         zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
+                                                                               veh.getAttribute('x')),
                                          message_dest={},
                                          message_source={},
                                          MAC=mac_address(),
@@ -98,7 +107,3 @@ class DataTable:
 
     def print_table(self):
         self.table.print_hash_table()
-
-
-my = DataTable(sumo_trace, number_of_cars)
-my.print_table()
