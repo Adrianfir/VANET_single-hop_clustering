@@ -98,6 +98,8 @@ class DataTable:
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
+                                         zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
+                                                                               veh.getAttribute('x')),
                                          caluster_head={},
                                          IP=None,
                                          MAC=mac_address()  # The mac address of each car is determined
