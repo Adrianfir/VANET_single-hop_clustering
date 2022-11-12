@@ -78,8 +78,8 @@ class HashTable:
                 print(f"{self.data_map[index].print_list()}")
 
 
-# table = HashTable(10)
-# table.set_item('bus0', {'x': 12, 'y': 13})
-# table.set_item('bus0', {'x': 15, 'y': 14})
-# table.set_item('bus1', {'x': -1, 'y': 1})
-# print(table.car_values('bus1'))
+table = HashTable(10)
+table.set_item('bus0', {'x': 12, 'y': 13})
+table.set_item('bus0', {'x': 15, 'y': 14})
+table.set_item('bus1', {'x': -1, 'y': 1})
+print(table.values('bus1'))

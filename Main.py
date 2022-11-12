@@ -42,7 +42,7 @@ area = dict(min_lat=43.586568,
             min_long=-79.540771,
             max_lat=44.012923,
             max_long=-79.238069)
-area_zones = ZoneID(area).zones()         # This is a hash table including all zones and their max and min lat and longs
+area_zones = ZoneID(area).zones()  # This is a hash table including all zones and their max and min lat and longs
 
 number_of_cars = 1000
 
@@ -57,10 +57,9 @@ def mac_address():
 
 class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
-    # and defining IP addresses by using trace (which is sumo_trace) and location information
-    # obtained from osm.poly.xml file
+    # and defining IP addresses by using trace (which is sumo_trace)
 
-    def __init__(self, trace, n_cars, area_coordinate, all_zones):
+    def __init__(self, trace, n_cars, area_coordinate):
         """
 
         :param trace:
@@ -109,3 +108,7 @@ class DataTable:
 
     def print_table(self):
         self.table.print_hash_table()
+
+
+a = DataTable(sumo_trace, 8000, area)
+a.print_table()
