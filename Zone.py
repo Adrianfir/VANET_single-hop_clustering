@@ -76,8 +76,8 @@ class ZoneID:
         :param long: current longitude of the vehicle
         :return: the zone that the car is in it
         """
-        temp, tem_row, temp_col = middle_zone(len(self.rows),1, len(self.cols),1) # middle_zone_id, its row+1, its col+1
-        temp_prev, tem_row_prev, temp_col_prev = temp, tem_row, temp_col
+        # middle_zone_id, its row+1, its col+1
+        temp, temp_row, temp_col = middle_zone(len(self.rows), 1, len(self.cols), 1)
         i = 0
         while temp:
 
@@ -87,22 +87,23 @@ class ZoneID:
 
             if (lat < self.zone_hash(temp)["min_lat"]) & (long < self.zone_hash(temp)["min_long"]):
                 if i is 0:
-                    temp_prev, tem_row_prev, temp_col_prev = 'zone0', 1, 1
+                    temp_prev = self.zone_hash.ids()[0]  # the very first zone is considered as first prev
+                    tem_row_prev = 1
+                    temp_col_prev = 1
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
-                temp_row = int(np.round(temp_row/2))
-                temp_col = int(np.round(temp_col/2))
-                temp, tem_row, temp_col = middle_zone(temp_row,),
-                                                      temp_col))  # middle_zone_id, its row+1, its col+1
-            elif (lat < self.zone_hash(temp)["min_lat"]) & (long < self.zone_hash(temp)["min_long"]):
-
-
-
-
-
-
-
-
-
+            elif (lat > self.zone_hash(temp)["max_lat"]) & (long > self.zone_hash(temp)["max_long"]):
+                if i is 0:
+                    temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
+                    tem_row_prev = len(self.rows)
+                    temp_col_prev = len(self.cols)
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
 # area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
 # a = ZoneID(area)
