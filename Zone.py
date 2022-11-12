@@ -85,7 +85,7 @@ class ZoneID:
                     ((lat < self.zone_hash(temp)["max_lat"]) & (long < self.zone_hash(temp)["max_long"])):
                 return temp
 
-            if (lat < self.zone_hash(temp)["min_lat"]) & (long < self.zone_hash(temp)["min_long"]):
+            if (lat >= self.zone_hash(temp)["min_lat"]) & (long >= self.zone_hash(temp)["min_long"]):
                 if i is 0:
                     temp_prev = self.zone_hash.ids()[0]  # the very first zone is considered as first prev
                     tem_row_prev = 1
@@ -95,10 +95,30 @@ class ZoneID:
                 temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
                 temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
-            elif (lat > self.zone_hash(temp)["max_lat"]) & (long > self.zone_hash(temp)["max_long"]):
+            elif (lat < self.zone_hash(temp)["max_lat"]) & (long < self.zone_hash(temp)["max_long"]):
                 if i is 0:
                     temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
                     tem_row_prev = len(self.rows)
+                    temp_col_prev = len(self.cols)
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+
+            elif (lat >= self.zone_hash(temp)["min_lat"]) & (long < self.zone_hash(temp)["max_long"]):
+                if i is 0:
+                    temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
+                    tem_row_prev = len(self.rows)
+                    temp_col_prev = 1
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+
+            elif (lat < self.zone_hash(temp)["max_lat"]) & (long >= self.zone_hash(temp)["max_long"]):
+                if i is 0:
+                    temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
+                    tem_row_prev = 1
                     temp_col_prev = len(self.cols)
                 # middle_zone_id, its row+1, its col+1
                 temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
