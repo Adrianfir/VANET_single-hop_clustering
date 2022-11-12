@@ -58,12 +58,11 @@ class ZoneID:
         z = 0  # zone counter
         for r in range(len(self.rows) - 1):
             for c in range(len(self.cols) - 1):
-                self.zone_hash.set_item("zone" + str(z),
-                                        dict(min_lat=self.rows[r],
-                                             min_long=self.cols[c],
-                                             max_lat=self.rows[r + 1],
-                                             max_long=self.cols[c + 1]
-                                             )
+                self.zone_hash.set_item("zone" + str(z), dict(min_lat=self.rows[r],
+                                                              min_long=self.cols[c],
+                                                              max_lat=self.rows[r+1],
+                                                              max_long=self.cols[c+1]
+                                                              )
                                         )
                 z += 1
 
