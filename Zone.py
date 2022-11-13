@@ -10,8 +10,8 @@ import haversine as hs
 import Hash
 
 
-def middle_zone(u_row, l_row,
-                u_col, l_col):
+def middle_zone(u_row, u_col,
+                l_row, l_col):
     """
 
     :param u_row: The upper row id +1
@@ -40,12 +40,13 @@ class ZoneID:
         self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
         self.area_surface = self.x_area * self.y_area
         self.rows = np.linspace(self.area["min_lat"], self.area["max_lat"],
-                                num=int(np.floor(self.y_area)))  # dividing longitude by almost 1km length
+                                num=int(np.floor(self.y_area)), endpoint=True)  # dividing longitude by almost 1km
+        # length
         self.cols = np.linspace(self.area["min_long"], self.area["max_long"],
-                                num=int(np.ceil(self.x_area)))  # dividing latitude by almost 1km length
+                                num=int(np.floor(self.x_area)), endpoint=True)  # dividing latitude by almost 1km length
 
         # Here we are going to have a Hash Table for zones
-        self.zone_hash = Hash.HashTable(int(np.ceil(self.area_surface)) * 100)
+        self.zone_hash = Hash.HashTable(int(np.ceil(self.area_surface)) * 10)
         self.centre_col = int()
         self.centre_row = int()
         self.centre_zone = str()
@@ -60,69 +61,75 @@ class ZoneID:
             for c in range(len(self.cols) - 1):
                 self.zone_hash.set_item("zone" + str(z), dict(min_lat=self.rows[r],
                                                               min_long=self.cols[c],
-                                                              max_lat=self.rows[r+1],
-                                                              max_long=self.cols[c+1]
+                                                              max_lat=self.rows[r + 1],
+                                                              max_long=self.cols[c + 1]
                                                               )
                                         )
                 z += 1
 
-    # def det_zone(self, lat, long):
-    #     """
-    #     :param lat:  current latitude of the vehicle
-    #     :param long: current longitude of the vehicle
-    #     :return: the zone that the car is in it
-    #     """
-    #     # middle_zone_id, its row+1, its col+1
-    #     temp, temp_row, temp_col = middle_zone(len(self.rows), 1, len(self.cols), 1)
-    #     i = 0
-    #     while temp:
-    #
-    #         if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
-    #                 ((lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"])):
-    #             return temp
-    #
-    #         if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
-    #             if i is 0:
-    #                 temp_prev = self.zone_hash.ids()[0]  # the very first zone is considered as first prev
-    #                 tem_row_prev = 1
-    #                 temp_col_prev = 1
-    #             # middle_zone_id, its row+1, its col+1
-    #             temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
-    #             temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-    #             temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
-    #
-    #         elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
-    #             if i is 0:
-    #                 temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
-    #                 tem_row_prev = len(self.rows)
-    #                 temp_col_prev = len(self.cols)
-    #             # middle_zone_id, its row+1, its col+1
-    #             temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
-    #             temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-    #             temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
-    #
-    #         elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
-    #             if i is 0:
-    #                 temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
-    #                 tem_row_prev = len(self.rows)
-    #                 temp_col_prev = 1
-    #             # middle_zone_id, its row+1, its col+1
-    #             temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
-    #             temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-    #             temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
-    #
-    #         elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
-    #             if i is 0:
-    #                 temp_prev = self.zone_hash.ids()[-1]  # the very last zone is considered as first prev
-    #                 tem_row_prev = 1
-    #                 temp_col_prev = len(self.cols)
-    #             # middle_zone_id, its row+1, its col+1
-    #             temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, tem_row_prev, temp_col, temp_col_prev)
-    #             temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-    #             temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+    def det_zone(self, lat, long):
+        """
+        :param lat:  current latitude of the vehicle
+        :param long: current longitude of the vehicle
+        :return: the zone that the car is in it
+        """
+        # middle_zone_id, its row+1, its col+1
+        temp, temp_row, temp_col = middle_zone(len(self.rows), 1, len(self.cols), 1)
+        i = 0
+        while temp:
+
+            if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
+                    ((lat <= self.zone_hash.values(temp)["max_lat"]) & (long <= self.zone_hash.values(temp)["max_long"])
+                    ):
+                return temp
+
+            if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
+                if i is 0:
+                    # the very South-East zone is considered as first prev
+                    tem_row_prev = 1
+                    temp_col_prev = 1
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, temp_col,
+                                                                     tem_row_prev, temp_col_prev)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+
+            elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
+                if i is 0:
+                    # the very North_West zone is considered as first prev
+                    tem_row_prev = len(self.rows)
+                    temp_col_prev = len(self.cols)
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(tem_row_prev, temp_col_prev,
+                                                                     temp_row, temp_col)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+
+            elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
+                if i is 0:
+                    # the very North_East zone is considered as first prev
+                    tem_row_prev = len(self.rows)
+                    temp_col_prev = 1
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(tem_row_prev, temp_col,
+                                                                     temp_row, temp_col_prev)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+
+            elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
+                if i is 0:
+                    # the very South_West zone is considered as first prev
+                    tem_row_prev = 1
+                    temp_col_prev = len(self.cols)
+                # middle_zone_id, its row+1, its col+1
+                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, temp_col_prev,
+                                                                     tem_row_prev, temp_col)
+                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
 
 area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
 a = ZoneID(area)
 a.zones()
 a.zone_hash.print_hash_table()
+table.set_item('bus2', {'x': -1, 'y': 1})

@@ -80,6 +80,7 @@ class HashTable:
 
 table = HashTable(10)
 table.set_item('bus0', {'x': 12, 'y': 13})
-table.set_item('bus0', {'x': 15, 'y': 14})
-table.set_item('bus1', {'x': -1, 'y': 1})
+table.set_item('bus1', {'x': 15, 'y': 14})
+table.set_item('bus2', {'x': -1, 'y': 1})
+table.set_item('bus3', {'x': -1, 'y': 1})
 print(table.values('bus1'))
