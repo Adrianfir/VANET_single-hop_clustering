@@ -24,7 +24,7 @@ def middle_zone(u_row, u_col,
     middle_row = np.round((u_row - l_row) / 2)
     middle_col = np.round((u_col - l_col) / 2)
     middle_zone_id = ((middle_row - 1) * u_col - l_col) + middle_col - 1
-    return "zone" + str(middle_zone_id), middle_row, middle_col
+    return '{}'.format(middle_zone_id)
 
 
 class ZoneID:
@@ -46,7 +46,7 @@ class ZoneID:
                                 num=int(np.floor(self.x_area)), endpoint=True)  # dividing latitude by almost 1km length
 
         # Here we are going to have a Hash Table for zones
-        self.zone_hash = Hash.HashTable(2000)
+        self.zone_hash = Hash.HashTable(int(np.ceil(self.area_surface)) * 3)
         self.centre_col = int()
         self.centre_row = int()
         self.centre_zone = str()
@@ -79,8 +79,8 @@ class ZoneID:
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
-                    ((lat <= self.zone_hash.values(temp)["max_lat"]) & (long <= self.zone_hash.values(temp)["max_long"])
-                    ):
+                    ((lat <= self.zone_hash.values(temp)["max_lat"]) & (
+                            long <= self.zone_hash.values(temp)["max_long"])):
                 return temp
 
             if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
@@ -128,8 +128,7 @@ class ZoneID:
                 temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
 
-# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-# a = ZoneID(area)
-# a.zones()
-# a.zone_hash.print_hash_table()
-#  table.set_item('bus2', {'x': -1, 'y': 1})
+area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+a = ZoneID(area)
+a.zones()
+b = 2

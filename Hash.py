@@ -22,7 +22,7 @@ class HashTable:
         """
         my_hash = 0
         for letter in key:
-            my_hash = (my_hash + ord(letter) * 31) % len(self.data_map)
+            my_hash = (my_hash + ord(letter) * 997) % len(self.data_map)
         return my_hash
 
     def set_item(self, key: object, value: object) -> object:
