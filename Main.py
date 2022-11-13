@@ -69,10 +69,10 @@ class DataTable:
         """
         # self.area = area_coordinate
         # self.area_zones = ZoneID(self.area).zones()         # Using ZoneID class to determine the zone IDs
-        self.table = Hash.HashTable(n_cars * 100)
+        self.veh_table = Hash.HashTable(n_cars * 100)
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
-                self.table.set_item(veh.getAttribute('id'),
+                self.veh_table.set_item(veh.getAttribute('id'),
                                     dict(long=veh.getAttribute('x'),
                                          lat=veh.getAttribute('y'),
                                          angle=veh.getAttribute('angle'),
@@ -107,7 +107,7 @@ class DataTable:
                                     )
 
     def print_table(self):
-        self.table.print_hash_table()
+        self.veh_table.print_hash_table()
 
 
 a = DataTable(sumo_trace, 8000, area)
