@@ -73,38 +73,38 @@ class DataTable:
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.veh_table.set_item(veh.getAttribute('id'),
-                                    dict(long=veh.getAttribute('x'),
-                                         lat=veh.getAttribute('y'),
-                                         angle=veh.getAttribute('angle'),
-                                         speed=veh.getAttribute('speed'),
-                                         pos=veh.getAttribute('pos'),
-                                         lane=veh.getAttribute('lane'),
-                                         # zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
-                                         #                                       veh.getAttribute('x')),
-                                         message_dest={},
-                                         message_source={},
-                                         MAC=mac_address(),
-                                         IP=None,
-                                         cluster_IPs={},
-                                         cluster_MACs={}
-                                         )
-                                    )
+                                        dict(long=veh.getAttribute('x'),
+                                             lat=veh.getAttribute('y'),
+                                             angle=veh.getAttribute('angle'),
+                                             speed=veh.getAttribute('speed'),
+                                             pos=veh.getAttribute('pos'),
+                                             lane=veh.getAttribute('lane'),
+                                             zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
+                                                                                   veh.getAttribute('x')),
+                                             message_dest={},
+                                             message_source={},
+                                             MAC=mac_address(),
+                                             IP=None,
+                                             cluster_IPs={},
+                                             cluster_MACs={}
+                                             )
+                                        )
             else:
                 self.veh_table.set_item(veh.getAttribute('id'),
-                                    dict(long=veh.getAttribute('x'),
-                                         lat=veh.getAttribute('y'),
-                                         angle=veh.getAttribute('angle'),
-                                         speed=veh.getAttribute('speed'),
-                                         pos=veh.getAttribute('pos'),
-                                         lane=veh.getAttribute('lane'),
-                                         # zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
-                                         #                                       veh.getAttribute('x')),
-                                         caluster_head={},
-                                         IP=None,
-                                         MAC=mac_address()  # The mac address of each car is determined
-                                         # using mac_address method
-                                         )
-                                    )
+                                        dict(long=veh.getAttribute('x'),
+                                             lat=veh.getAttribute('y'),
+                                             angle=veh.getAttribute('angle'),
+                                             speed=veh.getAttribute('speed'),
+                                             pos=veh.getAttribute('pos'),
+                                             lane=veh.getAttribute('lane'),
+                                             zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
+                                                                                   veh.getAttribute('x')),
+                                             caluster_head={},
+                                             IP=None,
+                                             MAC=mac_address()  # The mac address of each car is determined
+                                             # using mac_address method
+                                             )
+                                        )
 
     def print_table(self):
         self.veh_table.print_hash_table()

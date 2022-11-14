@@ -21,10 +21,10 @@ def middle_zone(u_row, u_col,
     :return:
     """
     # the almost centre zone id will be obtained here
-    middle_row = np.round((u_row - l_row) / 2)
-    middle_col = np.round((u_col - l_col) / 2)
-    middle_zone_id = ((middle_row - 1) * u_col - l_col) + middle_col - 1
-    return 'zone' + str(middle_zone_id)
+    middle_row = int(np.round((u_row - l_row) / 2))
+    middle_col = int(np.round((u_col - l_col) / 2))
+    middle_zone_id = ((middle_row - 1) * u_col) + middle_col - 1
+    return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
 class ZoneID:
@@ -74,13 +74,13 @@ class ZoneID:
         :return: the zone that the car is in it
         """
         # middle_zone_id, its row+1, its col+1
-        temp, temp_row, temp_col = middle_zone(len(self.rows), 1, len(self.cols), 1)
+        temp, temp_row, temp_col = middle_zone(len(self.rows), len(self.cols), 1, 1)
         i = 0
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
-                    ((lat <= self.zone_hash.values(temp)["max_lat"]) & (
-                            long <= self.zone_hash.values(temp)["max_long"])):
+                    ((lat < self.zone_hash.values(temp)["max_lat"]) & (
+                            long < self.zone_hash.values(temp)["max_long"])):
                 return temp
 
             if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
@@ -131,4 +131,5 @@ class ZoneID:
 area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
 a = ZoneID(area)
 a.zones()
-b = 2
+a.det_zone(43.586568, -79.540771)
+
