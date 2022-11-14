@@ -79,8 +79,8 @@ class DataTable:
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
-                                         zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
-                                                                               veh.getAttribute('x')),
+                                         # zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
+                                         #                                       veh.getAttribute('x')),
                                          message_dest={},
                                          message_source={},
                                          MAC=mac_address(),
@@ -90,15 +90,15 @@ class DataTable:
                                          )
                                     )
             else:
-                self.table.set_item(veh.getAttribute('id'),
+                self.veh_table.set_item(veh.getAttribute('id'),
                                     dict(long=veh.getAttribute('x'),
                                          lat=veh.getAttribute('y'),
                                          angle=veh.getAttribute('angle'),
                                          speed=veh.getAttribute('speed'),
                                          pos=veh.getAttribute('pos'),
                                          lane=veh.getAttribute('lane'),
-                                         zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
-                                                                               veh.getAttribute('x')),
+                                         # zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
+                                         #                                       veh.getAttribute('x')),
                                          caluster_head={},
                                          IP=None,
                                          MAC=mac_address()  # The mac address of each car is determined

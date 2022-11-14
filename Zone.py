@@ -24,7 +24,7 @@ def middle_zone(u_row, u_col,
     middle_row = np.round((u_row - l_row) / 2)
     middle_col = np.round((u_col - l_col) / 2)
     middle_zone_id = ((middle_row - 1) * u_col - l_col) + middle_col - 1
-    return '{}'.format(middle_zone_id)
+    return 'zone' + str(middle_zone_id)
 
 
 class ZoneID:
@@ -32,7 +32,7 @@ class ZoneID:
     def __init__(self, area_coordinate):
         """
         # first the x and y based on km is calculated to determine the area (hear greater Toronto Area (GTA) and some
-        # cities around it. Then the area will be devided into several zones (almost 1km^2 for each zone)
+        # cities around it. Then the area will be divided into several zones (almost 1km^2 for each zone)
         :param area: includes the min and max of lat and long of the area (coordinates of the area)
         """
         self.area = area_coordinate
@@ -46,7 +46,7 @@ class ZoneID:
                                 num=int(np.floor(self.x_area)), endpoint=True)  # dividing latitude by almost 1km length
 
         # Here we are going to have a Hash Table for zones
-        self.zone_hash = Hash.HashTable(int(np.ceil(self.area_surface)) * 3)
+        self.zone_hash = Hash.HashTable(400)
         self.centre_col = int()
         self.centre_row = int()
         self.centre_zone = str()
@@ -56,13 +56,13 @@ class ZoneID:
 
         :return: uploading self.zone_hash by the zones and their min & max lat & long
         """
-        z = 0  # zone counter
+        z = 0000  # zone counter
         for r in range(len(self.rows) - 1):
             for c in range(len(self.cols) - 1):
-                self.zone_hash.set_item('{}'.format(z), dict(min_lat=self.rows[r],
-                                                             min_long=self.cols[c],
-                                                             max_lat=self.rows[r + 1],
-                                                             max_long=self.cols[c + 1]
+                self.zone_hash.set_item('zone' + str(z), dict(min_lat=self.rows[r],
+                                                              min_long=self.cols[c],
+                                                              max_lat=self.rows[r + 1],
+                                                              max_long=self.cols[c + 1]
                                                              )
                                         )
                 z += 1
@@ -84,7 +84,7 @@ class ZoneID:
                 return temp
 
             if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
-                if i is 0:
+                if i == 0:
                     # the very South-East zone is considered as first prev
                     tem_row_prev = 1
                     temp_col_prev = 1
@@ -95,7 +95,7 @@ class ZoneID:
                 temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
-                if i is 0:
+                if i == 0:
                     # the very North_West zone is considered as first prev
                     tem_row_prev = len(self.rows)
                     temp_col_prev = len(self.cols)
@@ -106,7 +106,7 @@ class ZoneID:
                 temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
             elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
-                if i is 0:
+                if i == 0:
                     # the very North_East zone is considered as first prev
                     tem_row_prev = len(self.rows)
                     temp_col_prev = 1
@@ -117,7 +117,7 @@ class ZoneID:
                 temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
-                if i is 0:
+                if i == 0:
                     # the very South_West zone is considered as first prev
                     tem_row_prev = 1
                     temp_col_prev = len(self.cols)

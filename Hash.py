@@ -21,8 +21,8 @@ class HashTable:
         :return: my_hash which is the generated key related to the Hash_Table
         """
         my_hash = 0
-        for letter in key:
-            my_hash = (my_hash + ord(letter) * 997) % len(self.data_map)
+        for letter in str(key):
+            my_hash = (my_hash + ord(letter) * 31) % len(self.data_map)
         return my_hash
 
     def set_item(self, key: object, value: object) -> object:
@@ -52,7 +52,7 @@ class HashTable:
         if self.data_map[index]:
             temp = self.data_map[index].head
             while temp:
-                if temp.key is key:
+                if temp.key == key:
                     return temp.value
                 temp = temp.next
             return None
