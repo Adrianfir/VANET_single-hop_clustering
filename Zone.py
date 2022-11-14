@@ -76,6 +76,10 @@ class ZoneID:
         # middle_zone_id, its row+1, its col+1
         temp, temp_row, temp_col = middle_zone(len(self.rows), len(self.cols), 1, 1)
         i = 0
+        min_lat_temp = self.area['min_lat']
+        min_long_temp = self.area['min_long']
+        max_lat_temp = self.area['max_lat']
+        max_long_temp = self.area['max_long']
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
@@ -85,9 +89,9 @@ class ZoneID:
 
             if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
-                    # the very South-East zone is considered as first prev
-                    tem_row_prev = 1
-                    temp_col_prev = 1
+                    # the very North-East zone is considered as first prev
+                    tem_row_prev = len(self.rows)
+                    temp_col_prev = len(self.cols)
                 # middle_zone_id, its row+1, its col+1
                 temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, temp_col,
                                                                      tem_row_prev, temp_col_prev)
