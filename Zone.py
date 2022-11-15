@@ -83,8 +83,8 @@ class ZoneID:
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
-                    ((lat < self.zone_hash.values(temp)["max_lat"]) & (
-                            long < self.zone_hash.values(temp)["max_long"])):
+                    ((lat <= self.zone_hash.values(temp)["max_lat"]) & (
+                            long <= self.zone_hash.values(temp)["max_long"])):
                 return temp
 
             elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
@@ -99,7 +99,6 @@ class ZoneID:
 
                 lower_row = temp_row
                 lower_col = temp_col
-                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
                 temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                        lower_row, lower_col)
 
@@ -115,7 +114,6 @@ class ZoneID:
 
                 upper_row = temp_row
                 upper_col = temp_col
-                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
                 temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                        lower_row, lower_col)
 
@@ -131,7 +129,6 @@ class ZoneID:
 
                 lower_row = temp_row
                 upper_col = temp_col
-                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
                 temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                        lower_row, lower_col)
 
@@ -147,7 +144,6 @@ class ZoneID:
 
                 upper_row = temp_row
                 lower_col = temp_col
-                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
                 temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                        lower_row, lower_col)
 
