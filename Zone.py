@@ -21,14 +21,20 @@ def middle_zone(u_row, u_col,
     :return:
     """
     # the almost centre zone id will be obtained here
-    middle_row = int(np.round((u_row - l_row) / 2))
-    middle_col = int(np.round((u_col - l_col) / 2))
-    if (middle_row == 0) & (middle_col==0):
-        middle_zone_id = 0
-    elif middle_row == 0:
-        middle_row = 1
-        middle_zone_id = middle_col - 1
-    else:
+    middle_row = int(np.ceil((u_row - l_row) / 2))
+    middle_col = int(np.ceil((u_col - l_col) / 2))
+
+    if (middle_row == 0) & (middle_col == 0):           # if both are in same zone
+        middle_row = u_row
+        middle_col = u_col
+        middle_zone_id = ((u_row - 1) * u_col) + u_col - 1
+    elif (middle_row == 0) & (middle_col != 0):           # if both are in same row
+        middle_row = u_row
+        middle_zone_id = ((u_row - 1) * u_col) + middle_col - 1
+    elif (middle_row != 0) & (middle_col == 0):           # if both are in same column
+        middle_col = u_col
+        middle_zone_id = ((middle_row - 1) * u_col) + u_col - 1
+    else:                           # if both are not in same column or row
         middle_zone_id = ((middle_row - 1) * u_col) + middle_col - 1
 
     return 'zone' + str(middle_zone_id), middle_row, middle_col
@@ -103,11 +109,12 @@ class ZoneID:
                     upper_col = len(self.cols)
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                            lower_row, lower_col)
-
-                lower_row = temp_row
-                lower_col = temp_col
-                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                       lower_row, lower_col)
+                    i += 1
+                else:
+                    lower_row = temp_row
+                    lower_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
@@ -118,11 +125,12 @@ class ZoneID:
                     upper_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                            lower_row, lower_col)
-
-                upper_row = temp_row
-                upper_col = temp_col
-                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                       lower_row, lower_col)
+                    i += 1
+                else:
+                    upper_row = temp_row
+                    upper_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
 
             elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
@@ -133,11 +141,12 @@ class ZoneID:
                     upper_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                            lower_row, lower_col)
-
-                lower_row = temp_row
-                upper_col = temp_col
-                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                       lower_row, lower_col)
+                    i += 1
+                else:
+                    lower_row = temp_row
+                    upper_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
@@ -148,11 +157,14 @@ class ZoneID:
                     upper_col = len(self.cols)
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                            lower_row, lower_col)
+                    i += 1
+                else:
+                    upper_row = temp_row
+                    lower_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
 
-                upper_row = temp_row
-                lower_col = temp_col
-                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                       lower_row, lower_col)
+                i += 1
 
 
 area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
