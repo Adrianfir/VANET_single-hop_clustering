@@ -11,13 +11,15 @@ import Hash
 
 
 def middle_zone(u_row, u_col,
-                l_row, l_col):
+                l_row, l_col,
+                max_col):
     """
 
     :param u_row: The upper row id +1
     :param l_row: The lower row id +1
     :param u_col: The upper col id +1
     :param l_col: The lower col id +1
+    :param max_col: The maximum number of columns in the whole area
     :return:
     """
     # the almost centre zone id will be obtained here
@@ -27,15 +29,15 @@ def middle_zone(u_row, u_col,
     if (middle_row == 0) & (middle_col == 0):           # if both are in same zone
         middle_row = u_row
         middle_col = u_col
-        middle_zone_id = ((u_row - 1) * u_col) + u_col - 1
+        middle_zone_id = ((u_row - 1) * max_col) + u_col - 1
     elif (middle_row == 0) & (middle_col != 0):           # if both are in same row
         middle_row = u_row
-        middle_zone_id = ((u_row - 1) * u_col) + middle_col - 1
+        middle_zone_id = ((u_row - 1) * max_col) + middle_col - 1
     elif (middle_row != 0) & (middle_col == 0):           # if both are in same column
         middle_col = u_col
-        middle_zone_id = ((middle_row - 1) * u_col) + u_col - 1
+        middle_zone_id = ((middle_row - 1) * max_col) + u_col - 1
     else:                           # if both are not in same column or row
-        middle_zone_id = ((middle_row - 1) * u_col) + middle_col - 1
+        middle_zone_id = ((middle_row - 1) * max_col) + middle_col - 1
 
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
@@ -87,12 +89,8 @@ class ZoneID:
         :return: the zone that the car is in it
         """
         # middle_zone_id, its row+1, its col+1
-        temp, temp_row, temp_col = middle_zone(len(self.rows), len(self.cols), 1, 1)
+        temp, temp_row, temp_col = middle_zone(len(self.rows), len(self.cols), 1, 1, len(self.cols))
         i = 0
-        # min_row = 1
-        # min_col = 1
-        # max_row = len(self.rows)
-        # max_col = len(self.cols)
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
@@ -108,13 +106,15 @@ class ZoneID:
                     upper_row = len(self.rows)
                     upper_col = len(self.cols)
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
                     i += 1
                 else:
                     lower_row = temp_row
                     lower_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
@@ -124,13 +124,15 @@ class ZoneID:
                     upper_row = temp_row
                     upper_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
                     i += 1
                 else:
                     upper_row = temp_row
                     upper_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
 
             elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
@@ -140,13 +142,15 @@ class ZoneID:
                     upper_row = len(self.rows)
                     upper_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
                     i += 1
                 else:
                     lower_row = temp_row
                     upper_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
@@ -156,13 +160,15 @@ class ZoneID:
                     upper_row = temp_row
                     upper_col = len(self.cols)
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
                     i += 1
                 else:
                     upper_row = temp_row
                     lower_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
-                                                           lower_row, lower_col)
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
 
                 i += 1
 
