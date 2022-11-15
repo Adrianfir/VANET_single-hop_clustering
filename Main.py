@@ -81,6 +81,7 @@ class DataTable:
                                              lane=veh.getAttribute('lane'),
                                              zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
                                                                                    veh.getAttribute('x')),
+                                             prev_zone=None,
                                              message_dest={},
                                              message_source={},
                                              MAC=mac_address(),
