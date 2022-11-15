@@ -76,10 +76,10 @@ class ZoneID:
         # middle_zone_id, its row+1, its col+1
         temp, temp_row, temp_col = middle_zone(len(self.rows), len(self.cols), 1, 1)
         i = 0
-        min_lat_temp = self.area['min_lat']
-        min_long_temp = self.area['min_long']
-        max_lat_temp = self.area['max_lat']
-        max_long_temp = self.area['max_long']
+        # min_row = 1
+        # min_col = 1
+        # max_row = len(self.rows)
+        # max_col = len(self.cols)
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
@@ -87,49 +87,69 @@ class ZoneID:
                             long < self.zone_hash.values(temp)["max_long"])):
                 return temp
 
-            if (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
+            elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
                     # the very North-East zone is considered as first prev
-                    tem_row_prev = len(self.rows)
-                    temp_col_prev = len(self.cols)
-                # middle_zone_id, its row+1, its col+1
-                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, temp_col,
-                                                                     tem_row_prev, temp_col_prev)
-                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+                    lower_row = temp_row
+                    lower_col = temp_col
+                    upper_row = len(self.rows)
+                    upper_col = len(self.cols)
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
+
+                lower_row = temp_row
+                lower_col = temp_col
+                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                       lower_row, lower_col)
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
-                    # the very North_West zone is considered as first prev
-                    tem_row_prev = len(self.rows)
-                    temp_col_prev = len(self.cols)
-                # middle_zone_id, its row+1, its col+1
-                temp_next, tem_row_next, temp_col_next = middle_zone(tem_row_prev, temp_col_prev,
-                                                                     temp_row, temp_col)
-                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+                    # the very North-East zone is considered as first prev
+                    lower_row = 1
+                    lower_col = 1
+                    upper_row = temp_row
+                    upper_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
+
+                upper_row = temp_row
+                upper_col = temp_col
+                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                       lower_row, lower_col)
 
             elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very North_East zone is considered as first prev
-                    tem_row_prev = len(self.rows)
-                    temp_col_prev = 1
-                # middle_zone_id, its row+1, its col+1
-                temp_next, tem_row_next, temp_col_next = middle_zone(tem_row_prev, temp_col,
-                                                                     temp_row, temp_col_prev)
-                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+                    lower_row = temp_row
+                    lower_col = 1
+                    upper_row = len(self.rows)
+                    upper_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
+
+                lower_row = temp_row
+                upper_col = temp_col
+                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                       lower_row, lower_col)
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very South_West zone is considered as first prev
-                    tem_row_prev = 1
-                    temp_col_prev = len(self.cols)
-                # middle_zone_id, its row+1, its col+1
-                temp_next, tem_row_next, temp_col_next = middle_zone(temp_row, temp_col_prev,
-                                                                     tem_row_prev, temp_col)
-                temp_prev, temp_prev_row, temp_prev_col = temp, temp_row, temp_col
-                temp, temp_row, temp_col = temp_next, tem_row_next, temp_col_next
+                    lower_row = 1
+                    lower_col = temp_col
+                    upper_row = temp_row
+                    upper_col = len(self.cols)
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col)
+
+                upper_row = temp_row
+                lower_col = temp_col
+                prev_temp, prev_temp_row, prev_temp_col = temp, temp_row, temp_col
+                temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                       lower_row, lower_col)
 
 
 area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
