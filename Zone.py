@@ -98,7 +98,7 @@ class ZoneID:
                             long <= self.zone_hash.values(temp)["max_long"])):
                 return temp
 
-            elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"]):
+            elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very North-East zone is considered as first prev
                     lower_row = temp_row
@@ -116,7 +116,7 @@ class ZoneID:
                                                            lower_row, lower_col,
                                                            len(self.cols))
 
-            elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
+            elif (lat < self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
                     # the very North-East zone is considered as first prev
                     lower_row = 1
@@ -134,7 +134,7 @@ class ZoneID:
                                                            lower_row, lower_col,
                                                            len(self.cols))
 
-            elif (lat >= self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["max_long"]):
+            elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
                     # the very North_East zone is considered as first prev
                     lower_row = temp_row
@@ -152,7 +152,7 @@ class ZoneID:
                                                            lower_row, lower_col,
                                                            len(self.cols))
 
-            elif (lat < self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
+            elif (lat < self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very South_West zone is considered as first prev
                     lower_row = 1
@@ -165,6 +165,96 @@ class ZoneID:
                     i += 1
                 else:
                     upper_row = temp_row
+                    lower_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+
+                i += 1
+
+            elif ((lat < self.zone_hash.values(temp)["max_lat"]) & (lat >= self.zone_hash.values(temp)["min_lat"])) & \
+                    (long >= self.zone_hash.values(temp)["max_long"]):
+                if i == 0:
+                    # the very South_West zone is considered as first prev
+                    upper_col = len(self.cols)
+                    lower_col = temp_col
+                    upper_row = temp_row
+                    lower_row = temp_row
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+                    i += 1
+                else:
+                    upper_row = temp_row
+                    lower_row = temp_row
+                    lower_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+
+                i += 1
+
+            elif ((lat < self.zone_hash.values(temp)["max_lat"]) & (lat >= self.zone_hash.values(temp)["min_lat"])) & \
+                    (long < self.zone_hash.values(temp)["min_long"]):
+                if i == 0:
+                    # the very South_West zone is considered as first prev
+                    upper_col = temp_col
+                    lower_col = 1
+                    upper_row = temp_row
+                    lower_row = temp_row
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+                    i += 1
+                else:
+                    upper_row = temp_row
+                    lower_row = temp_row
+                    upper_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+
+                i += 1
+
+            elif (lat < self.zone_hash.values(temp)["max_lat"]) & \
+                    ((long < self.zone_hash.values(temp)["max_long"]) &
+                     (long > self.zone_hash.values(temp)["min_long"])):
+                if i == 0:
+                    # the very South_West zone is considered as first prev
+                    upper_col = temp_col
+                    lower_col = temp_col
+                    upper_row = temp_row
+                    lower_row = 1
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+                    i += 1
+                else:
+                    upper_row = temp_row
+                    upper_col = temp_col
+                    lower_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+
+                i += 1
+
+            elif (lat < self.zone_hash.values(temp)["max_lat"]) & \
+                    ((long < self.zone_hash.values(temp)["max_long"]) &
+                     (long > self.zone_hash.values(temp)["min_long"])):
+                if i == 0:
+                    # the very South_West zone is considered as first prev
+                    upper_row = len(self.row)
+                    lower_row = temp_row
+                    upper_col = temp_col
+                    lower_col = temp_col
+                    temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
+                                                           lower_row, lower_col,
+                                                           len(self.cols))
+                    i += 1
+                else:
+                    lower_row = temp_row
+                    upper_col = temp_col
                     lower_col = temp_col
                     temp, temp_row, temp_col = middle_zone(upper_row, upper_col,
                                                            lower_row, lower_col,
