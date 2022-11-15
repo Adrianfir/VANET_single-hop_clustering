@@ -71,7 +71,7 @@ class ZoneID:
 
         :return: uploading self.zone_hash by the zones and their min & max lat & long
         """
-        z = 0000  # zone counter
+        z = 0  # zone counter
         for r in range(len(self.rows) - 1):
             for c in range(len(self.cols) - 1):
                 self.zone_hash.set_item('zone' + str(z), dict(min_lat=self.rows[r],
@@ -81,6 +81,7 @@ class ZoneID:
                                                              )
                                         )
                 z += 1
+            print(z)
 
     def det_zone(self, lat, long):
         """
