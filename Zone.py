@@ -23,7 +23,14 @@ def middle_zone(u_row, u_col,
     # the almost centre zone id will be obtained here
     middle_row = int(np.round((u_row - l_row) / 2))
     middle_col = int(np.round((u_col - l_col) / 2))
-    middle_zone_id = ((middle_row - 1) * u_col) + middle_col - 1
+    if (middle_row == 0) & (middle_col==0):
+        middle_zone_id = 0
+    elif middle_row == 0:
+        middle_row = 1
+        middle_zone_id = middle_col - 1
+    else:
+        middle_zone_id = ((middle_row - 1) * u_col) + middle_col - 1
+
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
@@ -151,5 +158,5 @@ class ZoneID:
 area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
 a = ZoneID(area)
 a.zones()
-a.det_zone(43.586568, -79.540771)
+a.det_zone(43.6, -79.540771)
 
