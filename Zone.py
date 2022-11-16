@@ -25,19 +25,6 @@ def middle_zone(u_row, u_col,
     # the almost centre zone id will be obtained here
     middle_row = int(np.floor((u_row + l_row) / 2))
     middle_col = int(np.floor((u_col + l_col) / 2))
-
-    # if (middle_row == 0) & (middle_col == 0):  # if both are in same zone
-    #     middle_row = u_row
-    #     middle_col = u_col
-    #     middle_zone_id = ((u_row - 1) * max_col) + u_col - 1
-    # elif (middle_row == 0) & (middle_col != 0):  # if both are in same row
-    #     middle_row = u_row
-    #     middle_zone_id = ((u_row - 1) * max_col) + middle_col - 1
-    # elif (middle_row != 0) & (middle_col == 0):  # if both are in same column
-    #     middle_col = u_col
-    #     middle_zone_id = ((middle_row - 1) * max_col) + u_col - 1
-    # else:  # if both are not in same column or row
-    #     middle_zone_id = ((middle_row - 1) * max_col) + middle_col - 1
     middle_zone_id = ((middle_row-1) * n_cols) + middle_col
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
