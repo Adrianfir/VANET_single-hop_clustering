@@ -7,10 +7,9 @@ The output Data Structure is :....
 """
 
 # /Users/pouyafirouzmakan/Desktop/VANET/small_data_Richmondhill/sumoTrace_geo.xml
-# /Users/pouyafirouzmakan/Desktop/VANET/small_data_Richmondhill/osm.poly.xml
+
 import random
 import xml.dom.minidom
-import geopy.distance
 
 import Hash
 from Zone import ZoneID
@@ -25,17 +24,6 @@ sumoTrace_address = input("Please Input sumoTrace.xml file's address: ")
 sumo_trace = xml.dom.minidom.parse(sumoTrace_address)
 fcd = sumo_trace.documentElement  # Floating Car Data (FCD) from sumoTrace.xml
 times = fcd.getElementsByTagName('timestep')  # includes data for all seconds
-
-# for extracting min_long, min_lat, max_long. max_lat
-# osm_poly = xml.dom.minidom.parse(osmPoly_address)
-# location = osm_poly.documentElement.getElementsByTagName('location')[0]. \
-#     getAttribute('origBoundary')            # receives a string
-# location = location.split(",")              # split the string to a list of strings
-# location = [float(x) for x in location]     # float the strings in the list
-# min_long = location[1]
-# min_lat = location[0]
-# max_long = location[3]
-# max_lat = location[2]
 
 # Min and Max Latitude and Longitude of the area to define zones
 area = dict(min_lat=43.586568,
@@ -70,7 +58,7 @@ class DataTable:
         # self.area = area_coordinate
         # self.area_zones = ZoneID(self.area).zones()         # Using ZoneID class to determine the zone IDs
         self.veh_table = Hash.HashTable(n_cars * 100)
-        for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
+        for veh in trace.documentElement.getElementsByTagName('timestep').childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.veh_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
