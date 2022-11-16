@@ -82,8 +82,8 @@ class ZoneID:
         while temp:
 
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
-                    ((lat <= self.zone_hash.values(temp)["max_lat"]) & (
-                            long <= self.zone_hash.values(temp)["max_long"])):
+                    ((lat <= self.zone_hash.values(temp)["max_lat"]) &
+                     (long <= self.zone_hash.values(temp)["max_long"])):
                 return temp
 
             elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
@@ -277,7 +277,7 @@ class ZoneID:
                 i += 1
 
 
-area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-a = ZoneID(area)
-a.zones()
-print(a.det_zone(43.6, -79.540771))
+# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+# a = ZoneID(area)
+# a.zones()
+# print(a.det_zone(43.956432, -79.30198263788123))

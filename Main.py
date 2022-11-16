@@ -42,8 +42,8 @@ area = dict(min_lat=43.586568,
             min_long=-79.540771,
             max_lat=44.012923,
             max_long=-79.238069)
-area_zones = ZoneID(area).zones()  # This is a hash table including all zones and their max and min lat and longs
-
+area_zones = ZoneID(area)  # This is a hash table including all zones and their max and min lat and longs
+area_zones.zones()
 number_of_cars = 1000
 
 
@@ -59,7 +59,7 @@ class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
     # and defining IP addresses by using trace (which is sumo_trace)
 
-    def __init__(self, trace, n_cars, area_coordinate):
+    def __init__(self, trace, n_cars, zones):
         """
 
         :param trace:
@@ -79,8 +79,9 @@ class DataTable:
                                              speed=veh.getAttribute('speed'),
                                              pos=veh.getAttribute('pos'),
                                              lane=veh.getAttribute('lane'),
-                                             zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
-                                                                                   veh.getAttribute('x')),
+                                             zone=zones.det_zone(float(veh.getAttribute('y')),
+                                                                 float(veh.getAttribute('x'))
+                                                                 ),
                                              prev_zone=None,
                                              message_dest={},
                                              message_source={},
@@ -98,8 +99,9 @@ class DataTable:
                                              speed=veh.getAttribute('speed'),
                                              pos=veh.getAttribute('pos'),
                                              lane=veh.getAttribute('lane'),
-                                             zone=ZoneID(area_coordinate).det_zone(veh.getAttribute('y'),
-                                                                                   veh.getAttribute('x')),
+                                             zone=zones.det_zone(float(veh.getAttribute('y')),
+                                                                 float(veh.getAttribute('x'))
+                                                                 ),
                                              caluster_head={},
                                              IP=None,
                                              MAC=mac_address()  # The mac address of each car is determined
@@ -111,5 +113,5 @@ class DataTable:
         self.veh_table.print_hash_table()
 
 
-a = DataTable(sumo_trace, 8000, area)
+a = DataTable(sumo_trace, 8000, area_zones)
 a.print_table()
