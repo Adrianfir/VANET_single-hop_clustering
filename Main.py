@@ -58,7 +58,7 @@ class DataTable:
         # self.area = area_coordinate
         # self.area_zones = ZoneID(self.area).zones()         # Using ZoneID class to determine the zone IDs
         self.veh_table = Hash.HashTable(n_cars * 100)
-        for veh in trace.documentElement.getElementsByTagName('timestep').childNodes[1::2]:
+        for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.veh_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
