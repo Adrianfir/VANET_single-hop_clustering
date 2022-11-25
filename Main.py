@@ -76,7 +76,9 @@ class DataTable:
                                              MAC=mac_address(),
                                              IP=None,
                                              cluster_IPs={},
-                                             cluster_MACs={}
+                                             cluster_MACs={},
+                                             in_area=True,
+                                             trans_range=500
                                              )
                                         )
             else:
@@ -92,13 +94,17 @@ class DataTable:
                                                                  ),
                                              caluster_head={},
                                              IP=None,
-                                             MAC=mac_address()  # The mac address of each car is determined
+                                             MAC=mac_address(),  # The mac address of each car is determined
                                              # using mac_address method
+                                             in_area=True,
+                                             trans_range=200
                                              )
                                         )
 
     def print_table(self):
         self.veh_table.print_hash_table()
+
+    # def cluster(self):
 
 
 a = DataTable(sumo_trace, 8000, area_zones)

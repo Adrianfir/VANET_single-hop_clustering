@@ -49,7 +49,7 @@ class ZoneID:
                                      endpoint=True)  # dividing latitude by almost 1km length
 
         # Here we are going to have a Hash Table for zones
-        self.zone_hash = Hash.HashTable(400)
+        self.zone_hash = Hash.HashTable(2000)
         self.centre_col = int()
         self.centre_row = int()
         self.centre_zone = str()
@@ -84,6 +84,7 @@ class ZoneID:
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
                     ((lat <= self.zone_hash.values(temp)["max_lat"]) &
                      (long <= self.zone_hash.values(temp)["max_long"])):
+                print(i)
                 return temp
 
             elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
@@ -277,7 +278,7 @@ class ZoneID:
                 i += 1
 
 
-# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-# a = ZoneID(area)
-# a.zones()
-# print(a.det_zone(43.956432, -79.30198263788123))
+area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+a = ZoneID(area)
+a.zones()
+print(a.det_zone(43.956432, -79.30198263788123))
