@@ -50,14 +50,12 @@ class DataTable:
     def __init__(self, trace, n_cars, zones):
         """
 
-        :param trace:
+        :param trace: sumo_trace file from SUMO
         :param n_cars: number of cars
-        :param area_coordinate: coordination of the area
-        :param all_zones: ZoneID(area).zones()
+        :param zones: all the zones of the area
         """
-        # self.area = area_coordinate
-        # self.area_zones = ZoneID(self.area).zones()         # Using ZoneID class to determine the zone IDs
         self.veh_table = Hash.HashTable(n_cars * 100)
+        self.zone_cars = {}
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.veh_table.set_item(veh.getAttribute('id'),
@@ -100,6 +98,9 @@ class DataTable:
                                              trans_range=200
                                              )
                                         )
+            # to show which vehicles are in each zone
+            self.zone_cars[self.veh_table.values(veh.getAttribute('id'))['zone']] = \
+                veh.getAttribute('id')
 
     def print_table(self):
         self.veh_table.print_hash_table()
