@@ -220,7 +220,7 @@ class ZoneID:
                 i += 1
 
             elif (lat < self.zone_hash.values(temp)["max_lat"]) & \
-                    ((long < self.zone_hash.values(temp)["max_long"]) & \
+                    ((long < self.zone_hash.values(temp)["max_long"]) &
                      (long > self.zone_hash.values(temp)["min_long"])):
                 if i == 0:
                     # the very South_West zone is considered as first prev
@@ -248,8 +248,8 @@ class ZoneID:
 
                 i += 1
 
-            elif (lat < self.zone_hash.values(temp)["max_lat"]) & \
-                    ((long < self.zone_hash.values(temp)["max_long"]) & \
+            elif (lat > self.zone_hash.values(temp)["max_lat"]) & \
+                    ((long < self.zone_hash.values(temp)["max_long"]) &
                      (long > self.zone_hash.values(temp)["min_long"])):
                 if i == 0:
                     # the very South_West zone is considered as first prev
@@ -278,7 +278,7 @@ class ZoneID:
                 i += 1
 
 
-# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-# a = ZoneID(area)
-# a.zones()
-# print(a.det_zone(43.956432, -79.30198263788123))
+area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+a = ZoneID(area)
+a.zones()
+print(a.det_zone(44, -79.30198263788123))
