@@ -54,11 +54,15 @@ class DataTable:
         :param n_cars: number of cars
         :param zones: all the zones of the area
         """
+
+        self.bus_table = Hash.HashTable(n_cars * 100)
         self.veh_table = Hash.HashTable(n_cars * 100)
+
         self.zone_vehicles = {}
+        self.zone_buses = {}
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
-                self.veh_table.set_item(veh.getAttribute('id'),
+                self.bus_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
                                              lat=veh.getAttribute('y'),
                                              angle=veh.getAttribute('angle'),
@@ -98,11 +102,16 @@ class DataTable:
                                              trans_range=200
                                              )
                                         )
-            # to show which vehicles are in each zone
-            self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['zone']] = \
-                veh.getAttribute('id')
+
+            if 'bus' in veh.getAttribute('id'):
+                self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['zone']] = \
+                    veh.getAttribute('id')
+            else:
+                self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['zone']] = \
+                    veh.getAttribute('id')
 
     def print_table(self):
+        self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
 
     # def cluster(self):

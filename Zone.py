@@ -76,6 +76,12 @@ class ZoneID:
         :param long: current longitude of the vehicle
         :return: the zone that the car is in it
         """
+        # Is the vehicle or bus in the area or not
+        global upper_row
+        if (lat > self.area["max_lat"]) | (lat < self.area["min_lat"]) | \
+                (long > self.area["max_long"]) | (long < self.area["min_long"]):
+            return None
+
         # middle_zone_id, its row+1, its col+1
         temp, temp_row, temp_col = middle_zone(len(self.lat_rows)-1, len(self.long_cols)-1, 0, 0, len(self.long_cols)-1)
         i = 0
@@ -278,7 +284,7 @@ class ZoneID:
                 i += 1
 
 
-area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-a = ZoneID(area)
-a.zones()
-print(a.det_zone(44, -79.30198263788123))
+# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+# a = ZoneID(area)
+# a.zones()
+# print(a.det_zone(44, -79.30198263788123))
