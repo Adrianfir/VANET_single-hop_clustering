@@ -110,18 +110,6 @@ class DataTable:
                 self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['zone']] = \
                     veh.getAttribute('id')
 
-    def neighbor_zones(self,zone_id):
-        num = int(zone_id[4:])
-        prev = num - 1
-        next = num + 1
-        return []
-
-
-
-
-
-
-
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()

@@ -25,7 +25,7 @@ def middle_zone(u_row, u_col,
     # the almost centre zone id will be obtained here
     middle_row = int(np.floor((u_row + l_row) / 2))
     middle_col = int(np.floor((u_col + l_col) / 2))
-    middle_zone_id = ((middle_row-1) * n_cols) + middle_col
+    middle_zone_id = ((middle_row - 1) * n_cols) + middle_col
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
@@ -82,7 +82,8 @@ class ZoneID:
             return None
 
         # middle_zone_id, its row+1, its col+1
-        temp, temp_row, temp_col = middle_zone(len(self.lat_rows)-1, len(self.long_cols)-1, 0, 0, len(self.long_cols)-1)
+        temp, temp_row, temp_col = middle_zone(len(self.lat_rows) - 1, len(self.long_cols) - 1, 0, 0,
+                                               len(self.long_cols) - 1)
         i = 0
         while temp:
 
@@ -281,6 +282,63 @@ class ZoneID:
                                                            len(self.long_cols) - 1)
 
                 i += 1
+
+    def neighbor_zones(self, zone_id):
+        num = int(zone_id[4:])
+        row = np.floor(num / len(self.lat_cols))     # row number = 0, 1, 2, ...
+        col = num - row * len(self.long_cols)
+        # Central zone's neighbors
+        if (col != (len(self.long_cols)-1)) & (col != 0) & (row != (len(self.lat_rows)-1)) & (row != 0):
+            return ['zone' + str(num + 1),
+                    'zone' + str(num - 1),
+                    'zone' + str(num + len(self.long_cols)),
+                    'zone' + str(num + len(self.long_cols) + 1),
+                    'zone' + str(num + len(self.long_cols) - 1),
+                    'zone' + str(num - len(self.long_cols)),
+                    'zone' + str(num - len(self.long_cols) + 1),
+                    'zone' + str(num - len(self.long_cols) - 1)
+        # South zone's neighbors (not the ones in the corners)
+        elif (row == 0) & (col != 0) & (col != len(self.long_cols) - 1):
+            return ['zone' + str(num - 1),
+                    'zone' + str(num + 1),
+                    'zone' + str(num + len(self.long_cols)),
+                    'zone' + str(num + len(self.long_cols) + 1),
+                    'zone' + str(num + len(self.long_cols) + 1)
+                    ]
+        # North zone's neighbors (not the ones one the corners)
+        elif (row == len(self.lat_rows) -1) & (col != 0) & (col != len(self.long_cols) - 1):
+            return ['zone' + str(num - 1),
+                    'zone' + str(num + 1),
+                    'zone' + str(num - len(self.long_cols)),
+                    'zone' + str(num - len(self.long_cols) + 1),
+                    'zone' + str(num - len(self.long_cols) + 1)
+                    ]
+
+        # South-East zone's neighbors
+        elif (row == 0) & (col == len(self.long_cols)-1):
+            return ['zone' + str(num - 1),
+                    'zone' + str(num + len(self.long_cols)),
+                    'zone' + str(num + len(self.long_cols) - 1)
+                    ]
+        # North-West zone's neighbors
+        elif (row == len(self.lat_rows) - 1) & (col == 0):
+            return ['zone' + str(num + 1),
+                    'zone' + str(num - len(self.long_cols)),
+                    'zone' + str(num - len(self.long_cols) + 1)
+                    ]
+        # North-East zone's neighbors
+        elif (row == len(self.lat_rows) - 1) & (col == len(self.long_cols) - 1):
+            return ['zone' + str(num - 1),
+                    'zone' + str(num - len(self.long_cols)),
+                    'zone' + str(num - len(self.long_cols) - 1)
+                    ]
+        # South-West zone's neighbors
+        elif (row == 0) & (col == 0):
+            return ['zone' + str(num + 1),
+                    'zone' + str(num + len(self.long_cols)),
+                    'zone' + str(num + len(self.long_cols) + 1),
+                    ]
+
 
 
 # area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
