@@ -65,7 +65,7 @@ class ZoneID:
                 self.zone_hash.set_item('zone' + str(z), dict(min_lat=self.lat_rows[r],
                                                               min_long=self.long_cols[c],
                                                               max_lat=self.lat_rows[r + 1],
-                                                              max_long=self.long_cols[c + 1]
+                                                              max_long=self.long_cols[c + 1],
                                                               )
                                         )
                 z += 1
@@ -77,7 +77,6 @@ class ZoneID:
         :return: the zone that the car is in it
         """
         # Is the vehicle or bus in the area or not
-        global upper_row
         if (lat > self.area["max_lat"]) | (lat < self.area["min_lat"]) | \
                 (long > self.area["max_long"]) | (long < self.area["min_long"]):
             return None
