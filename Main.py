@@ -62,6 +62,9 @@ class DataTable:
         self.zone_buses = {}
         for veh in trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
+                zone_id = zones.det_zone(float(veh.getAttribute('y')),   # determine the zone_id of the car (bus | veh)
+                                         float(veh.getAttribute('x'))
+                                         )
                 self.bus_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
                                              lat=veh.getAttribute('y'),
@@ -69,10 +72,9 @@ class DataTable:
                                              speed=veh.getAttribute('speed'),
                                              pos=veh.getAttribute('pos'),
                                              lane=veh.getAttribute('lane'),
-                                             zone=zones.det_zone(float(veh.getAttribute('y')),
-                                                                 float(veh.getAttribute('x'))
-                                                                 ),
+                                             zone=zone_id,
                                              prev_zone=None,
+                                             neighbor_zones=zones.neighbor_zones(zone_id),
                                              message_dest={},
                                              message_source={},
                                              MAC=mac_address(),
@@ -83,6 +85,7 @@ class DataTable:
                                              trans_range=500
                                              )
                                         )
+                #
             else:
                 self.veh_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
@@ -91,9 +94,7 @@ class DataTable:
                                              speed=veh.getAttribute('speed'),
                                              pos=veh.getAttribute('pos'),
                                              lane=veh.getAttribute('lane'),
-                                             zone=zones.det_zone(float(veh.getAttribute('y')),
-                                                                 float(veh.getAttribute('x'))
-                                                                 ),
+                                             zone=zone_id,
                                              caluster_head={},
                                              IP=None,
                                              MAC=mac_address(),  # The mac address of each car is determined
@@ -104,10 +105,10 @@ class DataTable:
                                         )
 
             if 'bus' in veh.getAttribute('id'):
-                self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['zone']] = \
+                self.zone_buses[zone_id] = \
                     veh.getAttribute('id')
             else:
-                self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['zone']] = \
+                self.zone_vehicles[zone_id] = \
                     veh.getAttribute('id')
 
     def print_table(self):
