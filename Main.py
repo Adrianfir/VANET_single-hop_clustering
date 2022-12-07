@@ -126,10 +126,10 @@ class DataTable:
                                                 unit=hs.Unit.KILOMETERS
                                                 ) <= min(self.veh_table.values(k)['trans_range'], self.bus_table(i))/1000:
                                     # /1000 is for converting meter to kilometer
-                                    self.veh_table.values(k)['head_cluster'] = i         # add "i" as the head cluster for k
+                                    self.veh_table.values(k)['head_cluster'] = i     # add "i" as the head cluster for k
                                     self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
 
 
 a = DataTable(sumo_trace, 8000, area_zones)
-a.gen_cluster()
+a.gen_clusters()
 a.print_table()
