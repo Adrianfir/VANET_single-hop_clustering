@@ -100,7 +100,7 @@ class DataTable:
                                              MAC=mac_address(),  # The mac address of each car is determined
                                              # using mac_address method
                                              in_area=True,
-                                             trans_range=200
+                                             trans_range=500
                                              )
                                         )
 
@@ -111,12 +111,20 @@ class DataTable:
                 self.zone_vehicles[zone_id] = \
                     veh.getAttribute('id')
 
+    def gen_cluster(self):
+        for i in self.bus_table.ids():
+
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
 
-    # def cluster(self):
+    def cluster(self):
+        for i in self.bus_table.ids():
+            for j in self.bus_table.values(i)['neighbor_zones']:
+                for k in
+
 
 
 a = DataTable(sumo_trace, 8000, area_zones)
 a.print_table()
+print(a.zone_buses)
