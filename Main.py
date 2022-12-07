@@ -10,6 +10,7 @@ The output Data Structure is :....
 
 import random
 import xml.dom.minidom
+import haversine as hs
 
 import Hash
 from Zone import ZoneID
@@ -79,13 +80,10 @@ class DataTable:
                                              message_source={},
                                              MAC=mac_address(),
                                              IP=None,
-                                             cluster_IPs={},
-                                             cluster_MACs={},
-                                             in_area=True,
+                                             cluster={},
                                              trans_range=500
                                              )
                                         )
-                #
             else:
                 self.veh_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
@@ -95,7 +93,7 @@ class DataTable:
                                              pos=veh.getAttribute('pos'),
                                              lane=veh.getAttribute('lane'),
                                              zone=zone_id,
-                                             caluster_head={},
+                                             head_cluster=None,
                                              IP=None,
                                              MAC=mac_address(),  # The mac address of each car is determined
                                              # using mac_address method
@@ -111,18 +109,22 @@ class DataTable:
                 self.zone_vehicles[zone_id] = \
                     veh.getAttribute('id')
 
-    def gen_cluster(self):
-        for i in self.bus_table.ids():
-
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
 
-    def cluster(self):
+    def gen_cluster(self):
         for i in self.bus_table.ids():
             for j in self.bus_table.values(i)['neighbor_zones']:
-                for k in
-
+                for k in self.zone_vehicles[j]:
+                    if self.veh_table.values(k)['head_cluster'] is None:
+                        if hs.haversine((self.veh_table.values(k)["long"], self.veh_table.values(k)["lat"]),
+                                        (self.bus_table.values(i)['long'], self.bus_table.values(i)['lat']),
+                                        unit=hs.Unit.KILOMETERS
+                                        ) <= min(self.veh_table.values(k)['trans_range'],self.bus_table(i))/1000:
+                            # /1000 is for converting meter to kilometer
+                            self.veh_table.values(k)['head_cluster'] = i         # add "i" as the head on cluster for k
+                            self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
 
 
 a = DataTable(sumo_trace, 8000, area_zones)
