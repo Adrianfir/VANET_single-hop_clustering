@@ -101,32 +101,35 @@ class DataTable:
                                              trans_range=500
                                              )
                                         )
-
+            b = []          # Used for appending buses of a zone (As we need a list to do it)
+            v = []          # Used for appending vehicles of a zone (As we need a list to do it)
             if 'bus' in veh.getAttribute('id'):
                 self.zone_buses[zone_id] = \
-                    veh.getAttribute('id')
+                    b.append(veh.getAttribute('id'))
             else:
                 self.zone_vehicles[zone_id] = \
-                    veh.getAttribute('id')
+                    v.append(veh.getAttribute('id'))
 
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
 
-    def gen_cluster(self):
+    def gen_clusters(self):
         for i in self.bus_table.ids():
             for j in self.bus_table.values(i)['neighbor_zones']:
-                for k in self.zone_vehicles[j]:
-                    if self.veh_table.values(k)['head_cluster'] is None:
-                        if hs.haversine((self.veh_table.values(k)["long"], self.veh_table.values(k)["lat"]),
-                                        (self.bus_table.values(i)['long'], self.bus_table.values(i)['lat']),
-                                        unit=hs.Unit.KILOMETERS
-                                        ) <= min(self.veh_table.values(k)['trans_range'],self.bus_table(i))/1000:
-                            # /1000 is for converting meter to kilometer
-                            self.veh_table.values(k)['head_cluster'] = i         # add "i" as the head on cluster for k
-                            self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
+                if j in self.zone_vehicles:
+                    if self.zone_vehicles[j] is not None:
+                        for k in self.zone_vehicles[j]:
+                            if self.veh_table.values(k)['head_cluster'] is None:
+                                if hs.haversine((self.veh_table.values(k)["long"], self.veh_table.values(k)["lat"]),
+                                                (self.bus_table.values(i)['long'], self.bus_table.values(i)['lat']),
+                                                unit=hs.Unit.KILOMETERS
+                                                ) <= min(self.veh_table.values(k)['trans_range'], self.bus_table(i))/1000:
+                                    # /1000 is for converting meter to kilometer
+                                    self.veh_table.values(k)['head_cluster'] = i         # add "i" as the head cluster for k
+                                    self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
 
 
 a = DataTable(sumo_trace, 8000, area_zones)
+a.gen_cluster()
 a.print_table()
-print(a.zone_buses)
