@@ -129,6 +129,9 @@ class DataTable:
                                     self.veh_table.values(k)['head_cluster'] = i     # add "i" as the head cluster for k
                                     self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
 
+    def det_IP(self):
+
+
 
 a = DataTable(sumo_trace, 8000, area_zones)
 a.gen_clusters()
