@@ -130,6 +130,7 @@ class DataTable:
                                     self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
 
     def det_IP(self):
+        
 
 
 
