@@ -33,7 +33,6 @@ area = dict(min_lat=43.586568,
             max_long=-79.238069)
 area_zones = ZoneID(area)  # This is a hash table including all zones and their max and min lat and longs
 area_zones.zones()
-number_of_cars = 1000
 
 
 def mac_address():
