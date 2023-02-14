@@ -1,9 +1,7 @@
-from options.constants import GetConsts
+from options.constants import Inputs
 
 
 class Configs:
     def __init__(self) -> object:
-        self.config = GetConsts.get_parser()
-
-
-a = Configs()
+        consts = Inputs()
+        self.config = consts.get_parser()
