@@ -106,9 +106,11 @@ class DataTable:
         :return: cluster heads and connection between them including through the bridges
         """
 
-
-
     # def det_IP(self):
 
+
 a = DataTable(config, area_zones)
+print('bus-ids: ', a.bus_table.ids())
+print('vehicles-ids: ', a.veh_table.ids())
+print('\n')
 a.print_table()
