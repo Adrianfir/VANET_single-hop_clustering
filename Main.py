@@ -17,7 +17,7 @@ import utils.util as util
 import Hash
 from Zone import ZoneID
 
-__author__ = "Pouya Firouzmakan"
+__author__ = "Pouya 'Adrian' Firouzmakan"
 __all__ = []
 
 config = Configs().config

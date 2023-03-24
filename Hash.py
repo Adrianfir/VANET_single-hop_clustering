@@ -2,7 +2,7 @@
 This Class is for building Hash_Table to store the data from XML file obtained from SUMO.
 The Hash-Table is an array of 'LinekdList' so called 'chain structure'
 """
-__author__ = "Adrian (Pouya) Firouzmakan"
+__author__ = "Pouya 'Adrian' Firouzmakan"
 __all__ = []
 
 import LinkedList
