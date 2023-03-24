@@ -13,13 +13,13 @@ import Hash
 
 class ZoneID:
 
-    def __init__(self, configs):
+    def __init__(self, config):
         """
         # first the x and y based on km is calculated to determine the area (hear greater Toronto Area (GTA) and some
         # cities around it. Then the area will be divided into several zones (almost 1km^2 for each zone)
         :param area: includes the min and max of lat and long of the area (coordinates of the area)
         """
-        self.area = configs.area
+        self.area = config.area
         self.x_area = hs.haversine((self.area["min_long"], 0), (self.area["max_long"], 0), unit=hs.Unit.KILOMETERS)
         self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
         self.area_surface = self.x_area * self.y_area

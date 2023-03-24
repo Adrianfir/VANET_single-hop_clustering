@@ -20,9 +20,9 @@ from Zone import ZoneID
 __author__ = "Pouya 'Adrian' Firouzmakan"
 __all__ = []
 
-config = Configs().config
+configs = Configs().config
 
-area_zones = ZoneID(config)  # This is a hash table including all zones and their max and min lat and longs
+area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
 area_zones.zones()
 
 
@@ -30,7 +30,7 @@ class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
     # and defining IP addresses by using trace (which is sumo_trace)
 
-    def __init__(self, configs, zones):
+    def __init__(self, config, zones):
         """
 
         :param trace: sumo_trace file from SUMO
@@ -66,7 +66,7 @@ class DataTable:
                                              other_CHs=[],
                                              cluster_members={},
                                              bridges={},
-                                             trans_range=1000
+                                             trans_range=config.trans_range
                                              )
                                         )
             else:
@@ -86,7 +86,7 @@ class DataTable:
                                              MAC=util.mac_address(),  # The mac address of each car is determined
                                              # using mac_address method
                                              in_area=True,
-                                             trans_range=1000
+                                             trans_range=config.trans_range
                                              )
                                         )
             b = []  # Used for appending buses of a zone (As we need a list to do it)
@@ -124,7 +124,7 @@ class DataTable:
     # def det_IP(self):
 
 
-a = DataTable(config, area_zones)
+a = DataTable(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')
