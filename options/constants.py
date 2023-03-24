@@ -19,6 +19,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
+        trans_range = 1000
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--xml_path', default=trace_path, type=str,
@@ -33,6 +34,8 @@ class Inputs:
                             help='Floating Car Data (FCD) from sumoTrace.xml file')
         parser.add_argument('--times', type=xml.dom.minidom.NodeList, default=times,
                             help='includes data for all seconds')
+        parser.add_argument('--trans_range', type=int, default=trans_range,
+                            help='this is the transmission range considered in this project and it can be up to 2000')
         self.parser = parser
 
     def get_parser(self):

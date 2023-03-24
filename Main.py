@@ -63,9 +63,10 @@ class DataTable:
                                              MAC=util.mac_address(),
                                              IP=None,
                                              cluster_head=True,
+                                             other_CHs=[],
                                              cluster_members={},
                                              bridges={},
-                                             trans_range=500
+                                             trans_range=1000
                                              )
                                         )
             else:
@@ -78,13 +79,14 @@ class DataTable:
                                              lane=veh.getAttribute('lane'),
                                              zone=zone_id,
                                              cluster_head=False,
-                                             CH_name=None,
+                                             primary_CH=None,
+                                             other_CHs=[],
                                              cluster_members={},
                                              IP=None,
                                              MAC=util.mac_address(),  # The mac address of each car is determined
                                              # using mac_address method
                                              in_area=True,
-                                             trans_range=500
+                                             trans_range=1000
                                              )
                                         )
             b = []  # Used for appending buses of a zone (As we need a list to do it)
@@ -105,7 +107,20 @@ class DataTable:
         This method is designed for creating clusters
         :return: cluster heads and connection between them including through the bridges
         """
-
+        for i in self.bus_table.ids():
+            for j in self.bus_table.values(i)['neighbor_zones']:
+                if j in self.zone_vehicles:
+                    if self.zone_vehicles[j] is not None:
+                        for k in self.zone_vehicles[j]:
+                            if self.veh_table.values(k)['head_cluster'] is None:
+                                if hs.haversine((self.veh_table.values(k)["long"], self.veh_table.values(k)["lat"]),
+                                                (self.bus_table.values(i)['long'], self.bus_table.values(i)['lat']),
+                                                unit=hs.Unit.KILOMETERS
+                                                ) <= min(self.veh_table.values(k)['trans_range'],
+                                                         self.bus_table(i)) / 1000:
+                                    # /1000 is for converting meter to kilometer
+                                    self.veh_table.values(k)['head_cluster'] = i  # add "i" as the head cluster for k
+                                    self.bus_table.values(i)['cluster'][k] = {'MAC': self.veh_table.values(k)['MAC']}
     # def det_IP(self):
 
 
