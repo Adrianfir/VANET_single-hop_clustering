@@ -60,6 +60,8 @@ class Graph:
         return False
 
 
-# a = Graph()
-# a.print_graph()
-# a.add_vertex(['a', 'b'])
+a = Graph()
+a.add_vertex('a', 'b')
+a.add_edge('a', 'b')
+a.print_graph()
+

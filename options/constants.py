@@ -20,6 +20,7 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         trans_range = 1000
+        start_time = 1500
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--xml_path', default=trace_path, type=str,
@@ -36,6 +37,8 @@ class Inputs:
                             help='includes data for all seconds')
         parser.add_argument('--trans_range', type=int, default=trans_range,
                             help='this is the transmission range considered in this project and it can be up to 2000')
+        parser.add_argument('--start_time', type=int, default=start_time,
+                            help='This is the time that the initial values would be extract from sumo_trace.xml file')
         self.parser = parser
 
     def get_parser(self):

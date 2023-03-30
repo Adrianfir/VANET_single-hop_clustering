@@ -16,6 +16,7 @@ from configs.config import Configs
 import utils.util as util
 import Hash
 from Zone import ZoneID
+from Graph import Graph
 
 __author__ = "Pouya 'Adrian' Firouzmakan"
 __all__ = []
@@ -64,7 +65,7 @@ class DataTable:
                                              IP=None,
                                              cluster_head=True,
                                              other_CHs=[],
-                                             cluster_members={},
+                                             cluster_members=Graph().add_vertex(veh.getAttribute('id')),
                                              bridges={},
                                              trans_range=config.trans_range
                                              )
@@ -79,6 +80,7 @@ class DataTable:
                                              lane=veh.getAttribute('lane'),
                                              zone=zone_id,
                                              cluster_head=False,
+                                             # if the vehicle is a CH, it will be changed to a Graph in the Clustering
                                              primary_CH=None,
                                              other_CHs=[],
                                              cluster_members={},
