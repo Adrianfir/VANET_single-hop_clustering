@@ -44,7 +44,7 @@ class DataTable:
 
         self.zone_vehicles = {}
         self.zone_buses = {}
-        for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[0].childNodes[1::2]:
+        for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[config.start_time].childNodes[1::2]:
             if 'bus' in veh.getAttribute('id'):
                 zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                          float(veh.getAttribute('x'))
@@ -65,7 +65,7 @@ class DataTable:
                                              IP=None,
                                              cluster_head=True,
                                              other_CHs=[],
-                                             cluster_members=Graph().add_vertex(veh.getAttribute('id')),
+                                             cluster_members=Graph(),
                                              bridges={},
                                              trans_range=config.trans_range
                                              )
