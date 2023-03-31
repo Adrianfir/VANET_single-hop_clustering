@@ -9,8 +9,8 @@ __all__ = []
 
 class Graph:
 
-    def __init__(self):
-        self.adj_list = {}
+    def __init__(self, head):
+        self.adj_list = {head: []}
 
     def print_graph(self):
         for vertex in self.adj_list:
@@ -24,8 +24,6 @@ class Graph:
         for v in vertex:
             if v not in self.adj_list.keys():
                 self.adj_list[v] = []
-                return True
-            return False
 
     def add_edge(self, v1, v2):
         """
@@ -60,8 +58,8 @@ class Graph:
         return False
 
 
-# a = Graph()
-# a.add_vertex('a', 'b')
+# a = Graph('bus1')
+# a.add_vertex(['veh1', 'veh2'])
 # a.add_edge('a', 'b')
 # a.print_graph()
 
