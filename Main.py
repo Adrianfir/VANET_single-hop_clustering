@@ -65,7 +65,7 @@ class DataTable:
                                              IP=None,
                                              cluster_head=True,
                                              other_CHs=[],
-                                             cluster_members=Graph(),
+                                             cluster_members=Graph(veh.getAttribute('id')),
                                              bridges={},
                                              trans_range=config.trans_range
                                              )
