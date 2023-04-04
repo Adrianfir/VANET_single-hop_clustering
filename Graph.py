@@ -9,8 +9,8 @@ __all__ = []
 
 class Graph:
 
-    def __init__(self, head):
-        self.adj_list = {head: []}
+    def __init__(self):
+        self.adj_list = {}
 
     def print_graph(self):
         for vertex in self.adj_list:
@@ -58,8 +58,8 @@ class Graph:
         return False
 
 
-# a = Graph('bus1')
-# a.add_vertex(['veh1', 'veh2'])
-# a.add_edge('a', 'b')
+# a = Graph()
+# a.add_vertex(['veh2'])
+# a.add_edge('bus1', 'b')
 # a.print_graph()
 
