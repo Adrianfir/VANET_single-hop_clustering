@@ -38,7 +38,7 @@ def middle_zone(u_row, u_col,
 
 
 def det_bus_ch(bus_table, veh_table_i,
-                 area_zones, bus_candidates):
+               area_zones, bus_candidates):
     """
 
     :param bus_table:
@@ -65,7 +65,7 @@ def det_bus_ch(bus_table, veh_table_i,
     veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
-    a = {}
+    a = dict(nominee=bus_candidates[0])
     for j in bus_candidates:
         # latitude of the centre of previous zone that bus were in
         prev_bus_lat = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_lat'] +
@@ -83,6 +83,8 @@ def det_bus_ch(bus_table, veh_table_i,
 
         bus_vector_x = np.multiply(euclidian_distance, np.cos(bus_alpha))
         bus_vector_y = np.multiply(euclidian_distance, np.sin(bus_alpha))
+
+
 
 
 
