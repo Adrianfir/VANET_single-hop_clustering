@@ -5,11 +5,6 @@ This Module is coded for extracting data from XML file related to ..., ..., ....
 The output Data Structure is :....
 
 """
-
-# /Users/pouyafirouzmakan/Desktop/VANET/small_data_Richmondhill/sumoTrace_geo.xml
-
-import random
-import xml.dom.minidom
 import haversine as hs
 
 from configs.config import Configs
@@ -131,10 +126,27 @@ class DataTable:
         #                             self.bus_table.values(i).add_vertex([i, k])  # add 'i' and 'k' as vertexes
         #                             self.bus_table.values(i).add_edge(i, k)
         for i in self.veh_table.ids():
-            for j in self.veh_table.values(i)['neighbor_zones']:
-                if j in self.zone_buses:
-                    
+            if self.veh_table.values(i)['cluster_head'] is None:
+                bus_candidates = []
+                for j in self.veh_table.values(i)['neighbor_zones']:
+                    if 'bus' in j:
+                        if hs.haversine((self.veh_table.values(i)["long"], self.veh_table.values(i)["lat"]),
+                                        (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
+                                        unit=hs.Unit.KILOMETERS) <= min(self.veh_table.values(i)['trans_range'],
+                                                                        self.bus_table(i)) / 1000:
+                            bus_candidates.append(i)
 
+                    # else:
+
+            if len(bus_candidates) > 0:
+                bus_head = util.det_bus_head(self.bus_table,           # determine the most suitable from bus_candidates
+                                             self.veh_table.values(i),
+                                             bus_candidates)
+                # bus_candidates
+            self.veh_table.values(i)['primary_CH'] = bus_head
+            bus_candidates.remove(bus_head)
+            self.veh_table(i)['other_CHs'] = bus_candidates
+            continue
 
 a = DataTable(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())

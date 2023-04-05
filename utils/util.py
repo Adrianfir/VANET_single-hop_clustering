@@ -3,6 +3,8 @@ This is the Utils file to have all the small functions
 """
 import numpy as np
 import random
+import haversine as hs
+
 
 
 def mac_address():
@@ -34,3 +36,7 @@ def middle_zone(u_row, u_col,
     middle_col = int(np.floor((u_col + l_col) / 2))
     middle_zone_id = ((middle_row - 1) * n_cols) + middle_col
     return 'zone' + str(middle_zone_id), middle_row, middle_col
+
+def det_bus_head(bus_table, veh_table_i, bus_candidates):
+
+
