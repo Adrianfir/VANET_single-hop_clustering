@@ -59,11 +59,11 @@ def det_bus_head(bus_table, veh_table_i,
                                       (veh_table_i['long'], veh_table_i['lat']),
                                       unit=hs.Unit.METERS)
 
-    veh_theta = np.arctan((prev_veh_long - veh_table_i['long'])/
+    veh_alpha = np.arctan((prev_veh_long - veh_table_i['long'])/
                           (prev_veh_lat - veh_table_i['lat']))
 
-    veh_vector_x =
-    veh_vector_y =
+    veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
+    veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
     a = {}
     for j in bus_candidates:
@@ -73,6 +73,18 @@ def det_bus_head(bus_table, veh_table_i,
         # latitude of the centre of previous zone that bus were in
         prev_bus_long = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_long'] +
                          area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['min_long']) / 2
+
+        euclidian_distance = hs.haversine((prev_bus_long, prev_bus_lat),
+                                          (bus_table.values(j)['long'], bus_table.values(j)['lat']),
+                                          unit=hs.Unit.METERS)
+
+        bus_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
+                              (prev_veh_lat - veh_table_i['lat']))
+
+        bus_vector_x = np.multiply(euclidian_distance, np.cos(bus_alpha))
+        bus_vector_y = np.multiply(euclidian_distance, np.sin(bus_alpha))
+
+
 
 
 
