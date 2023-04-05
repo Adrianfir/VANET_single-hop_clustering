@@ -6,7 +6,6 @@ import random
 import haversine as hs
 
 
-
 def mac_address():
     """
     This function is used in the Main.py file
@@ -37,5 +36,37 @@ def middle_zone(u_row, u_col,
     middle_zone_id = ((middle_row - 1) * n_cols) + middle_col
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
-def det_bus_head(bus_table, veh_table_i, bus_candidates):
 
+def det_bus_head(bus_table, veh_table_i,
+                 area_zones, bus_candidates):
+    """
+
+    :param bus_table:
+    :param veh_table_i:
+    :param area_zones:
+    :param bus_candidates:
+    :return: it This function will return the best candidate among all the buses near to i (vehicle_i) to be
+     its cluster head
+    """
+    # latitude of the centre of previous zone that vehicle were in
+    prev_veh_lat = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_lat'] +
+                    area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_lat']) / 2
+    # longitude of the centre of previous zone that vehicle were in
+    prev_veh_long = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_long'] +
+                     area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_long']) / 2
+
+    veh_vector = 
+
+    a = {}
+    for j in bus_candidates:
+        # latitude of the centre of previous zone that bus were in
+        prev_bus_lat = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_lat'] +
+                        area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['min_lat']) / 2
+        # latitude of the centre of previous zone that bus were in
+        prev_bus_long = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_long'] +
+                         area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['min_long']) / 2
+
+
+
+
+    return True

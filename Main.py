@@ -76,6 +76,7 @@ class DataTable:
                                              pos=veh.getAttribute('pos'),
                                              lane=veh.getAttribute('lane'),
                                              zone=zone_id,
+                                             prev_zone=None,
                                              neighbor_zones=zones.neighbor_zones(zone_id),
                                              cluster_head=False,
                                              # if the vehicle is a CH, it will be changed to a Graph in the Clustering
@@ -142,6 +143,7 @@ class DataTable:
             if len(bus_candidates) > 0:
                 bus_head = util.det_bus_head(self.bus_table,  # determine the most suitable from bus_candidates
                                              self.veh_table.values(i),
+                                             area_zones,
                                              bus_candidates)
                 # bus_candidates
                 self.veh_table.values(i)['primary_CH'] = bus_head
