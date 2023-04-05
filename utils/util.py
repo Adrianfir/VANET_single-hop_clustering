@@ -39,4 +39,3 @@ def middle_zone(u_row, u_col,
 
 def det_bus_head(bus_table, veh_table_i, bus_candidates):
 
-

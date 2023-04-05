@@ -34,6 +34,7 @@ class DataTable:
         :param zones: all the zones of the area
         """
 
+        global zone_id
         self.bus_table = Hash.HashTable(config.n_cars * 100)
         self.veh_table = Hash.HashTable(config.n_cars * 100)
 
@@ -139,14 +140,15 @@ class DataTable:
                     # else:
 
             if len(bus_candidates) > 0:
-                bus_head = util.det_bus_head(self.bus_table,           # determine the most suitable from bus_candidates
+                bus_head = util.det_bus_head(self.bus_table,  # determine the most suitable from bus_candidates
                                              self.veh_table.values(i),
                                              bus_candidates)
                 # bus_candidates
-            self.veh_table.values(i)['primary_CH'] = bus_head
-            bus_candidates.remove(bus_head)
-            self.veh_table(i)['other_CHs'] = bus_candidates
-            continue
+                self.veh_table.values(i)['primary_CH'] = bus_head
+                bus_candidates.remove(bus_head)
+                self.veh_table(i)['other_CHs'] = bus_candidates
+                continue
+
 
 a = DataTable(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())
