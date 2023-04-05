@@ -37,7 +37,7 @@ def middle_zone(u_row, u_col,
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
-def det_bus_head(bus_table, veh_table_i,
+def det_bus_ch(bus_table, veh_table_i,
                  area_zones, bus_candidates):
     """
 

@@ -109,24 +109,7 @@ class DataTable:
         This method is designed for creating clusters
         :return: cluster heads and connection between them including through the bridges
         """
-        # for i in self.bus_table.ids():
-        #     for j in self.bus_table.values(i)['neighbor_zones']:
-        #         if j in self.zone_vehicles:
-        #             if self.zone_vehicles[j] is not None:
-        #                 for k in self.zone_vehicles[j]:
-        #                     head_candidates = []
-        #                     if self.veh_table.values(k)['head_cluster'] is None:
-        #                         if hs.haversine((self.veh_table.values(k)["long"], self.veh_table.values(k)["lat"]),
-        #                                         (self.bus_table.values(i)['long'], self.bus_table.values(i)['lat']),
-        #                                         unit=hs.Unit.KILOMETERS
-        #                                         ) <= min(self.veh_table.values(k)['trans_range'],
-        #                                                  self.bus_table(i)) / 1000:
-        #                             # /1000 is for converting meter to kilometer
-        #                             head_candidates.append(i)
-        #                             if len(head_candidates) == 1:
-        #                             self.veh_table.values(k)['primary_CH'] = i  # add "i" as the head cluster for k
-        #                             self.bus_table.values(i).add_vertex([i, k])  # add 'i' and 'k' as vertexes
-        #                             self.bus_table.values(i).add_edge(i, k)
+
         for i in self.veh_table.ids():
             if self.veh_table.values(i)['cluster_head'] is None:
                 bus_candidates = []
@@ -141,15 +124,23 @@ class DataTable:
                     # else:
 
             if len(bus_candidates) > 0:
-                bus_head = util.det_bus_head(self.bus_table,  # determine the most suitable from bus_candidates
-                                             self.veh_table.values(i),
-                                             area_zones,
-                                             bus_candidates)
-                # bus_candidates
-                self.veh_table.values(i)['primary_CH'] = bus_head
-                bus_candidates.remove(bus_head)
-                self.veh_table(i)['other_CHs'] = bus_candidates
-                continue
+                if len(bus_candidates) == 1:
+                    self.veh_table.values(i)['primary_CH'] = j
+                    self.veh_table.values(i)['other_CHs'] = []
+                    self.bus_table.values(j)['cluster_members'].add_vertex(i)
+                    self.bus_table.values(j)['cluster_members'].add_edge(j, i)
+                else:
+                    bus_ch = util.det_bus_ch(self.bus_table,  # determine the most suitable from bus_candidates
+                                               self.veh_table.values(i),
+                                               area_zones,
+                                               bus_candidates)
+
+                    self.veh_table.values(i)['primary_CH'] = bus_ch
+                    bus_candidates.remove(bus_ch)
+                    self.veh_table(i)['other_CHs'] = bus_candidates
+                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex(i)
+                    self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, i)
+                    continue
 
 
 a = DataTable(configs, area_zones)
