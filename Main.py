@@ -134,8 +134,8 @@ class DataTable:
                     if 'bus' in j:
                         if hs.haversine((self.veh_table.values(i)["long"], self.veh_table.values(i)["lat"]),
                                         (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
-                                        unit=hs.Unit.KILOMETERS) <= min(self.veh_table.values(i)['trans_range'],
-                                                                        self.bus_table(i)) / 1000:
+                                        unit=hs.Unit.METERS) <= min(self.veh_table.values(i)['trans_range'],
+                                                                    self.bus_table(i)):
                             bus_candidates.append(i)
 
                     # else:

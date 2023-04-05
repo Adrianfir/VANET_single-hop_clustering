@@ -55,7 +55,15 @@ def det_bus_head(bus_table, veh_table_i,
     prev_veh_long = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_long'] +
                      area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_long']) / 2
 
-    veh_vector = 
+    euclidian_distance = hs.haversine((prev_veh_long, prev_veh_lat),
+                                      (veh_table_i['long'], veh_table_i['lat']),
+                                      unit=hs.Unit.METERS)
+
+    veh_theta = np.arctan((prev_veh_long - veh_table_i['long'])/
+                          (prev_veh_lat - veh_table_i['lat']))
+
+    veh_vector_x =
+    veh_vector_y =
 
     a = {}
     for j in bus_candidates:
