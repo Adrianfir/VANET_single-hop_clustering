@@ -4,6 +4,7 @@ This is the Utils file to have all the small functions
 import numpy as np
 import random
 import haversine as hs
+from scipy import spatial
 
 
 def mac_address():
@@ -59,13 +60,14 @@ def det_bus_ch(bus_table, veh_table_i,
                                       (veh_table_i['long'], veh_table_i['lat']),
                                       unit=hs.Unit.METERS)
 
-    veh_alpha = np.arctan((prev_veh_long - veh_table_i['long'])/
+    veh_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
                           (prev_veh_lat - veh_table_i['lat']))
 
     veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
-    a = dict(nominee=bus_candidates[0])
+    nominee = ''
+    min_ef = 2
     for j in bus_candidates:
         # latitude of the centre of previous zone that bus were in
         prev_bus_lat = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_lat'] +
@@ -84,11 +86,15 @@ def det_bus_ch(bus_table, veh_table_i,
         bus_vector_x = np.multiply(euclidian_distance, np.cos(bus_alpha))
         bus_vector_y = np.multiply(euclidian_distance, np.sin(bus_alpha))
 
+        cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [bus_vector_x, bus_vector_y])
+        theta_sim = np.arccos(cos_sim) / 2 * np.pi
+        speed_sim = np.divide(np.abs(bus_table.values(j)['speed'] - veh_table_i['speed']),
+                              np.abs(bus_table.values(j)['speed']))
 
+        # calculate the Eligibility Factor (EF) for buses
+        ef = theta_sim + speed_sim
 
+        if ef < min_ef:
+            nominee = j
 
-
-
-
-
-    return True
+    return nominee
