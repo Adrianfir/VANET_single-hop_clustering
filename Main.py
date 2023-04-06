@@ -14,7 +14,6 @@ from Zone import ZoneID
 from Graph import Graph
 
 __author__ = "Pouya 'Adrian' Firouzmakan"
-__all__ = []
 
 configs = Configs().config
 
@@ -29,12 +28,11 @@ class DataTable:
     def __init__(self, config, zones):
         """
 
-        :param trace: sumo_trace file from SUMO
-        :param n_cars: number of cars
+        :param config: look at options.py and config.py
         :param zones: all the zones of the area
         """
 
-        global zone_id
+        # global zone_id
         self.bus_table = Hash.HashTable(config.n_cars * 100)
         self.veh_table = Hash.HashTable(config.n_cars * 100)
 
@@ -106,12 +104,12 @@ class DataTable:
         this method updates the bus_table and veh_table values for the current interval
         :return:
         """
-        self.time +=1
+        self.time += 1
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             if 'bus' in veh.getAttribute('id'):
                 self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
-                    self.bus_table.values(veh.getAttribute('id'))['zone']     # update prev_zone
+                    self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
                 self.bus_table.values(veh.getAttribute('id'))['long']  # update zone
                 self.bus_table.values(veh.getAttribute('id'))['lat']  # update zone
@@ -153,9 +151,9 @@ class DataTable:
                     self.bus_table.values(j)['cluster_members'].add_edge(j, i)
                 else:
                     bus_ch = util.det_bus_ch(self.bus_table,  # determine the most suitable from bus_candidates
-                                               self.veh_table.values(i),
-                                               area_zones,
-                                               bus_candidates)
+                                             self.veh_table.values(i),
+                                             area_zones,
+                                             bus_candidates)
 
                     self.veh_table.values(i)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)

@@ -2,7 +2,7 @@
 This function is defined in order to determine the zones based on the Latitude and Longitude
 """
 __author__ = "Adrian (Pouya) Firouzmakan"
-__all__ = []
+__all__ = ['ZoneID']
 
 import numpy as np
 import haversine as hs
