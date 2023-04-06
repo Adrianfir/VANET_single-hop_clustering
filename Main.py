@@ -40,7 +40,8 @@ class DataTable:
 
         self.zone_vehicles = {}
         self.zone_buses = {}
-        for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[config.start_time].childNodes[
+        self.time = config.start_time
+        for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             if 'bus' in veh.getAttribute('id'):
                 zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -99,6 +100,27 @@ class DataTable:
             else:
                 self.zone_vehicles[zone_id] = \
                     v.append(veh.getAttribute('id'))
+
+    def update(self, config, zones):
+        """
+        this method updates the bus_table and veh_table values for the current interval
+        :return:
+        """
+        self.time +=1
+        for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
+                   1::2]:
+            if 'bus' in veh.getAttribute('id'):
+                self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
+                    self.bus_table.values(veh.getAttribute('id'))['zone']     # update prev_zone
+
+                self.bus_table.values(veh.getAttribute('id'))['long']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['lat']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['angle']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['speed']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['pos']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['lane']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['zone']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones']  # update zone
 
     def print_table(self):
         self.bus_table.print_hash_table()

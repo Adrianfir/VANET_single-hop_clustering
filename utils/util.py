@@ -67,7 +67,7 @@ def det_bus_ch(bus_table, veh_table_i,
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
     nominee = ''
-    min_ef = 2
+    min_ef = 10
     for j in bus_candidates:
         # latitude of the centre of previous zone that bus were in
         prev_bus_lat = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_lat'] +
