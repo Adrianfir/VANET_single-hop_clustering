@@ -111,14 +111,18 @@ class DataTable:
                 self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
                     self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
-                self.bus_table.values(veh.getAttribute('id'))['long']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['lat']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['angle']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['speed']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['pos']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['lane']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['zone']  # update zone
-                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones']  # update zone
+                self.bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
+                self.bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
+                self.bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
+                self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
+                self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
+                self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+                self.bus_table.values(veh.getAttribute('id'))['zone'] = veh.getAttribute('zone')
+                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = \
+                    zones.det_zone(float(veh.getAttribute('y')),          # determine the zone_id of the car (bus | veh)
+                                   float(veh.getAttribute('x'))
+                                   )
+
 
     def print_table(self):
         self.bus_table.print_hash_table()
