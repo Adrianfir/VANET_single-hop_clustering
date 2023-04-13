@@ -63,6 +63,7 @@ class DataTable:
                                              other_CHs=[],
                                              cluster_members=Graph(),
                                              bridges={},
+                                             in_area=True,
                                              trans_range=config.trans_range
                                              )
                                         )
