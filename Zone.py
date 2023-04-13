@@ -20,6 +20,7 @@ class ZoneID:
         :param area: includes the min and max of lat and long of the area (coordinates of the area)
         """
         self.area = config.area
+        self.un_pad_area = {}
         self.x_area = hs.haversine((self.area["min_long"], 0), (self.area["max_long"], 0), unit=hs.Unit.KILOMETERS)
         self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
         self.area_surface = self.x_area * self.y_area
@@ -32,6 +33,7 @@ class ZoneID:
 
         # Here we are going to have a Hash Table for zones
         self.zone_hash = Hash.HashTable(2000)
+        self.n_zones = int()
         self.centre_col = int()
         self.centre_row = int()
         self.centre_zone = str()
@@ -51,6 +53,7 @@ class ZoneID:
                                                               )
                                         )
                 z += 1
+        self.n_zones = z + 1
 
     def det_zone(self, lat, long):
         """
@@ -264,6 +267,13 @@ class ZoneID:
                                                                 len(self.long_cols) - 1)
 
                 i += 1
+
+    def understudied__area(self):
+
+        self.un_pad_area = dict(min_lat=self.zone_hash.values('zone' + '01')['max_lat'],
+                                min_long=self.zone_hash.values('zone' + '01')['max_long'],
+                                max_lat=self.zone_hash.values('zone' + str(self.n_zones - 1))['min_lat'],
+                                max_long=self.zone_hash.values('zone' + str(self.n_zones - 1))['min_long'])
 
     def neighbor_zones(self, zone_id):
         num = int(zone_id[4:])

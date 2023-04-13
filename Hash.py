@@ -78,11 +78,11 @@ class HashTable:
                 print(f"{self.data_map[index].print_list()}")
 
 
-table = HashTable(10)
-table.set_item('bus0', {'x': 1, 'y': 1})
-table.set_item('bus1', {'x': 2, 'y': 2})
-table.set_item('bus1', {'x': 15, 'y': 14})
-table.set_item('bus2', {'x': -1, 'y': 1})
-table.set_item('bus3', {'x': -1, 'y': 1})
-table.print_hash_table()
-a = 2
+# table = HashTable(10)
+# table.set_item('bus0', {'x': 1, 'y': 1})
+# table.set_item('bus1', {'x': 2, 'y': 2})
+# table.set_item('bus1', {'x': 15, 'y': 14})
+# table.set_item('bus2', {'x': -1, 'y': 1})
+# table.set_item('bus3', {'x': -1, 'y': 1})
+# table.print_hash_table()
+# a = 2

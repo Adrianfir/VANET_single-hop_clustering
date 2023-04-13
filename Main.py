@@ -63,7 +63,7 @@ class DataTable:
                                              other_CHs=[],
                                              cluster_members=Graph(),
                                              bridges={},
-                                             in_area=True,
+                                             in_area=presence(self.area_zones),
                                              trans_range=config.trans_range
                                              )
                                         )

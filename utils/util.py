@@ -98,3 +98,11 @@ def det_bus_ch(bus_table, veh_table_i,
             nominee = j
 
     return nominee
+
+
+def presence(area_cord, veh_cord):
+    if ((veh_cord['max_lat'] < area_cord['max_lat']) & (veh_cord['min_lat'] > area_cord['min_lat']) &
+            (veh_cord['max_long'] < area_cord['max_long']) & (veh_cord['min_long'] > area_cord["min_long"])):
+        return True
+    else:
+        return False
