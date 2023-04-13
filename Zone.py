@@ -268,7 +268,7 @@ class ZoneID:
 
                 i += 1
 
-    def understudied__area(self):
+    def understudied_area(self):
 
         self.un_pad_area = dict(min_lat=self.zone_hash.values('zone' + '01')['max_lat'],
                                 min_long=self.zone_hash.values('zone' + '01')['max_long'],

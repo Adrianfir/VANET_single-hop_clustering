@@ -101,8 +101,18 @@ def det_bus_ch(bus_table, veh_table_i,
 
 
 def presence(area_cord, veh_cord):
-    if ((veh_cord['max_lat'] < area_cord['max_lat']) & (veh_cord['min_lat'] > area_cord['min_lat']) &
-            (veh_cord['max_long'] < area_cord['max_long']) & (veh_cord['min_long'] > area_cord["min_long"])):
+    """
+    This function will determine if the vehicle or bus is in the understudied area (unpadded area)
+    :param area_cord: the coordination of the understudied area (unpadded area)
+    :param veh_cord: the coordination of the vehicle or bus
+    :return: it returns True or False
+    """
+    if (
+            (veh_cord.getAttribute('x') < area_cord['max_long']) &
+            (veh_cord.getAttribute('x') > area_cord["min_long"]) &
+            (veh_cord.getAttribute('y') < area_cord['max_lat']) &
+            (veh_cord.getAttribute('y') > area_cord['min_lat'])
+       ):
         return True
     else:
         return False
