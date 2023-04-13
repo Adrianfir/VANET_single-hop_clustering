@@ -41,10 +41,10 @@ class DataTable:
         self.time = config.start_time
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
+            zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
+                                     float(veh.getAttribute('x'))
+                                     )
             if 'bus' in veh.getAttribute('id'):
-                zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
-                                         float(veh.getAttribute('x'))
-                                         )
                 self.bus_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
                                              lat=veh.getAttribute('y'),
@@ -107,6 +107,9 @@ class DataTable:
         self.time += 1
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
+            zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
+                                     float(veh.getAttribute('x'))
+                                     )
             if 'bus' in veh.getAttribute('id'):
                 self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
                     self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
@@ -117,54 +120,48 @@ class DataTable:
                 self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
                 self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
                 self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-                self.bus_table.values(veh.getAttribute('id'))['zone'] = veh.getAttribute('zone')
-                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = \
-                    zones.det_zone(float(veh.getAttribute('y')),          # determine the zone_id of the car (bus | veh)
-                                   float(veh.getAttribute('x'))
-                                   )
-
+                self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
+                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
 
-    def gen_clusters(self):
+    def find_cluster(self, veh_id):
         """
-        This method is designed for creating clusters
+        This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
         """
 
-        for i in self.veh_table.ids():
-            if self.veh_table.values(i)['cluster_head'] is None:
-                bus_candidates = []
-                for j in self.veh_table.values(i)['neighbor_zones']:
-                    if 'bus' in j:
-                        if hs.haversine((self.veh_table.values(i)["long"], self.veh_table.values(i)["lat"]),
-                                        (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
-                                        unit=hs.Unit.METERS) <= min(self.veh_table.values(i)['trans_range'],
-                                                                    self.bus_table(i)):
-                            bus_candidates.append(i)
+        if self.veh_table.values(veh_id)['cluster_head'] is None:
+            bus_candidates = []
+            for j in self.veh_table.values(veh_id)['neighbor_zones']:
+                if 'bus' in j:
+                    if hs.haversine((self.veh_table.values(veh_id)["long"], self.veh_table.values(veh_id)["lat"]),
+                                    (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
+                                    unit=hs.Unit.METERS) <= min(self.veh_table.values(veh_id)['trans_range'],
+                                                                self.bus_table(veh_id)):
+                        bus_candidates.append(veh_id)
 
-                    # else:
+                # else:
 
             if len(bus_candidates) > 0:
                 if len(bus_candidates) == 1:
-                    self.veh_table.values(i)['primary_CH'] = j
-                    self.veh_table.values(i)['other_CHs'] = []
-                    self.bus_table.values(j)['cluster_members'].add_vertex(i)
-                    self.bus_table.values(j)['cluster_members'].add_edge(j, i)
+                    self.veh_table.values(veh_id)['primary_CH'] = j
+                    self.veh_table.values(veh_id)['other_CHs'] = []
+                    self.bus_table.values(j)['cluster_members'].add_vertex(veh_id)
+                    self.bus_table.values(j)['cluster_members'].add_edge(j, veh_id)
                 else:
                     bus_ch = util.det_bus_ch(self.bus_table,  # determine the most suitable from bus_candidates
-                                             self.veh_table.values(i),
+                                             self.veh_table.values(veh_id),
                                              area_zones,
                                              bus_candidates)
 
-                    self.veh_table.values(i)['primary_CH'] = bus_ch
+                    self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
-                    self.veh_table(i)['other_CHs'] = bus_candidates
-                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex(i)
-                    self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, i)
-                    continue
+                    self.veh_table(veh_id)['other_CHs'] = bus_candidates
+                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
+                    self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
 
 
 a = DataTable(configs, area_zones)
