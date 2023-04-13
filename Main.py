@@ -44,7 +44,7 @@ class DataTable:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
-            understudied_area = area_zones.understudied_area()
+            self.understudied_area = area_zones.understudied_area()
             if 'bus' in veh.getAttribute('id'):
                 self.bus_table.set_item(veh.getAttribute('id'),
                                         dict(long=veh.getAttribute('x'),
@@ -64,7 +64,7 @@ class DataTable:
                                              other_CHs=[],
                                              cluster_members=Graph(),
                                              bridges={},
-                                             in_area=util.presence(understudied_area, veh),
+                                             in_area=util.presence(self.understudied_area, veh),
                                              trans_range=config.trans_range
                                              )
                                         )
@@ -87,7 +87,7 @@ class DataTable:
                                              IP=None,
                                              MAC=util.mac_address(),  # The mac address of each car is determined
                                              # using mac_address method
-                                             in_area=util.presence(understudied_area, veh),
+                                             in_area=util.presence(self.understudied_area, veh),
                                              trans_range=config.trans_range,
                                              counter=3  # a counter_time to search and join a cluster
                                              )
@@ -123,6 +123,7 @@ class DataTable:
                 self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
                 self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
                 self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
+                self.bus_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
                 self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
     def print_table(self):
