@@ -125,6 +125,9 @@ class DataTable:
                 self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
                 self.bus_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
                 self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+                continue
+            else:
+                
 
     def print_table(self):
         self.bus_table.print_hash_table()
@@ -136,7 +139,7 @@ class DataTable:
         :return: cluster heads and connection between them including through the bridges
         """
 
-        if self.veh_table.values(veh_id)['cluster_head'] is None:
+        if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['cluster_head'] is None):
             bus_candidates = []
             for j in self.veh_table.values(veh_id)['neighbor_zones']:
                 if 'bus' in j:
