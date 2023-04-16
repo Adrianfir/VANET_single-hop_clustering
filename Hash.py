@@ -77,7 +77,6 @@ class HashTable:
                 print(f"{index}:")
                 print(f"{self.data_map[index].print_list()}")
 
-
 # table = HashTable(10)
 # table.set_item('bus0', {'x': 1, 'y': 1})
 # table.set_item('bus1', {'x': 2, 'y': 2})

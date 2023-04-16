@@ -38,6 +38,7 @@ class DataTable:
 
         self.zone_vehicles = {}
         self.zone_buses = {}
+        self.zone_CH = {}
         self.time = config.start_time
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
@@ -56,16 +57,16 @@ class DataTable:
                                              zone=zone_id,
                                              prev_zone=None,
                                              neighbor_zones=zones.neighbor_zones(zone_id),
+                                             in_area=util.presence(self.understudied_area, veh),
+                                             trans_range=config.trans_range,
                                              message_dest={},
                                              message_source={},
-                                             MAC=util.mac_address(),
-                                             IP=None,
                                              cluster_head=True,
                                              other_CHs=[],
                                              cluster_members=Graph(),
                                              bridges={},
-                                             in_area=util.presence(self.understudied_area, veh),
-                                             trans_range=config.trans_range
+                                             MAC=util.mac_address(),
+                                             IP=None,
                                              )
                                         )
             else:
@@ -79,16 +80,16 @@ class DataTable:
                                              zone=zone_id,
                                              prev_zone=None,
                                              neighbor_zones=zones.neighbor_zones(zone_id),
-                                             cluster_head=False,
-                                             # if the vehicle is a CH, it will be changed to a Graph in the Clustering
-                                             primary_CH=None,
-                                             other_CHs=[],
-                                             cluster_members={},
-                                             IP=None,
-                                             MAC=util.mac_address(),  # The mac address of each car is determined
-                                             # using mac_address method
                                              in_area=util.presence(self.understudied_area, veh),
                                              trans_range=config.trans_range,
+                                             message_dest={},
+                                             message_source={},
+                                             cluster_head=False,  # if the vehicle is a CH, it will be True
+                                             primary_CH=None,
+                                             other_CHs=[],
+                                             cluster_members={},  # This will be a Graph if the vehicle is a CH
+                                             IP=None,
+                                             MAC=util.mac_address(),
                                              counter=3  # a counter_time to search and join a cluster
                                              )
                                         )
@@ -103,7 +104,8 @@ class DataTable:
 
     def update(self, config, zones):
         """
-        this method updates the bus_table and veh_table values for the current interval
+        this method updates the bus_table and veh_table values for the current interval.
+        Attention: The properties related to clusters and IP addresses are going to be updated here
         :return:
         """
         self.time += 1
@@ -112,34 +114,29 @@ class DataTable:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
-            if 'bus' in veh.getAttribute('id'):
-                self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
-                    self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
-                self.bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
-                self.bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
-                self.bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
-                self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
-                self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
-                self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-                self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
-                self.bus_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
-                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-                continue
-            else:
-                
+            self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
+                self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
-    def print_table(self):
-        self.bus_table.print_hash_table()
-        self.veh_table.print_hash_table()
+            self.bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
+            self.bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
+            self.bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
+            self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
+            self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
+            self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+            self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
+            self.bus_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
+            self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+            continue
 
-    def find_cluster(self, veh_id):
+    def find_update_cluster(self, veh_id):
         """
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
         """
-
-        if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['cluster_head'] is None):
+        # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
+        if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
+                & (self.veh_table.values(veh_id)['cluster_head'] is False):
             bus_candidates = []
             for j in self.veh_table.values(veh_id)['neighbor_zones']:
                 if 'bus' in j:
@@ -169,6 +166,9 @@ class DataTable:
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
 
+     def print_table(self):
+            self.bus_table.print_hash_table()
+            self.veh_table.print_hash_table()
 
 a = DataTable(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())
