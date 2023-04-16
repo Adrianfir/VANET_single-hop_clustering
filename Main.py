@@ -87,7 +87,7 @@ class DataTable:
                                              cluster_head=False,  # if the vehicle is a CH, it will be True
                                              primary_CH=None,
                                              other_CHs=[],
-                                             cluster_members={},  # This will be a Graph if the vehicle is a CH
+                                             cluster_members=None,  # This will be a Graph if the vehicle is a CH
                                              IP=None,
                                              MAC=util.mac_address(),
                                              counter=3  # a counter_time to search and join a cluster
@@ -129,8 +129,8 @@ class DataTable:
                 self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
                 self.zone_buses[zone_id].append(veh.getAttribute('id'))
-                self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']].\
-                    remove(veh.getAttribute('id'))      # This will remove the vehicle from its previous zone_buses
+                self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                    remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
             else:
                 self.veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
                 self.veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
@@ -143,9 +143,9 @@ class DataTable:
                 self.veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
                 self.zone_vehicles[zone_id].append(veh.getAttribute('id'))
-                self.zone_vehicles[self.bus_table.values(veh.getAttribute('id'))['prev_zone']].\
-                    remove(veh.getAttribute('id'))      # This will remove the vehicle from its previous zone_vehicles
-   
+                self.zone_vehicles[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                    remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_vehicles
+
     def find_update_cluster(self, veh_id):
         """
         This method is designed for finding a cluster for veh_id
@@ -155,13 +155,15 @@ class DataTable:
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
                 & (self.veh_table.values(veh_id)['cluster_head'] is False):
             bus_candidates = []
-            for j in self.veh_table.values(veh_id)['neighbor_zones']:
-                if 'bus' in j:
-                    if hs.haversine((self.veh_table.values(veh_id)["long"], self.veh_table.values(veh_id)["lat"]),
-                                    (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
-                                    unit=hs.Unit.METERS) <= min(self.veh_table.values(veh_id)['trans_range'],
-                                                                self.bus_table(veh_id)):
-                        bus_candidates.append(veh_id)
+            for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
+                if len(self.zone_buses[neigh_z]) != 0:
+                    for j in self.zone_buses[neigh_z]:
+                        if hs.haversine((self.veh_table.values(veh_id)["long"],
+                                         self.veh_table.values(veh_id)["lat"]),
+                                        (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
+                                        unit=hs.Unit.METERS) <= min(self.veh_table.values(veh_id)['trans_range'],
+                                                                    self.bus_table(veh_id)):
+                            bus_candidates.append(j)
 
                 # else:
 
@@ -172,20 +174,20 @@ class DataTable:
                     self.bus_table.values(j)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(j)['cluster_members'].add_edge(j, veh_id)
                 else:
-                    bus_ch = util.det_bus_ch(self.bus_table,  # determine the most suitable from bus_candidates
-                                             self.veh_table.values(veh_id),
+                    bus_ch = util.det_bus_ch(self.bus_table, self.veh_table.values(veh_id),
                                              area_zones,
-                                             bus_candidates)
+                                             bus_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
                     self.veh_table(veh_id)['other_CHs'] = bus_candidates
-                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
+                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex([bus_ch, veh_id])
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
 
-     def print_table(self):
-            self.bus_table.print_hash_table()
-            self.veh_table.print_hash_table()
+    def print_table(self):
+        self.bus_table.print_hash_table()
+        self.veh_table.print_hash_table()
+
 
 a = DataTable(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())
