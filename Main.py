@@ -114,21 +114,38 @@ class DataTable:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
+            if 'bus' in veh.getAttribute('id'):
+                self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
+                    self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
-            self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
-                self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
+                self.bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
+                self.bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
+                self.bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
+                self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
+                self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
+                self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+                self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
+                self.bus_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
+                self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
-            self.bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
-            self.bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
-            self.bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
-            self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
-            self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
-            self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-            self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
-            self.bus_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
-            self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-            continue
+                self.zone_buses[zone_id].append(veh.getAttribute('id'))
+                self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']].\
+                    remove(veh.getAttribute('id'))      # This will remove the vehicle from its previous zone_buses
+            else:
+                self.veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
+                self.veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
+                self.veh_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
+                self.veh_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
+                self.veh_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
+                self.veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+                self.veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
+                self.veh_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area, veh)
+                self.veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
+                self.zone_vehicles[zone_id].append(veh.getAttribute('id'))
+                self.zone_vehicles[self.bus_table.values(veh.getAttribute('id'))['prev_zone']].\
+                    remove(veh.getAttribute('id'))      # This will remove the vehicle from its previous zone_vehicles
+   
     def find_update_cluster(self, veh_id):
         """
         This method is designed for finding a cluster for veh_id
