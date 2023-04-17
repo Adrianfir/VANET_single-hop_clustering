@@ -136,7 +136,7 @@ class DataTable:
                     self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
                         remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
                 except KeyError:
-                    print('Skipping an error due to initial value of prev_zone ax "None"')
+                    print('Skipping an error due to initial value of prev_zone as "None"')
 
             else:
                 self.veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
@@ -154,7 +154,7 @@ class DataTable:
                     self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
                         remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_vehicles
                 except KeyError:
-                    print('Skipping an error due to initial value of prev_zone ax "None"')
+                    print('Skipping an error due to initial value of prev_zone as "None"')
 
 
     def find_update_cluster(self, veh_id):
