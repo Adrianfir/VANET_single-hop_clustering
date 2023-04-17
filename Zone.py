@@ -11,6 +11,7 @@ import utils.util as util
 from configs.config import Configs
 import Hash
 
+
 class ZoneID:
 
     def __init__(self, config):
@@ -356,7 +357,6 @@ class ZoneID:
                     'zone' + str(num + len(self.long_cols)),
                     'zone' + str(num + len(self.long_cols) + 1),
                     ]
-
 
 # area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
 # a = ZoneID(Configs().config)

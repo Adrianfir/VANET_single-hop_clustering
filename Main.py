@@ -36,8 +36,14 @@ class DataTable:
         self.bus_table = Hash.HashTable(config.n_cars * 100)
         self.veh_table = Hash.HashTable(config.n_cars * 100)
 
-        self.zone_vehicles = {}
-        self.zone_buses = {}
+        self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
+                                      [[] for i in range(len(zones.zone_hash.ids()))]
+                                      )
+                                  )
+        self.zone_buses = dict(zip(zones.zone_hash.ids(),
+                                   [[] for i in range(len(zones.zone_hash.ids()))]
+                                   )
+                               )
         self.zone_CH = {}
         self.time = config.start_time
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
@@ -93,14 +99,11 @@ class DataTable:
                                              counter=3  # a counter_time to search and join a cluster
                                              )
                                         )
-            b = []  # Used for appending buses of a zone (As we need a list to do it)
-            v = []  # Used for appending vehicles of a zone (As we need a list to do it)
+
             if 'bus' in veh.getAttribute('id'):
-                self.zone_buses[zone_id] = \
-                    b.append(veh.getAttribute('id'))
+                self.zone_buses[zone_id].append(veh.getAttribute('id'))
             else:
-                self.zone_vehicles[zone_id] = \
-                    v.append(veh.getAttribute('id'))
+                self.zone_vehicles[zone_id].append(veh.getAttribute('id'))
 
     def update(self, config, zones):
         """
@@ -129,8 +132,12 @@ class DataTable:
                 self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
                 self.zone_buses[zone_id].append(veh.getAttribute('id'))
-                self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                    remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
+                try:
+                    self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                        remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
+                except KeyError:
+                    print('Skipping an error due to initial value of prev_zone ax "None"')
+
             else:
                 self.veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
                 self.veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
@@ -143,8 +150,12 @@ class DataTable:
                 self.veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
                 self.zone_vehicles[zone_id].append(veh.getAttribute('id'))
-                self.zone_vehicles[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                    remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_vehicles
+                try:
+                    self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                        remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_vehicles
+                except KeyError:
+                    print('Skipping an error due to initial value of prev_zone ax "None"')
+
 
     def find_update_cluster(self, veh_id):
         """
@@ -190,6 +201,8 @@ class DataTable:
 
 
 a = DataTable(configs, area_zones)
+for i in range(10):
+    a.update(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')
