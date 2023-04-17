@@ -108,10 +108,10 @@ def presence(area_cord, veh_cord):
     :return: it returns True or False
     """
     if (
-            (veh_cord.getAttribute('x') < area_cord['max_long']) &
-            (veh_cord.getAttribute('x') > area_cord["min_long"]) &
-            (veh_cord.getAttribute('y') < area_cord['max_lat']) &
-            (veh_cord.getAttribute('y') > area_cord['min_lat'])
+            (float(veh_cord.getAttribute('x')) < area_cord['max_long']) &
+            (float(veh_cord.getAttribute('x')) > area_cord['min_long']) &
+            (float(veh_cord.getAttribute('y')) < area_cord['max_lat']) &
+            (float(veh_cord.getAttribute('y')) > area_cord['min_lat'])
        ):
         return True
     else:

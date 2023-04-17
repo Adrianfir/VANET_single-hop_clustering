@@ -8,8 +8,8 @@ import numpy as np
 import haversine as hs
 
 import utils.util as util
+from configs.config import Configs
 import Hash
-
 
 class ZoneID:
 
@@ -20,7 +20,7 @@ class ZoneID:
         :param area: includes the min and max of lat and long of the area (coordinates of the area)
         """
         self.area = config.area
-        self.un_pad_area = {}
+        self.un_pad_area = dict()
         self.x_area = hs.haversine((self.area["min_long"], 0), (self.area["max_long"], 0), unit=hs.Unit.KILOMETERS)
         self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
         self.area_surface = self.x_area * self.y_area
@@ -53,7 +53,7 @@ class ZoneID:
                                                               )
                                         )
                 z += 1
-        self.n_zones = z + 1
+        self.n_zones = z
 
     def det_zone(self, lat, long):
         """
@@ -270,10 +270,11 @@ class ZoneID:
 
     def understudied_area(self):
 
-        self.un_pad_area = dict(min_lat=self.zone_hash.values('zone' + '01')['max_lat'],
-                                min_long=self.zone_hash.values('zone' + '01')['max_long'],
+        self.un_pad_area = dict(min_lat=self.zone_hash.values('zone' + '1')['max_lat'],
+                                min_long=self.zone_hash.values('zone' + '1')['max_long'],
                                 max_lat=self.zone_hash.values('zone' + str(self.n_zones - 1))['min_lat'],
                                 max_long=self.zone_hash.values('zone' + str(self.n_zones - 1))['min_long'])
+        return self.un_pad_area
 
     def neighbor_zones(self, zone_id):
         num = int(zone_id[4:])
@@ -356,7 +357,8 @@ class ZoneID:
                     'zone' + str(num + len(self.long_cols) + 1),
                     ]
 
+
 # area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-# a = ZoneID(area)
+# a = ZoneID(Configs().config)
 # a.zones()
 # print(a.det_zone(44, -79.30198263788123))
