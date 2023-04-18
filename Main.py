@@ -51,55 +51,18 @@ class DataTable:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
+            # the bus_table will be initiated here for the very first time
             self.understudied_area = area_zones.understudied_area()
             if 'bus' in veh.getAttribute('id'):
-                self.bus_table.set_item(veh.getAttribute('id'),
-                                        dict(long=veh.getAttribute('x'),
-                                             lat=veh.getAttribute('y'),
-                                             angle=veh.getAttribute('angle'),
-                                             speed=veh.getAttribute('speed'),
-                                             pos=veh.getAttribute('pos'),
-                                             lane=veh.getAttribute('lane'),
-                                             zone=zone_id,
-                                             prev_zone=None,
-                                             neighbor_zones=zones.neighbor_zones(zone_id),
-                                             in_area=util.presence(self.understudied_area, veh),
-                                             trans_range=config.trans_range,
-                                             message_dest={},
-                                             message_source={},
-                                             cluster_head=True,
-                                             other_CHs=[],
-                                             cluster_members=Graph(),
-                                             bridges={},
-                                             MAC=util.mac_address(),
-                                             IP=None,
-                                             )
-                                        )
-            else:
-                self.veh_table.set_item(veh.getAttribute('id'),
-                                        dict(long=veh.getAttribute('x'),
-                                             lat=veh.getAttribute('y'),
-                                             angle=veh.getAttribute('angle'),
-                                             speed=veh.getAttribute('speed'),
-                                             pos=veh.getAttribute('pos'),
-                                             lane=veh.getAttribute('lane'),
-                                             zone=zone_id,
-                                             prev_zone=None,
-                                             neighbor_zones=zones.neighbor_zones(zone_id),
-                                             in_area=util.presence(self.understudied_area, veh),
-                                             trans_range=config.trans_range,
-                                             message_dest={},
-                                             message_source={},
-                                             cluster_head=False,  # if the vehicle is a CH, it will be True
-                                             primary_CH=None,
-                                             other_CHs=[],
-                                             cluster_members=None,  # This will be a Graph if the vehicle is a CH
-                                             IP=None,
-                                             MAC=util.mac_address(),
-                                             counter=3  # a counter_time to search and join a cluster
-                                             )
-                                        )
+                self.bus_table.set_item(veh.getAttribute('id'), util.initiate_new_bus(veh, zones, zone_id, config,
+                                                                                      self.understudied_area))
 
+                # the veh_table will be initiated here for the very first time self.understudied_area))
+            else:
+                self.veh_table.set_item(veh.getAttribute('id'), util.initiate_new_veh(veh, zones, zone_id, config,
+                                                                                      self.understudied_area))
+
+            # Here the vehicles and buses will be added to and zone_vehicles zone_buses
             if 'bus' in veh.getAttribute('id'):
                 self.zone_buses[zone_id].append(veh.getAttribute('id'))
             else:
@@ -200,8 +163,8 @@ class DataTable:
 
 
 a = DataTable(configs, area_zones)
-for i in range(10):
-    a.update(configs, area_zones)
+# for i in range(10):
+#     a.update(configs, area_zones)
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')

@@ -5,6 +5,72 @@ import numpy as np
 import random
 import haversine as hs
 from scipy import spatial
+from Graph import Graph
+
+
+def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
+    """
+    this function is for initialing the new bus coming to the area
+    :param veh:veh extracted from .xml file
+    :param zones:the hash_table related to zones
+    :param zone_id:zone_id of the vehicle determined based on its location
+    :param config:it is the config file
+    :param understudied_area:the un_padded area
+    :return:a dictionary for initiating the new bus coming to the area
+    """
+    return dict(long=veh.getAttribute('x'),
+                lat=veh.getAttribute('y'),
+                angle=veh.getAttribute('angle'),
+                speed=veh.getAttribute('speed'),
+                pos=veh.getAttribute('pos'),
+                lane=veh.getAttribute('lane'),
+                zone=zone_id,
+                prev_zone=None,
+                neighbor_zones=zones.neighbor_zones(zone_id),
+                in_area=presence(understudied_area, veh),
+                trans_range=config.trans_range,
+                message_dest={},
+                message_source={},
+                cluster_head=True,
+                other_CHs=[],
+                cluster_members=Graph(),
+                bridges={},
+                MAC=mac_address(),
+                IP=None,
+                )
+
+
+def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
+    """
+    this function is for initialing the new vehicle coming to the area
+    :param veh:veh extracted from .xml file
+    :param zones:the hash_table related to zones
+    :param zone_id:zone_id of the vehicle determined based on its location
+    :param config:it is the config file
+    :param understudied_area:the un_padded area
+    :return:a dictionary for initiating the new vehicle coming to the area
+    """
+    return dict(long=veh.getAttribute('x'),
+                lat=veh.getAttribute('y'),
+                angle=veh.getAttribute('angle'),
+                speed=veh.getAttribute('speed'),
+                pos=veh.getAttribute('pos'),
+                lane=veh.getAttribute('lane'),
+                zone=zone_id,
+                prev_zone=None,
+                neighbor_zones=zones.neighbor_zones(zone_id),
+                in_area=presence(understudied_area, veh),
+                trans_range=config.trans_range,
+                message_dest={},
+                message_source={},
+                cluster_head=False,  # if the vehicle is a CH, it will be True
+                primary_CH=None,
+                other_CHs=[],
+                cluster_members=None,  # This will be a Graph if the vehicle is a CH
+                IP=None,
+                MAC=mac_address(),
+                counter=3  # a counter_time to search and join a cluster
+                )
 
 
 def mac_address():
@@ -112,7 +178,7 @@ def presence(area_cord, veh_cord):
             (float(veh_cord.getAttribute('x')) > area_cord['min_long']) &
             (float(veh_cord.getAttribute('y')) < area_cord['max_lat']) &
             (float(veh_cord.getAttribute('y')) > area_cord['min_lat'])
-       ):
+    ):
         return True
     else:
         return False
