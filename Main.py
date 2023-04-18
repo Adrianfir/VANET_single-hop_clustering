@@ -156,7 +156,6 @@ class DataTable:
                 except KeyError:
                     print('Skipping an error due to initial value of prev_zone as "None"')
 
-
     def find_update_cluster(self, veh_id):
         """
         This method is designed for finding a cluster for veh_id
