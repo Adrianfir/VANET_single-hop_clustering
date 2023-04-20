@@ -11,7 +11,6 @@ from configs.config import Configs
 import utils.util as util
 import Hash
 from Zone import ZoneID
-from Graph import Graph
 
 __author__ = "Pouya 'Adrian' Firouzmakan"
 
@@ -32,16 +31,15 @@ class DataTable:
         :param zones: all the zones of the area
         """
 
-        # global zone_id
         self.bus_table = Hash.HashTable(config.n_cars * 100)
         self.veh_table = Hash.HashTable(config.n_cars * 100)
 
         self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
-                                      [set() for i in range(len(zones.zone_hash.ids()))]
+                                      [set() for j in range(len(zones.zone_hash.ids()))]
                                       )
                                   )
         self.zone_buses = dict(zip(zones.zone_hash.ids(),
-                                   [set() for i in range(len(zones.zone_hash.ids()))]
+                                   [set() for j in range(len(zones.zone_hash.ids()))]
                                    )
                                )
         self.zone_CH = {}
@@ -75,12 +73,25 @@ class DataTable:
         :return:
         """
         self.time += 1
+        bus_ids = set()
+        veh_ids = set()
+        zone_buses = set()  # to remove the buses that leave the area
+        vehicles = set()    # to remove the vehicles that leave the area
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
+            self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
+                                          [set() for j in range(len(zones.zone_hash.ids()))]
+                                          )
+                                      )
+            self.zone_buses = dict(zip(zones.zone_hash.ids(),
+                                       [set() for j in range(len(zones.zone_hash.ids()))]
+                                       )
+                                   )
             if 'bus' in veh.getAttribute('id'):
+                bus_ids.add(veh.getAttribute('id'))
                 try:
                     self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
                         self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
@@ -111,6 +122,7 @@ class DataTable:
                                                                                           self.understudied_area))
 
             else:
+                veh_ids.add(veh.getAttribute('id'))
                 try:
                     self.veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
                     self.veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
@@ -137,6 +149,12 @@ class DataTable:
                 except TypeError:
                     self.veh_table.set_item(veh.getAttribute('id'), util.initiate_new_veh(veh, zones, zone_id, config,
                                                                                           self.understudied_area))
+        #  turning in_area index of the buses left the area to False
+        for k in (self.bus_table.ids() - bus_ids):
+            self.bus_table.values(k)['in_area'] = False
+        #  turning in_area index of the vehicles left the area to False
+        for k in (self.veh_table.ids() - veh_ids):
+            self.veh_table.values(k)['in_area'] = False
 
     def find_update_cluster(self, veh_id):
         """
@@ -181,11 +199,10 @@ class DataTable:
         self.veh_table.print_hash_table()
 
 
-if __name__ == '__main__':
-    a = DataTable(configs, area_zones)
-    for i in range(10):
-        a.update(configs, area_zones)
-    print('bus-ids: ', a.bus_table.ids())
-    print('vehicles-ids: ', a.veh_table.ids())
-    print('\n')
-    a.print_table()
+a = DataTable(configs, area_zones)
+for i in range(10):
+    a.update(configs, area_zones)
+print('bus-ids: ', a.bus_table.ids())
+print('vehicles-ids: ', a.veh_table.ids())
+print('\n')
+a.print_table()

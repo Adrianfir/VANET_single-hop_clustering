@@ -1,6 +1,9 @@
 """
 This is the Utils file to have all the small functions
 """
+
+__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone', 'det_bus_ch', 'presence']
+
 import numpy as np
 import random
 import haversine as hs
