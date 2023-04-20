@@ -8,7 +8,6 @@ import numpy as np
 import haversine as hs
 
 import utils.util as util
-from configs.config import Configs
 import Hash
 
 
@@ -63,6 +62,7 @@ class ZoneID:
         :return: the zone that the car is in it
         """
         # Is the vehicle or bus in the area or not
+        global lower_row
         if (lat > self.area["max_lat"]) | (lat < self.area["min_lat"]) | \
                 (long > self.area["max_long"]) | (long < self.area["min_long"]):
             return None

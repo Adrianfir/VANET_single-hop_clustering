@@ -62,12 +62,12 @@ class HashTable:
 
         :return: this method will return all the ids
         """
-        all_keys = []
+        all_keys = set()
         for i in range(len(self.data_map)):
             if self.data_map[i]:
                 temp = self.data_map[i].head
                 while temp:
-                    all_keys.append(temp.key)
+                    all_keys.add(temp.key)
                     temp = temp.next
         return all_keys
 

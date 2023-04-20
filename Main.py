@@ -37,11 +37,11 @@ class DataTable:
         self.veh_table = Hash.HashTable(config.n_cars * 100)
 
         self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
-                                      [[] for i in range(len(zones.zone_hash.ids()))]
+                                      [set() for i in range(len(zones.zone_hash.ids()))]
                                       )
                                   )
         self.zone_buses = dict(zip(zones.zone_hash.ids(),
-                                   [[] for i in range(len(zones.zone_hash.ids()))]
+                                   [set() for i in range(len(zones.zone_hash.ids()))]
                                    )
                                )
         self.zone_CH = {}
@@ -64,9 +64,9 @@ class DataTable:
 
             # Here the vehicles and buses will be added to and zone_vehicles zone_buses
             if 'bus' in veh.getAttribute('id'):
-                self.zone_buses[zone_id].append(veh.getAttribute('id'))
+                self.zone_buses[zone_id].add(veh.getAttribute('id'))
             else:
-                self.zone_vehicles[zone_id].append(veh.getAttribute('id'))
+                self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
 
     def update(self, config, zones):
         """
@@ -96,7 +96,7 @@ class DataTable:
                         util.presence(self.understudied_area, veh)
                     self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
-                    self.zone_buses[zone_id].append(veh.getAttribute('id'))
+                    self.zone_buses[zone_id].add(veh.getAttribute('id'))
                     try:
                         self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
                             remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
@@ -123,7 +123,7 @@ class DataTable:
                                                                                              veh)
                     self.veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
 
-                    self.zone_vehicles[zone_id].append(veh.getAttribute('id'))
+                    self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
                     try:
                         self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
                             remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
