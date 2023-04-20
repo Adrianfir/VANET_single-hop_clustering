@@ -181,10 +181,11 @@ class DataTable:
         self.veh_table.print_hash_table()
 
 
-a = DataTable(configs, area_zones)
-for i in range(10):
-    a.update(configs, area_zones)
-print('bus-ids: ', a.bus_table.ids())
-print('vehicles-ids: ', a.veh_table.ids())
-print('\n')
-a.print_table()
+if __name__ == '__main__':
+    a = DataTable(configs, area_zones)
+    for i in range(10):
+        a.update(configs, area_zones)
+    print('bus-ids: ', a.bus_table.ids())
+    print('vehicles-ids: ', a.veh_table.ids())
+    print('\n')
+    a.print_table()
