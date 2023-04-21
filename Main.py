@@ -114,18 +114,20 @@ class DataTable:
         # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
                 & (self.veh_table.values(veh_id)['cluster_head'] is False):
-            bus_candidates = []
-            for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
-                if len(self.zone_buses[neigh_z]) != 0:
-                    for j in self.zone_buses[neigh_z]:
-                        if hs.haversine((self.veh_table.values(veh_id)["long"],
-                                         self.veh_table.values(veh_id)["lat"]),
-                                        (self.bus_table.values(j)['long'], self.bus_table.values(j)['lat']),
-                                        unit=hs.Unit.METERS) <= min(self.veh_table.values(veh_id)['trans_range'],
-                                                                    self.bus_table(veh_id)):
-                            bus_candidates.append(j)
 
-                # else:
+            bus_candidates = []
+            neigh_bus = []
+            for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
+                neigh_bus += self.zone_buses[neigh_z]        # adding all the vehicles in the neighbor zones to a list
+
+            for j in neigh_bus:
+                euclidian_dist = hs.haversine((self.veh_table.values(veh_id)["long"],
+                                               self.veh_table.values(veh_id)["lat"]),
+                                              (self.bus_table.values(j)['long'],
+                                               self.bus_table.values(j)['lat']), unit=hs.Unit.METERS)
+
+                if euclidian_dist <= min(self.veh_table.values(veh_id)['trans_range'], self.bus_table(veh_id)):
+                    bus_candidates.append(j)
 
             if len(bus_candidates) > 0:
                 if len(bus_candidates) == 1:
