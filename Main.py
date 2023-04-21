@@ -44,26 +44,24 @@ class DataTable:
                                )
         self.zone_CH = {}
         self.time = config.start_time
+        self.understudied_area = area_zones.understudied_area()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
             # the bus_table will be initiated here for the very first time
-            self.understudied_area = area_zones.understudied_area()
             if 'bus' in veh.getAttribute('id'):
                 self.bus_table.set_item(veh.getAttribute('id'), util.initiate_new_bus(veh, zones, zone_id, config,
                                                                                       self.understudied_area))
+                # Here the buses will be added to zone_buses
+                self.zone_buses[zone_id].add(veh.getAttribute('id'))
 
                 # the veh_table will be initiated here for the very first time self.understudied_area))
             else:
                 self.veh_table.set_item(veh.getAttribute('id'), util.initiate_new_veh(veh, zones, zone_id, config,
                                                                                       self.understudied_area))
-
-            # Here the vehicles and buses will be added to and zone_vehicles zone_buses
-            if 'bus' in veh.getAttribute('id'):
-                self.zone_buses[zone_id].add(veh.getAttribute('id'))
-            else:
+                # Here the vehicles will be added to zone_vehicles
                 self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
 
     def update(self, config, zones):
@@ -98,7 +96,7 @@ class DataTable:
                                                                         config, self.zone_buses)
             else:
                 veh_ids.add(veh.getAttribute('id'))
-                self.veh_table, self.zone_vehicles = util.update_bus_table(veh, self.bus_table, zone_id,
+                self.veh_table, self.zone_vehicles = util.update_veh_table(veh, self.veh_table, zone_id,
                                                                            self.understudied_area, zones,
                                                                            config, self.zone_vehicles)
         #  turning in_area index of the buses left the area to False
@@ -152,9 +150,10 @@ class DataTable:
 
 
 a = DataTable(configs, area_zones)
-for i in range(10):
-    a.update(configs, area_zones)
+a.update(configs, area_zones)
+a.find_update_cluster('veh250')
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')
 a.print_table()
+

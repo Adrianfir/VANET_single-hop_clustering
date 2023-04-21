@@ -3,7 +3,7 @@ This is the Utils file to have all the small functions
 """
 
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'det_bus_ch', 'presence', 'update_bus_table', 'update_veh_table']
+           'presence','det_bus_ch', 'update_bus_table', 'update_veh_table']
 
 import numpy as np
 import random
@@ -109,6 +109,24 @@ def middle_zone(u_row, u_col,
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
+def presence(area_cord, veh_cord):
+    """
+    This function will determine if the vehicle or bus is in the understudied area (unpadded area)
+    :param area_cord: the coordination of the understudied area (unpadded area)
+    :param veh_cord: the coordination of the vehicle or bus
+    :return: it returns True or False
+    """
+    if (
+            (float(veh_cord.getAttribute('x')) < area_cord['max_long']) &
+            (float(veh_cord.getAttribute('x')) > area_cord['min_long']) &
+            (float(veh_cord.getAttribute('y')) < area_cord['max_lat']) &
+            (float(veh_cord.getAttribute('y')) > area_cord['min_lat'])
+    ):
+        return True
+    else:
+        return False
+
+
 def det_bus_ch(bus_table, veh_table_i,
                area_zones, bus_candidates):
     """
@@ -169,24 +187,6 @@ def det_bus_ch(bus_table, veh_table_i,
             nominee = j
 
     return nominee
-
-
-def presence(area_cord, veh_cord):
-    """
-    This function will determine if the vehicle or bus is in the understudied area (unpadded area)
-    :param area_cord: the coordination of the understudied area (unpadded area)
-    :param veh_cord: the coordination of the vehicle or bus
-    :return: it returns True or False
-    """
-    if (
-            (float(veh_cord.getAttribute('x')) < area_cord['max_long']) &
-            (float(veh_cord.getAttribute('x')) > area_cord['min_long']) &
-            (float(veh_cord.getAttribute('y')) < area_cord['max_lat']) &
-            (float(veh_cord.getAttribute('y')) > area_cord['min_lat'])
-    ):
-        return True
-    else:
-        return False
 
 
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):

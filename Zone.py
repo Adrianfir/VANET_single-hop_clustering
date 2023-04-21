@@ -8,6 +8,7 @@ import haversine as hs
 
 import utils.util as util
 import Hash
+from configs.config import Configs
 
 
 class ZoneID:
@@ -357,7 +358,9 @@ class ZoneID:
                     'zone' + str(num + len(self.long_cols) + 1),
                     ]
 
+
+# configs = Configs()
 # area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-# a = ZoneID(Configs().config)
+# a = ZoneID(configs.config)
 # a.zones()
 # print(a.det_zone(44, -79.30198263788123))
