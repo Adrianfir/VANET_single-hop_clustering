@@ -73,21 +73,20 @@ class DataTable:
         self.time += 1
         bus_ids = set()
         veh_ids = set()
-        zone_buses = set()  # to remove the buses that leave the area
-        vehicles = set()    # to remove the vehicles that leave the area
+        self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
+                                      [set() for j in range(len(zones.zone_hash.ids()))]
+                                      )
+                                  )
+        self.zone_buses = dict(zip(zones.zone_hash.ids(),
+                                   [set() for j in range(len(zones.zone_hash.ids()))]
+                                   )
+                               )
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
-            self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
-                                          [set() for j in range(len(zones.zone_hash.ids()))]
-                                          )
-                                      )
-            self.zone_buses = dict(zip(zones.zone_hash.ids(),
-                                       [set() for j in range(len(zones.zone_hash.ids()))]
-                                       )
-                                   )
+
             # update the bus_table for the time step
             if 'bus' in veh.getAttribute('id'):
                 bus_ids.add(veh.getAttribute('id'))
@@ -153,7 +152,8 @@ class DataTable:
 
 a = DataTable(configs, area_zones)
 a.update(configs, area_zones)
-a.find_update_cluster('veh250')
+for i in a.veh_table.ids():
+    a.find_update_cluster(i)
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')
