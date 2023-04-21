@@ -191,15 +191,15 @@ def presence(area_cord, veh_cord):
 
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):
     """
-
-    :param veh:
-    :param bus_table:
-    :param zone_id:
-    :param understudied_area:
-    :param zones:
+    this function updates the self.bus_tabel and self.zone_buses from main.py
+    :param veh: it's the veh from .xml file
+    :param bus_table: its self.bus_table
+    :param zone_id: the zon_id f the vehicle
+    :param understudied_area: the un_padded area
+    :param zones: the area_zones.zones() or self.zones table from the DataTable class in the main.py
     :param config:
-    :param zone_buses:
-    :return:
+    :param zone_buses: self.zone_buses from the DataTable class in the main.py
+    :return: updated self.bus_table and self.zone_buses
     """
     try:
         bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
@@ -231,15 +231,15 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
 
 def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, zone_vehicles):
     """
-
-    :param veh:
-    :param veh_table:
-    :param zone_id:
-    :param understudied_area:
-    :param zones:
+    this function updates the self.veh_tabel and self.zone_vehicles from main.py
+    :param veh: it's the veh from .xml file
+    :param veh_table: its self.veh_table
+    :param zone_id: the zon_id f the vehicle
+    :param understudied_area: the un_padded area
+    :param zones: the area_zones.zones() or self.zones table from the DataTable class in the main.py
     :param config:
-    :param zone_vehicles:
-    :return:
+    :param zone_vehicles: self.zone_vehicles from the DataTable class in the main.py
+    :return: updated self.veh_table and self.zone_vehicles
     """
     try:
         veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
