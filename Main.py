@@ -90,65 +90,17 @@ class DataTable:
                                        [set() for j in range(len(zones.zone_hash.ids()))]
                                        )
                                    )
+            # update the bus_table for the time step
             if 'bus' in veh.getAttribute('id'):
                 bus_ids.add(veh.getAttribute('id'))
-                try:
-                    self.bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
-                        self.bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
-
-                    self.bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
-                    self.bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
-                    self.bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
-                    self.bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
-                    self.bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
-                    self.bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-                    self.bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
-                    self.bus_table.values(veh.getAttribute('id'))['in_area'] = \
-                        util.presence(self.understudied_area, veh)
-                    self.bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-
-                    self.zone_buses[zone_id].add(veh.getAttribute('id'))
-                    try:
-                        self.zone_buses[self.bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                            remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
-                    except KeyError:
-                        self.bus_table.set_item(veh.getAttribute('id'),
-                                                util.initiate_new_bus(veh, zones, zone_id, config,
-                                                                      self.understudied_area
-                                                                      )
-                                                )
-                except TypeError:
-                    self.bus_table.set_item(veh.getAttribute('id'), util.initiate_new_bus(veh, zones, zone_id, config,
-                                                                                          self.understudied_area))
-
+                self.bus_table, self.zone_buses = util.update_bus_table(veh, self.bus_table, zone_id,
+                                                                        self.understudied_area, zones,
+                                                                        config, self.zone_buses)
             else:
                 veh_ids.add(veh.getAttribute('id'))
-                try:
-                    self.veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
-                    self.veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
-                    self.veh_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
-                    self.veh_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
-                    self.veh_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
-                    self.veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-                    self.veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
-                    self.veh_table.values(veh.getAttribute('id'))['in_area'] = util.presence(self.understudied_area,
-                                                                                             veh)
-                    self.veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-
-                    self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
-                    try:
-                        self.zone_vehicles[self.veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                            remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
-                    except KeyError:
-                        # initiate the vehicle
-                        self.veh_table.set_item(veh.getAttribute('id'),
-                                                util.initiate_new_veh(veh, zones, zone_id, config,
-                                                                      self.understudied_area
-                                                                      )
-                                                )
-                except TypeError:
-                    self.veh_table.set_item(veh.getAttribute('id'), util.initiate_new_veh(veh, zones, zone_id, config,
-                                                                                          self.understudied_area))
+                self.veh_table, self.zone_vehicles = util.update_bus_table(veh, self.bus_table, zone_id,
+                                                                           self.understudied_area, zones,
+                                                                           config, self.zone_vehicles)
         #  turning in_area index of the buses left the area to False
         for k in (self.bus_table.ids() - bus_ids):
             self.bus_table.values(k)['in_area'] = False

@@ -2,7 +2,8 @@
 This is the Utils file to have all the small functions
 """
 
-__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone', 'det_bus_ch', 'presence']
+__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
+           'det_bus_ch', 'presence', 'update_bus_table', 'update_veh_table']
 
 import numpy as np
 import random
@@ -186,3 +187,80 @@ def presence(area_cord, veh_cord):
         return True
     else:
         return False
+
+
+def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):
+    """
+
+    :param veh:
+    :param bus_table:
+    :param zone_id:
+    :param understudied_area:
+    :param zones:
+    :param config:
+    :param zone_buses:
+    :return:
+    """
+    try:
+        bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
+            bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
+
+        bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
+        bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
+        bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
+        bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
+        bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
+        bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+        bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
+        bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
+        bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+
+        zone_buses[zone_id].add(veh.getAttribute('id'))
+        try:
+            zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
+        except KeyError:
+            bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
+                                                                        config, understudied_area)
+                               )
+    except TypeError:
+        bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
+                                                                    config, understudied_area))
+    return bus_table, zone_buses
+
+
+def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, zone_vehicles):
+    """
+
+    :param veh:
+    :param veh_table:
+    :param zone_id:
+    :param understudied_area:
+    :param zones:
+    :param config:
+    :param zone_vehicles:
+    :return:
+    """
+    try:
+        veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
+        veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
+        veh_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
+        veh_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
+        veh_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
+        veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+        veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
+        veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
+        veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+
+        zone_vehicles[zone_id].add(veh.getAttribute('id'))
+        try:
+            zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
+        except KeyError:
+            # initiate the vehicle
+            veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
+                                                                        config, understudied_area))
+    except TypeError:
+        veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
+                                                                    config, understudied_area))
+    return veh_table, zone_vehicles
