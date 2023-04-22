@@ -177,8 +177,10 @@ def det_bus_ch(bus_table, veh_table_i,
 
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [bus_vector_x, bus_vector_y])
         theta_sim = np.arccos(cos_sim) / 2 * np.pi
-        speed_sim = np.divide(np.abs(bus_table.values(j)['speed'] - veh_table_i['speed']),
-                              np.abs(bus_table.values(j)['speed']))
+        # since it might return RuntimeWarning regarding the division, the warning will be ignored
+        with np.errstate(divide='ignore', invalid='ignore'):
+            speed_sim = np.divide(np.abs(bus_table.values(j)['speed'] - veh_table_i['speed']),
+                                  np.abs(bus_table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for buses
         ef = theta_sim + speed_sim
