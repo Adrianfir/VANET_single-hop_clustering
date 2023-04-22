@@ -125,7 +125,8 @@ class DataTable:
                                               (self.bus_table.values(j)['long'],
                                                self.bus_table.values(j)['lat']), unit=hs.Unit.METERS)
 
-                if euclidian_dist <= min(self.veh_table.values(veh_id)['trans_range'], self.bus_table(veh_id)):
+                if euclidian_dist <= min(self.veh_table.values(veh_id)['trans_range'],
+                                         self.bus_table.values(j)['trans_range']):
                     bus_candidates.append(j)
 
             if len(bus_candidates) > 0:
@@ -141,7 +142,7 @@ class DataTable:
 
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
-                    self.veh_table(veh_id)['other_CHs'] = bus_candidates
+                    self.veh_table.values(veh_id)['other_CHs'] = bus_candidates
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex([bus_ch, veh_id])
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
 

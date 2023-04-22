@@ -22,11 +22,11 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
     :param understudied_area:the un_padded area
     :return:a dictionary for initiating the new bus coming to the area
     """
-    return dict(long=veh.getAttribute('x'),
-                lat=veh.getAttribute('y'),
-                angle=veh.getAttribute('angle'),
-                speed=veh.getAttribute('speed'),
-                pos=veh.getAttribute('pos'),
+    return dict(long=float(veh.getAttribute('x')),
+                lat=float(veh.getAttribute('y')),
+                angle=float(veh.getAttribute('angle')),
+                speed=float(veh.getAttribute('speed')),
+                pos=float(veh.getAttribute('pos')),
                 lane=veh.getAttribute('lane'),
                 zone=zone_id,
                 prev_zone=None,
@@ -55,11 +55,11 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
     :param understudied_area:the un_padded area
     :return:a dictionary for initiating the new vehicle coming to the area
     """
-    return dict(long=veh.getAttribute('x'),
-                lat=veh.getAttribute('y'),
-                angle=veh.getAttribute('angle'),
-                speed=veh.getAttribute('speed'),
-                pos=veh.getAttribute('pos'),
+    return dict(long=float(veh.getAttribute('x')),
+                lat=float(veh.getAttribute('y')),
+                angle=float(veh.getAttribute('angle')),
+                speed=float(veh.getAttribute('speed')),
+                pos=float(veh.getAttribute('pos')),
                 lane=veh.getAttribute('lane'),
                 zone=zone_id,
                 prev_zone=None,
@@ -205,17 +205,6 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
             bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
-        bus_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
-        bus_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
-        bus_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
-        bus_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
-        bus_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
-        bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-        bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
-        bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
-        bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-
-        zone_buses[zone_id].add(veh.getAttribute('id'))
         try:
             zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
                 remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
@@ -223,6 +212,19 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
             bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
                                                                         config, understudied_area)
                                )
+
+        bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
+        bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
+        bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
+        bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed'))
+        bus_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
+        bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+        bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
+        bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
+        bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+
+        zone_buses[zone_id].add(veh.getAttribute('id'))
+
     except TypeError:
         bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
                                                                     config, understudied_area))
@@ -242,24 +244,29 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
     :return: updated self.veh_table and self.zone_vehicles
     """
     try:
-        veh_table.values(veh.getAttribute('id'))['long'] = veh.getAttribute('x')
-        veh_table.values(veh.getAttribute('id'))['lat'] = veh.getAttribute('y')
-        veh_table.values(veh.getAttribute('id'))['angle'] = veh.getAttribute('angle')
-        veh_table.values(veh.getAttribute('id'))['speed'] = veh.getAttribute('speed')
-        veh_table.values(veh.getAttribute('id'))['pos'] = veh.getAttribute('pos')
-        veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
-        veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
-        veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
-        veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+        veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
+            veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
-        zone_vehicles[zone_id].add(veh.getAttribute('id'))
         try:
             zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
                 remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
         except KeyError:
             # initiate the vehicle
             veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
-                                                                        config, understudied_area))
+                                                                        config, understudied_area)
+                               )
+        veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
+        veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
+        veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
+        veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed'))
+        veh_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
+        veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
+        veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
+        veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
+        veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+
+        zone_vehicles[zone_id].add(veh.getAttribute('id'))
+
     except TypeError:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
                                                                     config, understudied_area))
