@@ -24,9 +24,8 @@ class Graph:
         :param vertex: the vertex is either a cluster-head or a bridge
         :return:
         """
-        for v in vertex:
-            if v not in self.adj_list.keys():
-                self.adj_list[v] = []
+        if vertex not in self.adj_list.keys():
+            self.adj_list[vertex] = []
 
     def add_edge(self, v1, v2):
         """
@@ -61,8 +60,8 @@ class Graph:
         return False
 
 
-a = Graph('test')
-a.print_graph()
-b = Hash.HashTable(20)
-b.set_item('bus01', {'a': 12, 'g': a})
-b.print_hash_table()
+# a = Graph('test')
+# a.print_graph()
+# b = Hash.HashTable(20)
+# b.set_item('bus01', {'a': 12, 'g': a})
+# b.print_hash_table()

@@ -136,7 +136,6 @@ class DataTable:
                     bus_ch = bus_candidates[0]
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     self.veh_table.values(veh_id)['other_CHs'] = []
-                    # self.bus_table.values(bus_ch)['cluster_members'] = Graph().Graph.add_vertex(bus_ch)
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 else:
@@ -147,7 +146,6 @@ class DataTable:
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_CHs'] = bus_candidates
-                    # self.bus_table.values(bus_ch)['cluster_members'].add_vertex(bus_ch)
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
 
@@ -163,5 +161,5 @@ for i in a.veh_table.ids():
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')
-a.print_table()
+a.bus_table.values('bus80')['cluster_members'].print_graph()
 
