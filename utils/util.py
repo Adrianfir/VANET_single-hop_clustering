@@ -3,7 +3,7 @@ This is the Utils file to have all the small functions
 """
 
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'presence','det_bus_ch', 'update_bus_table', 'update_veh_table']
+           'presence', 'det_bus_ch', 'update_bus_table', 'update_veh_table']
 
 import numpy as np
 import random
@@ -37,7 +37,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=True,
                 other_CHs=[],
-                cluster_members=Graph(),
+                cluster_members=Graph(veh.getAttribute('id')),
                 bridges={},
                 IP=None,
                 MAC=mac_address(),

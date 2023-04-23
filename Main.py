@@ -11,6 +11,8 @@ from configs.config import Configs
 import utils.util as util
 import Hash
 from Zone import ZoneID
+from Graph import Graph
+
 
 __author__ = "Pouya 'Adrian' Firouzmakan"
 
@@ -117,7 +119,7 @@ class DataTable:
             bus_candidates = []
             neigh_bus = []
             for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
-                neigh_bus += self.zone_buses[neigh_z]        # adding all the vehicles in the neighbor zones to a list
+                neigh_bus += self.zone_buses[neigh_z]        # adding all the buses in the neighbor zones to a list
 
             for j in neigh_bus:
                 euclidian_dist = hs.haversine((self.veh_table.values(veh_id)["long"],
@@ -131,10 +133,12 @@ class DataTable:
 
             if len(bus_candidates) > 0:
                 if len(bus_candidates) == 1:
-                    self.veh_table.values(veh_id)['primary_CH'] = j
+                    bus_ch = bus_candidates[0]
+                    self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     self.veh_table.values(veh_id)['other_CHs'] = []
-                    self.bus_table.values(j)['cluster_members'].add_vertex(veh_id)
-                    self.bus_table.values(j)['cluster_members'].add_edge(j, veh_id)
+                    # self.bus_table.values(bus_ch)['cluster_members'] = Graph().Graph.add_vertex(bus_ch)
+                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
+                    self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 else:
                     bus_ch = util.det_bus_ch(self.bus_table, self.veh_table.values(veh_id),
                                              area_zones,
@@ -143,7 +147,8 @@ class DataTable:
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_CHs'] = bus_candidates
-                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex([bus_ch, veh_id])
+                    # self.bus_table.values(bus_ch)['cluster_members'].add_vertex(bus_ch)
+                    self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
 
     def print_table(self):

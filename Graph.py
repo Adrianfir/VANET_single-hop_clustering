@@ -6,11 +6,13 @@ Greater Toronto Area (GTA) would affect the space complexity
 __author__ = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['Graph']
 
+import Hash
+
 
 class Graph:
 
-    def __init__(self):
-        self.adj_list = {}
+    def __init__(self, head):
+        self.adj_list = {head: []}
 
     def print_graph(self):
         for vertex in self.adj_list:
@@ -18,6 +20,7 @@ class Graph:
 
     def add_vertex(self, vertex):
         """
+        this method is for adding a a new vertex
         :param vertex: the vertex is either a cluster-head or a bridge
         :return:
         """
@@ -58,8 +61,8 @@ class Graph:
         return False
 
 
-# a = Graph()
-# a.add_vertex(['veh2'])
-# a.add_edge('bus1', 'b')
-# a.print_graph()
-
+a = Graph('test')
+a.print_graph()
+b = Hash.HashTable(20)
+b.set_item('bus01', {'a': 12, 'g': a})
+b.print_hash_table()
