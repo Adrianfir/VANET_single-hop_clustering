@@ -208,8 +208,10 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
             bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
         try:
-            zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
+            if bus_table.values(veh.getAttribute('id'))['prev_zone'] != \
+                    bus_table.values(veh.getAttribute('id'))['zone']:
+                zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                    remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
         except KeyError:
             bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
                                                                         config, understudied_area)
@@ -250,8 +252,10 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
             veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
 
         try:
-            zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
+            if veh_table.values(veh.getAttribute('id'))['prev_zone'] != \
+                    veh_table.values(veh.getAttribute('id'))['zone']:
+                zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                    remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
         except KeyError:
             # initiate the vehicle
             veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,

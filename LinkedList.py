@@ -23,7 +23,7 @@ class LinkedList:
             print(f"{temp.key}: {temp.value}")
             temp = temp.next
             if temp is None:
-                return {'length':self.length}
+                return {'length': self.length}
 
     def append(self, key, value):
         new_node = Node(key, value)

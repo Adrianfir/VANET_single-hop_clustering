@@ -13,7 +13,6 @@ import Hash
 from Zone import ZoneID
 from Graph import Graph
 
-
 __author__ = "Pouya 'Adrian' Firouzmakan"
 
 configs = Configs().config
@@ -75,14 +74,7 @@ class DataTable:
         self.time += 1
         bus_ids = set()
         veh_ids = set()
-        self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
-                                      [set() for j in range(len(zones.zone_hash.ids()))]
-                                      )
-                                  )
-        self.zone_buses = dict(zip(zones.zone_hash.ids(),
-                                   [set() for j in range(len(zones.zone_hash.ids()))]
-                                   )
-                               )
+
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -107,7 +99,7 @@ class DataTable:
         for k in (self.veh_table.ids() - veh_ids):
             self.veh_table.values(k)['in_area'] = False
 
-    def find_update_cluster(self, veh_id):
+    def update_cluster(self, veh_id):
         """
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
@@ -118,8 +110,9 @@ class DataTable:
 
             bus_candidates = []
             neigh_bus = []
+            neigh_veh = []
             for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
-                neigh_bus += self.zone_buses[neigh_z]        # adding all the buses in the neighbor zones to a list
+                neigh_bus += self.zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
 
             for j in neigh_bus:
                 euclidian_dist = hs.haversine((self.veh_table.values(veh_id)["long"],
@@ -148,6 +141,9 @@ class DataTable:
                     self.veh_table.values(veh_id)['other_CHs'] = bus_candidates
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
+            else:
+                for neigh_z in self.veh_veh.values(veh_id)['neighbor_zones']:
+                    neigh_veh += self.zone_buses[neigh_z]  # adding all the vehicles in the neighbor zones to a list
 
     def print_table(self):
         self.bus_table.print_hash_table()
@@ -155,11 +151,11 @@ class DataTable:
 
 
 a = DataTable(configs, area_zones)
+a.print_table()
 a.update(configs, area_zones)
 for i in a.veh_table.ids():
-    a.find_update_cluster(i)
+    a.update_cluster(i)
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')
-a.bus_table.values('bus80')['cluster_members'].print_graph()
-
+a.print_table()
