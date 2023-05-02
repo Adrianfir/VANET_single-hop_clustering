@@ -105,7 +105,20 @@ class DataTable:
         :return: cluster heads and connection between them including through the bridges
         """
         # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
-        if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
+        if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH']
+                                                                 is not None):
+            dist_to_primaryCH = hs.haversine([self.veh_table.values(veh_id)["long"],
+                                              self.veh_table.values(veh_id)["lat"]],
+                                             [self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
+                                                  'long'],
+                                              self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
+                                                  'lat']], unit=hs.Unit.METERS)
+            if dist_to_primaryCH < min(self.veh_table.values(veh_id)['trans_range'],
+                                       self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])
+                                       ['trans_range']):
+                return veh_id + "is still in its primary_CH transmission range"
+
+        elif (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
                 & (self.veh_table.values(veh_id)['cluster_head'] is False):
 
             bus_candidates = []
