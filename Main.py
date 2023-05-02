@@ -104,36 +104,11 @@ class DataTable:
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
         """
-        # determining the buses and cluster_head in neighbor zones
-
-        bus_candidates = []
-        ch_candidates = []
-        neigh_bus = []
-        neigh_ch = []
         neigh_veh = []
-        for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
-            neigh_bus += self.zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
-            neigh_ch += self.zone_vehicles[neigh_z]
+        # determining the buses and cluster_head in neighbor zones
+        bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
+                                                         self.zone_buses,self.zone_vehicles )
 
-        for j in neigh_bus:
-            euclidian_dist = hs.haversine((self.veh_table.values(veh_id)["long"],
-                                           self.veh_table.values(veh_id)["lat"]),
-                                          (self.bus_table.values(j)['long'],
-                                           self.bus_table.values(j)['lat']), unit=hs.Unit.METERS)
-
-            if euclidian_dist <= min(self.veh_table.values(veh_id)['trans_range'],
-                                     self.bus_table.values(j)['trans_range']):
-                bus_candidates.append(j)
-
-        for j in neigh_ch:
-            euclidian_dist = hs.haversine((self.veh_table.values(veh_id)["long"],
-                                           self.veh_table.values(veh_id)["lat"]),
-                                          (self.veh_table.values(j)['long'],
-                                           self.veh_table.values(j)['lat']), unit=hs.Unit.METERS)
-
-            if euclidian_dist <= min(self.veh_table.values(veh_id)['trans_range'],
-                                     self.veh_table.values(j)['trans_range']):
-                ch_candidates.append(j)
         # checking if the vehicle is still in transmission range of its current primary_CH
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH']
                                                                  is not None):
@@ -151,22 +126,6 @@ class DataTable:
         # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
         elif (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
                 & (self.veh_table.values(veh_id)['cluster_head'] is False):
-
-            # bus_candidates = []
-            # neigh_bus = []
-            # neigh_veh = []
-            # for neigh_z in self.veh_table.values(veh_id)['neighbor_zones']:
-            #     neigh_bus += self.zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
-            #
-            # for j in neigh_bus:
-            #     euclidian_dist = hs.haversine((self.veh_table.values(veh_id)["long"],
-            #                                    self.veh_table.values(veh_id)["lat"]),
-            #                                   (self.bus_table.values(j)['long'],
-            #                                    self.bus_table.values(j)['lat']), unit=hs.Unit.METERS)
-            #
-            #     if euclidian_dist <= min(self.veh_table.values(veh_id)['trans_range'],
-            #                              self.bus_table.values(j)['trans_range']):
-            #         bus_candidates.append(j)
 
             if len(bus_candidates) > 0:
                 if len(bus_candidates) == 1:

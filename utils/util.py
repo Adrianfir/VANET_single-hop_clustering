@@ -3,7 +3,7 @@ This is the Utils file to have all the small functions
 """
 
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'presence', 'det_bus_ch', 'update_bus_table', 'update_veh_table']
+           'presence', 'det_bus_ch', 'update_bus_table', 'update_veh_table', 'det_near_ch']
 
 import numpy as np
 import random
@@ -127,6 +127,48 @@ def presence(area_cord, veh_cord):
         return False
 
 
+def det_near_ch(veh_id, veh_table, bus_table,
+                zone_buses, zone_vehicles):
+    """
+    This function will determine the buses and CHs nearby veh_id
+    :param veh_table:
+    :param bus_table:
+    :param zone_buses:
+    :param zone_vehicles:
+    :param veh_id:
+    :return: it returns bus_candidate which includes buses and vehicles being CH which are in neighbor zones
+    """
+    bus_candidates = []
+    ch_candidates = []
+    neigh_bus = []
+    neigh_ch = []
+    for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
+        neigh_bus += zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
+        neigh_ch += zone_vehicles[neigh_z]
+
+    for j in neigh_bus:
+        euclidian_dist = hs.haversine((veh_table.values(veh_id)["long"],
+                                       veh_table.values(veh_id)["lat"]),
+                                      (bus_table.values(j)['long'],
+                                       bus_table.values(j)['lat']), unit=hs.Unit.METERS)
+
+        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                 bus_table.values(j)['trans_range']):
+            bus_candidates.append(j)
+
+    for j in neigh_ch:
+        euclidian_dist = hs.haversine((veh_table.values(veh_id)["long"],
+                                       veh_table.values(veh_id)["lat"]),
+                                      (veh_table.values(j)['long'],
+                                       veh_table.values(j)['lat']), unit=hs.Unit.METERS)
+
+        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                 veh_table.values(j)['trans_range']):
+            ch_candidates.append(j)
+
+    return bus_candidates, ch_candidates
+
+
 def det_bus_ch(bus_table, veh_table_i,
                area_zones, bus_candidates):
     """
@@ -193,15 +235,15 @@ def det_bus_ch(bus_table, veh_table_i,
 
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):
     """
-    this function updates the self.bus_tabel and self.zone_buses from main.py
+    this function updates the bus_tabel and zone_buses from main.py
     :param veh: it's the veh from .xml file
-    :param bus_table: its self.bus_table
+    :param bus_table: its bus_table
     :param zone_id: the zon_id f the vehicle
     :param understudied_area: the un_padded area
-    :param zones: the area_zones.zones() or self.zones table from the DataTable class in the main.py
+    :param zones: the area_zones.zones() or zones table from the DataTable class in the main.py
     :param config:
-    :param zone_buses: self.zone_buses from the DataTable class in the main.py
-    :return: updated self.bus_table and self.zone_buses
+    :param zone_buses: zone_buses from the DataTable class in the main.py
+    :return: updated bus_table and zone_buses
     """
     try:
         bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
@@ -237,15 +279,15 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
 
 def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, zone_vehicles):
     """
-    this function updates the self.veh_tabel and self.zone_vehicles from main.py
+    this function updates the veh_tabel and zone_vehicles from main.py
     :param veh: it's the veh from .xml file
-    :param veh_table: its self.veh_table
+    :param veh_table: its veh_table
     :param zone_id: the zon_id f the vehicle
     :param understudied_area: the un_padded area
-    :param zones: the area_zones.zones() or self.zones table from the DataTable class in the main.py
+    :param zones: the area_zones.zones() or zones table from the DataTable class in the main.py
     :param config:
-    :param zone_vehicles: self.zone_vehicles from the DataTable class in the main.py
-    :return: updated self.veh_table and self.zone_vehicles
+    :param zone_vehicles: zone_vehicles from the DataTable class in the main.py
+    :return: updated veh_table and zone_vehicles
     """
     try:
         veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
