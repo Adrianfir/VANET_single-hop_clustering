@@ -11,7 +11,6 @@ from configs.config import Configs
 import utils.util as util
 import Hash
 from Zone import ZoneID
-from Graph import Graph
 
 __author__ = "Pouya 'Adrian' Firouzmakan"
 
@@ -43,7 +42,8 @@ class DataTable:
                                    [set() for j in range(len(zones.zone_hash.ids()))]
                                    )
                                )
-        self.zone_CH = {}
+        self.zone_CH = dict()
+        self.all_CHs = set()
         self.time = config.start_time
         self.understudied_area = area_zones.understudied_area()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
@@ -104,9 +104,10 @@ class DataTable:
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
         """
+        self.veh_table.values(veh_id)['other_members'] = set()
         # determining the buses and cluster_head in neighbor zones
         bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
-                                                         self.zone_buses,self.zone_vehicles )
+                                                         self.zone_buses, self.zone_vehicles)
 
         # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH']
@@ -120,18 +121,25 @@ class DataTable:
             if dist_to_primaryCH < min(self.veh_table.values(veh_id)['trans_range'],
                                        self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])
                                        ['trans_range']):
+                # update ['other_CHs'] of veh_id
+                if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
+                    bus_candidates.remove(self.veh_table.values(veh_id)['primary_CH'])
+                    self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
+                else:
+                    ch_candidates.remove(self.veh_table.values(veh_id)['primary_CH'])
+                    self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
 
-                return veh_id + "is still in its primary_CH transmission range"
+                return veh_id + "is still in its current primary_CH transmission range"
 
         # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
-        elif (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH'] is None) \
-                & (self.veh_table.values(veh_id)['cluster_head'] is False):
+        elif (self.veh_table.values(veh_id)['in_area'] is True) & \
+                (self.veh_table.values(veh_id)['primary_CH'] is None) & \
+                (self.veh_table.values(veh_id)['cluster_head'] is False):
 
             if len(bus_candidates) > 0:
                 if len(bus_candidates) == 1:
                     bus_ch = list(bus_candidates)[0]
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
-                    self.veh_table.values(veh_id)['other_CHs'] = set()
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                     return veh_id + "is in a bus cluster"
@@ -143,6 +151,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
+                    self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates)
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 return veh_id + "is now in a bus cluster"
