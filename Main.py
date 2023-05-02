@@ -104,12 +104,11 @@ class DataTable:
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
         """
-        neigh_veh = []
         # determining the buses and cluster_head in neighbor zones
         bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                          self.zone_buses,self.zone_vehicles )
 
-        # checking if the vehicle is still in transmission range of its current primary_CH
+        # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH']
                                                                  is not None):
             dist_to_primaryCH = hs.haversine([self.veh_table.values(veh_id)["long"],
@@ -121,6 +120,7 @@ class DataTable:
             if dist_to_primaryCH < min(self.veh_table.values(veh_id)['trans_range'],
                                        self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])
                                        ['trans_range']):
+
                 return veh_id + "is still in its primary_CH transmission range"
 
         # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
@@ -129,9 +129,9 @@ class DataTable:
 
             if len(bus_candidates) > 0:
                 if len(bus_candidates) == 1:
-                    bus_ch = bus_candidates[0]
+                    bus_ch = list(bus_candidates)[0]
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
-                    self.veh_table.values(veh_id)['other_CHs'] = []
+                    self.veh_table.values(veh_id)['other_CHs'] = set()
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                     return veh_id + "is in a bus cluster"
@@ -142,13 +142,10 @@ class DataTable:
 
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     bus_candidates.remove(bus_ch)
-                    self.veh_table.values(veh_id)['other_CHs'] = bus_candidates
+                    self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
-                    return veh_id + "is in a bus cluster"
-            else:
-                for neigh_z in self.veh_veh.values(veh_id)['neighbor_zones']:
-                    neigh_veh += self.zone_buses[neigh_z]  # adding all the vehicles in the neighbor zones to a list
+                    return veh_id + "is now in a bus cluster"
 
     def print_table(self):
         self.bus_table.print_hash_table()

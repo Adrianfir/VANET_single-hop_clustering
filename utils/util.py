@@ -36,9 +36,9 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_dest={},
                 message_source={},
                 cluster_head=True,
-                other_CHs=[],
+                other_CHs=set(),
                 cluster_members=Graph(veh.getAttribute('id')),
-                bridges={},
+                bridges=set(),
                 IP=None,
                 MAC=mac_address(),
                 counter=3
@@ -70,8 +70,9 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=False,  # if the vehicle is a CH, it will be True
                 primary_CH=None,
-                other_CHs=[],
+                other_CHs=set(),
                 cluster_members=None,  # This will be a Graph if the vehicle is a CH
+                bridges=set(),
                 IP=None,
                 MAC=mac_address(),
                 counter=3  # a counter_time to search and join a cluster
@@ -138,8 +139,8 @@ def det_near_ch(veh_id, veh_table, bus_table,
     :param veh_id:
     :return: it returns bus_candidate which includes buses and vehicles being CH which are in neighbor zones
     """
-    bus_candidates = []
-    ch_candidates = []
+    bus_candidates = set()
+    ch_candidates = set()
     neigh_bus = []
     neigh_ch = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
@@ -154,7 +155,7 @@ def det_near_ch(veh_id, veh_table, bus_table,
 
         if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
                                  bus_table.values(j)['trans_range']):
-            bus_candidates.append(j)
+            bus_candidates.add(j)
 
     for j in neigh_ch:
         euclidian_dist = hs.haversine((veh_table.values(veh_id)["long"],
@@ -164,7 +165,7 @@ def det_near_ch(veh_id, veh_table, bus_table,
 
         if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
                                  veh_table.values(j)['trans_range']):
-            ch_candidates.append(j)
+            ch_candidates.add(j)
 
     return bus_candidates, ch_candidates
 
