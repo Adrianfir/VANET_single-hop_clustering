@@ -145,7 +145,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
-                    return veh_id + "is now in a bus cluster"
+                return veh_id + "is now in a bus cluster"
 
     def print_table(self):
         self.bus_table.print_hash_table()
