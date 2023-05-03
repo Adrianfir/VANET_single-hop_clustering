@@ -7,6 +7,7 @@ The output Data Structure is :....
 """
 import haversine as hs
 
+from Graph import Graph
 from configs.config import Configs
 import utils.util as util
 import Hash
@@ -99,12 +100,12 @@ class DataTable:
         for k in (self.veh_table.ids() - veh_ids):
             self.veh_table.values(k)['in_area'] = False
 
-    def update_cluster(self, veh_id):
+    def update_cluster(self, veh_id, config):
         """
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
         """
-        self.veh_table.values(veh_id)['other_members'] = set()
+        self.veh_table.values(veh_id)['other_CHs'] = set()
         # determining the buses and cluster_head in neighbor zones
         bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                          self.zone_buses, self.zone_vehicles)
@@ -143,18 +144,21 @@ class DataTable:
                 if len(bus_candidates) == 1:
                     bus_ch = list(bus_candidates)[0]
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
+                    self.veh_table.values(veh_id)['counter'] = config.counter
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
-                    return veh_id + "is in a bus cluster"
                 else:
                     bus_ch = util.det_bus_ch(self.bus_table, self.veh_table.values(veh_id),
                                              area_zones,
                                              bus_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
+                    self.veh_table.values(veh_id)['counter'] = config.counter
                     bus_candidates.remove(bus_ch)
-                    self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
-                    self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates)
+                    self.veh_table.values(veh_id)['other_CHs'].\
+                        update(self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates))
+                    self.veh_table.values(veh_id)['other_CHs'].\
+                        update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 return veh_id + "is now in a bus cluster"
@@ -162,11 +166,29 @@ class DataTable:
                 if len(ch_candidates) == 1:
                     veh_ch = list(ch_candidates)[0]
                     self.veh_table.values(veh_id)['primary_CH'] = veh_ch
+                    self.veh_table.values(veh_id)['counter'] = config.counter
                     self.veh_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
                     self.veh_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
                 else:
+                    veh_ch = util.det_veh_ch(self.veh_table, self.veh_table.values(veh_id),
+                                             area_zones,
+                                             ch_candidates)  # determine the most suitable from bus_candidates
 
-
+                    self.veh_table.values(veh_id)['primary_CH'] = veh_ch
+                    self.veh_table.values(veh_id)['counter'] = config.counter
+                    bus_candidates.remove(veh_ch)
+                    self.veh_table.values(veh_id)['other_CHs'].\
+                        update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
+                    self.bus_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
+                    self.bus_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
+            else:
+                if self.veh_table.values(veh_id)['counter'] > 1:
+                    self.veh_table.values(veh_id)['counter'] -= 1
+                    self.stand_alones.add(veh_id)
+                else:
+                    self.stand_alones.add(veh_id)['cluster_head'] = True
+                    self.veh_table.values(veh_id)['counter'] = config.counter
+                    self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id)
 
     def print_table(self):
         self.bus_table.print_hash_table()
@@ -177,7 +199,7 @@ a = DataTable(configs, area_zones)
 a.print_table()
 a.update(configs, area_zones)
 for i in a.veh_table.ids():
-    a.update_cluster(i)
+    a.update_cluster(i, configs)
 print('bus-ids: ', a.bus_table.ids())
 print('vehicles-ids: ', a.veh_table.ids())
 print('\n')

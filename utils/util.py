@@ -41,7 +41,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 bridges=set(),
                 IP=None,
                 MAC=mac_address(),
-                counter=3
+                counter=config.counter
                 )
 
 
