@@ -118,18 +118,21 @@ class DataTable:
                                                   'long'],
                                               self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
                                                   'lat']], unit=hs.Unit.METERS)
-            if dist_to_primaryCH < min(self.veh_table.values(veh_id)['trans_range'],
-                                       self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])
-                                       ['trans_range']):
-                # update ['other_CHs'] of veh_id
-                if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
-                    bus_candidates.remove(self.veh_table.values(veh_id)['primary_CH'])
-                    self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
-                else:
-                    ch_candidates.remove(self.veh_table.values(veh_id)['primary_CH'])
-                    self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates)
-
+            if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
+                                        self.bus_table.values(self.veh_table.values(veh_id)
+                                                              ['primary_CH'])['trans_range']):
                 return veh_id + "is still in its current primary_CH transmission range"
+            # here the 'primary_CH' will be changed to None and recursion is applied
+            else:
+                ch_id = self.veh_table.values(veh_id)['primary_CH']
+                if 'bus' in ch_id:
+                    self.bus_table.values(ch_id)['cluster_members'].remove_vertex(ch_id, veh_id)
+                    self.bus_table.values(ch_id)['cluster_members'].remove_edge(ch_id)
+                else:
+                    self.veh_table.values(ch_id)['cluster_members'].remove_vertex(ch_id, veh_id)
+                    self.veh_table.values(ch_id)['cluster_members'].remove_edge(ch_id)
+                self.veh_table.values(veh_id)['primary_CH'] = None
+                self.update_cluster(veh_id)
 
         # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
         elif (self.veh_table.values(veh_id)['in_area'] is True) & \
