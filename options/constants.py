@@ -21,6 +21,7 @@ class Inputs:
                     max_long=-79.238069)
         trans_range = 1000
         start_time = 2000
+        counter = 3
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--xml_path', default=trace_path, type=str,
@@ -39,6 +40,9 @@ class Inputs:
                             help='this is the transmission range considered in this project and it can be up to 2000')
         parser.add_argument('--start_time', type=int, default=start_time,
                             help='This is the time that the initial values would be extract from sumo_trace.xml file')
+        parser.add_argument('--counter', type=int, default=counter,
+                            help='This is the a counter for vehicle to make themselves as CH if they can not'
+                                 ' find any Ch or nearby stand-alone vehicles to create a cluster')
         self.parser = parser
 
     def get_parser(self):

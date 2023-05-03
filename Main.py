@@ -158,6 +158,15 @@ class DataTable:
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 return veh_id + "is now in a bus cluster"
+            elif len(ch_candidates) > 0:
+                if len(ch_candidates) == 1:
+                    veh_ch = list(ch_candidates)[0]
+                    self.veh_table.values(veh_id)['primary_CH'] = veh_ch
+                    self.veh_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
+                    self.veh_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
+                else:
+
+
 
     def print_table(self):
         self.bus_table.print_hash_table()
