@@ -1,24 +1,15 @@
 """
-<<Main>>
 
 This Module is coded for extracting data from XML file related to ..., ..., ....
 The output Data Structure is :....
 
 """
-import haversine as hs
-
-from Graph import Graph
-from configs.config import Configs
-import utils.util as util
-import Hash
-from Zone import ZoneID
-
 __author__ = "Pouya 'Adrian' Firouzmakan"
 
-configs = Configs().config
-
-area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
-area_zones.zones()
+import haversine as hs
+from Graph import Graph
+import utils.util as util
+import Hash
 
 
 class DataTable:
@@ -46,7 +37,7 @@ class DataTable:
         self.zone_CH = dict()
         self.all_CHs = set()
         self.time = config.start_time
-        self.understudied_area = area_zones.understudied_area()
+        self.understudied_area = zones.understudied_area()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -100,7 +91,7 @@ class DataTable:
         for k in (self.veh_table.ids() - veh_ids):
             self.veh_table.values(k)['in_area'] = False
 
-    def update_cluster(self, veh_id, config):
+    def update_cluster(self, veh_id, config, zones):
         """
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the bridges
@@ -149,7 +140,7 @@ class DataTable:
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 else:
                     bus_ch = util.det_bus_ch(self.bus_table, self.veh_table.values(veh_id),
-                                             area_zones,
+                                             zones,
                                              bus_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
@@ -171,7 +162,7 @@ class DataTable:
                     self.veh_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
                 else:
                     veh_ch = util.det_veh_ch(self.veh_table, self.veh_table.values(veh_id),
-                                             area_zones,
+                                             zones,
                                              ch_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_CH'] = veh_ch
@@ -193,14 +184,3 @@ class DataTable:
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
-
-
-a = DataTable(configs, area_zones)
-a.print_table()
-a.update(configs, area_zones)
-for i in a.veh_table.ids():
-    a.update_cluster(i, configs)
-print('bus-ids: ', a.bus_table.ids())
-print('vehicles-ids: ', a.veh_table.ids())
-print('\n')
-a.print_table()
