@@ -1,10 +1,11 @@
 """
 
-This Module is coded for extracting data from XML file related to ..., ..., ....
-The output Data Structure is :....
+This Module is coded for extracting data from XML file related to SUMO and putting them to a Hash table.
+There are methods in the main DataTable class to initiate and update the vehicles and buses coming to the
+understudied area and creating and updating the clusters using recursion.
 
 """
-__author__ = "Pouya 'Adrian' Firouzmakan"
+__author__: str = "Pouya 'Adrian' Firouzmakan"
 
 import haversine as hs
 from Graph import Graph
@@ -146,9 +147,9 @@ class DataTable:
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     bus_candidates.remove(bus_ch)
-                    self.veh_table.values(veh_id)['other_CHs'].\
+                    self.veh_table.values(veh_id)['other_CHs']. \
                         update(self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates))
-                    self.veh_table.values(veh_id)['other_CHs'].\
+                    self.veh_table.values(veh_id)['other_CHs']. \
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
@@ -168,7 +169,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['primary_CH'] = veh_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     bus_candidates.remove(veh_ch)
-                    self.veh_table.values(veh_id)['other_CHs'].\
+                    self.veh_table.values(veh_id)['other_CHs']. \
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)

@@ -4,7 +4,7 @@
 This project is related to clustering and routing problem in VANET
 
 """
-__author__ = "Pouya 'Adrian' Firouzmakan"
+__author__: str = "Pouya 'Adrian' Firouzmakan"
 
 
 from data_cluster import DataTable

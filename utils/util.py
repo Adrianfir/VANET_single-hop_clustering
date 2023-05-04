@@ -1,7 +1,7 @@
 """
 This is the utils file including the small functions
 """
-
+__author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
            'presence', 'det_bus_ch', 'det_near_ch', 'update_bus_table', 'update_veh_table']
 

@@ -3,7 +3,7 @@ This Class is for building a Graph to show the connections of the Cluster-Heads 
 Rhis Graoh is based on adjacency-List rather than a matrix as the number of vehicles in the
 Greater Toronto Area (GTA) would affect the space complexity
 """
-__author__ = "Pouya 'Adrian' Firouzmakan"
+__author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['Graph']
 
 import Hash

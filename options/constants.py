@@ -1,6 +1,7 @@
 """
 This .py file is for adding arguments to argparse
 """
+__author__: str = "Pouya 'Adrian' Firouzmakan"
 
 import argparse
 import pathlib
