@@ -48,7 +48,7 @@ class Inputs:
 
     def get_parser(self):
         """
-        this methos can be used on order to return the parser and be used in config file
+        this methods can be used on order to return the parser and be used in config file
         :return: it returns the parser
         """
         return self.parser.parse_args()
