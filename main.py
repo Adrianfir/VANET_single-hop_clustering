@@ -5,12 +5,11 @@ This project is related to clustering and routing problem in VANET
 
 """
 __author__ = "Pouya 'Adrian' Firouzmakan"
-from sklearn.pipeline import Pipeline
+
 
 from data_cluster import DataTable
 from configs.config import Configs
 from Zone import ZoneID
-
 
 if __name__ == "__main__":
     configs = Configs().config
