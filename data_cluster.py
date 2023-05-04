@@ -37,6 +37,7 @@ class DataTable:
                                )
         self.zone_CH = dict()
         self.all_CHs = set()
+        self.stand_alone = set()
         self.time = config.start_time
         self.understudied_area = zones.understudied_area()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
@@ -176,11 +177,12 @@ class DataTable:
             else:
                 if self.veh_table.values(veh_id)['counter'] > 1:
                     self.veh_table.values(veh_id)['counter'] -= 1
-                    self.stand_alones.add(veh_id)
+                    self.stand_alone.add(veh_id)
                 else:
-                    self.stand_alones.add(veh_id)['cluster_head'] = True
+                    self.veh_table.values(veh_id)['cluster_head'] = True
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id)
+                    self.stand_alone.remove(veh_id)
 
     def print_table(self):
         self.bus_table.print_hash_table()

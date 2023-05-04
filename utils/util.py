@@ -244,6 +244,9 @@ def det_bus_ch(bus_table, veh_table_i,
     return nominee
 
 
+def det_veh_ch():
+
+
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):
     """
     this function updates the bus_tabel and zone_buses from main.py
