@@ -181,6 +181,13 @@ class DataTable:
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
+                    # updating the bridges of the CH: if a=self.veh_table.values(veh_ch)['bridges'], and
+                    # b=self.veh_table.values(veh_id)['other_CHs']
+                    # then a.update(a.union(b.difference(a)))
+                    self.veh_table.values(veh_ch)['bridges'].update(
+                        self.veh_table.values(veh_ch)['bridges'].
+                        union(self.veh_table.values(veh_id)['other_CHs'].
+                              difference(self.veh_table.values(veh_ch)['bridges'])))
             else:
                 if self.veh_table.values(veh_id)['counter'] > 1:
                     self.veh_table.values(veh_id)['counter'] -= 1
