@@ -8,7 +8,6 @@ import haversine as hs
 
 import utils.util as util
 import Hash
-from configs.config import Configs
 
 
 class ZoneID:

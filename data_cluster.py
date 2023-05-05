@@ -104,6 +104,7 @@ class DataTable:
                                                          self.zone_buses, self.zone_vehicles)
 
         # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
+        # or is not in its transmission_range anymore
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH']
                                                                  is not None):
             dist_to_primaryCH = hs.haversine([self.veh_table.values(veh_id)["long"],
@@ -141,9 +142,8 @@ class DataTable:
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                 else:
-                    bus_ch = util.det_bus_ch(self.bus_table, self.veh_table.values(veh_id),
-                                             zones,
-                                             bus_candidates)  # determine the most suitable from bus_candidates
+                    bus_ch = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
+                                            bus_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
@@ -154,6 +154,13 @@ class DataTable:
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
+                    # updating the bridges of the bus_ch: if a=self.bus_table.values(bus_ch)['bridges'], and
+                    # b=self.veh_table.values(veh_id)['other_CHs']
+                    # then a.update(a.union(b.difference(a)))
+                    self.bus_table.values(bus_ch)['bridges'].update(
+                        self.bus_table.values(bus_ch)['bridges'].
+                        union(self.veh_table.values(veh_id)['other_CHs'].
+                              difference(self.bus_table.values(bus_ch)['bridges'])))
                 return veh_id + "is now in a bus cluster"
             elif len(ch_candidates) > 0:
                 if len(ch_candidates) == 1:
@@ -163,9 +170,9 @@ class DataTable:
                     self.veh_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
                     self.veh_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
                 else:
-                    veh_ch = util.det_veh_ch(self.veh_table, self.veh_table.values(veh_id),
-                                             zones,
-                                             ch_candidates)  # determine the most suitable from bus_candidates
+                    veh_ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
+                                            zones,
+                                            ch_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_CH'] = veh_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter

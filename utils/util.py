@@ -2,8 +2,9 @@
 This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'presence', 'det_bus_ch', 'det_near_ch', 'update_bus_table', 'update_veh_table']
+__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
+           'middle_zone', 'presence', 'choose_ch', 'det_veh_ch',
+           'det_near_ch', 'update_bus_table', 'update_veh_table']
 
 import numpy as np
 import random
@@ -180,11 +181,12 @@ def det_other_CH(veh_id, veh_table, bus_table,
         all_near_chs.union(near_buses)
 
 
-def det_bus_ch(bus_table, veh_table_i,
+def choose_ch(table, veh_table_i,
                area_zones, bus_candidates):
     """
-
-    :param bus_table:
+    this function will be used to choose a bus among all other buses or a ch from other chs nearby as the vehicle's
+    primary_CH
+    :param table:
     :param veh_table_i:
     :param area_zones:
     :param bus_candidates:
@@ -212,14 +214,14 @@ def det_bus_ch(bus_table, veh_table_i,
     min_ef = 10
     for j in bus_candidates:
         # latitude of the centre of previous zone that bus were in
-        prev_bus_lat = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_lat'] +
-                        area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['min_lat']) / 2
+        prev_bus_lat = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_lat'] +
+                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2
         # latitude of the centre of previous zone that bus were in
-        prev_bus_long = (area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['max_long'] +
-                         area_zones.zone_hash.values(bus_table.values(j)['prev_zone'])['min_long']) / 2
+        prev_bus_long = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_long'] +
+                         area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_long']) / 2
 
         euclidian_distance = hs.haversine((prev_bus_long, prev_bus_lat),
-                                          (bus_table.values(j)['long'], bus_table.values(j)['lat']),
+                                          (table.values(j)['long'], table.values(j)['lat']),
                                           unit=hs.Unit.METERS)
 
         bus_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
@@ -232,8 +234,8 @@ def det_bus_ch(bus_table, veh_table_i,
         theta_sim = np.arccos(cos_sim) / 2 * np.pi
         # since it might return RuntimeWarning regarding the division, the warning will be ignored
         with np.errstate(divide='ignore', invalid='ignore'):
-            speed_sim = np.divide(np.abs(bus_table.values(j)['speed'] - veh_table_i['speed']),
-                                  np.abs(bus_table.values(j)['speed']))
+            speed_sim = np.divide(np.abs(table.values(j)['speed'] - veh_table_i['speed']),
+                                  np.abs(table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for buses
         ef = theta_sim + speed_sim
@@ -244,7 +246,8 @@ def det_bus_ch(bus_table, veh_table_i,
     return nominee
 
 
-def det_veh_ch():
+# def det_veh_ch(veh_table, veh_table_i,
+#                area_zones, bus_candidates):
 
 
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):
@@ -282,6 +285,8 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
         bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+        bus_table.values(veh.getAttribute('id'))['bridges'] = set()
+        bus_table.values(veh.getAttribute('id'))['other_CHs'] = set()
 
         zone_buses[zone_id].add(veh.getAttribute('id'))
 
@@ -326,6 +331,8 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
         veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
+        veh_table.values(veh.getAttribute('id'))['bridges'] = set()
+        veh_table.values(veh.getAttribute('id'))['other_CHs'] = set()
 
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
 
