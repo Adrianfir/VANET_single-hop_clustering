@@ -197,6 +197,16 @@ class DataTable:
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id)
                     self.stand_alone.remove(veh_id)
+        elif (self.veh_table.values(veh_id)['in_area'] is True) & \
+                (self.veh_table.values(veh_id)['primary_CH'] is None) & \
+                (self.veh_table.values(veh_id)['cluster_head'] is True):
+            # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
+            # unless get selected by another vehicles or can't find a cluster head after the counter
+            if len(self.veh_table.values(veh_id))['cluster_members'].adj_list == 1:
+                if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
+                    self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id)
+                    self.veh_table.values(veh_id)['cluster_head'] = False
+                    self.update_cluster(veh_id)
 
     def print_table(self):
         self.bus_table.print_hash_table()

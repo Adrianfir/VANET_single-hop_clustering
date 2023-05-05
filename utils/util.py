@@ -182,7 +182,7 @@ def det_other_CH(veh_id, veh_table, bus_table,
 
 
 def choose_ch(table, veh_table_i,
-               area_zones, bus_candidates):
+              area_zones, bus_candidates):
     """
     this function will be used to choose a bus among all other buses or a ch from other chs nearby as the vehicle's
     primary_CH
