@@ -88,10 +88,11 @@ class DataTable:
                                                                            config, self.zone_vehicles)
         #  turning in_area index of the buses left the area to False
         for k in (self.bus_table.ids() - bus_ids):
-            self.bus_table.values(k)['in_area'] = False
+            self.bus_table.remove(k)
+
         #  turning in_area index of the vehicles left the area to False
         for k in (self.veh_table.ids() - veh_ids):
-            self.veh_table.values(k)['in_area'] = False
+            self.veh_table.remove(k)
 
     def update_cluster(self, veh_id, config, zones):
         """
@@ -207,6 +208,12 @@ class DataTable:
                     self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id)
                     self.veh_table.values(veh_id)['cluster_head'] = False
                     self.update_cluster(veh_id)
+
+    # def create_cluster(self):
+    #     near_veh = dict()
+    #     if len(self.stand_alone()) > 1:
+    #         for i in self.stand_alone:
+    #             near_veh[i:[]]
 
     def print_table(self):
         self.bus_table.print_hash_table()
