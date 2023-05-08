@@ -86,12 +86,14 @@ class DataTable:
                 self.veh_table, self.zone_vehicles = util.update_veh_table(veh, self.veh_table, zone_id,
                                                                            self.understudied_area, zones,
                                                                            config, self.zone_vehicles)
-        #  turning in_area index of the buses left the area to False
+        # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
+            self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.bus_table.remove(k)
 
-        #  turning in_area index of the vehicles left the area to False
+        # removing the vehicles, that have left the understudied area, from self.veh_table and veh.zone_buses
         for k in (self.veh_table.ids() - veh_ids):
+            self.veh_buses[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
 
     def update_cluster(self, veh_id, config, zones):
