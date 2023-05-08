@@ -113,8 +113,8 @@ def middle_zone(u_row, u_col,
 
 def presence(area_cord, veh_cord):
     """
-    This function will determine if the vehicle or bus is in the understudied area (unpadded area)
-    :param area_cord: the coordination of the understudied area (unpadded area)
+    This function will determine if the vehicle or bus is in the understudied area (padded area)
+    :param area_cord: the coordination of the understudied area (padded area)
     :param veh_cord: the coordination of the vehicle or bus
     :return: it returns True or False
     """
@@ -149,20 +149,20 @@ def det_near_ch(veh_id, veh_table, bus_table,
         neigh_ch += zone_vehicles[neigh_z]
 
     for j in neigh_bus:
-        euclidian_dist = hs.haversine((veh_table.values(veh_id)["long"],
-                                       veh_table.values(veh_id)["lat"]),
-                                      (bus_table.values(j)['long'],
-                                       bus_table.values(j)['lat']), unit=hs.Unit.METERS)
+        euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
+                                       veh_table.values(veh_id)["long"]),
+                                      (bus_table.values(j)['lat'],
+                                       bus_table.values(j)['long']), unit=hs.Unit.METERS)
 
         if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
                                  bus_table.values(j)['trans_range']):
             bus_candidates.add(j)
 
     for j in neigh_ch:
-        euclidian_dist = hs.haversine((veh_table.values(veh_id)["long"],
-                                       veh_table.values(veh_id)["lat"]),
-                                      (veh_table.values(j)['long'],
-                                       veh_table.values(j)['lat']), unit=hs.Unit.METERS)
+        euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
+                                       veh_table.values(veh_id)["long"]),
+                                      (veh_table.values(j)['lat'],
+                                       veh_table.values(j)['long']), unit=hs.Unit.METERS)
 
         if (euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range'])) & \
                 (veh_table.values(j)['cluster_head'] is True):
@@ -200,8 +200,8 @@ def choose_ch(table, veh_table_i,
     prev_veh_long = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_long'] +
                      area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_long']) / 2
 
-    euclidian_distance = hs.haversine((prev_veh_long, prev_veh_lat),
-                                      (veh_table_i['long'], veh_table_i['lat']),
+    euclidian_distance = hs.haversine((prev_veh_lat, prev_veh_long),
+                                      (veh_table_i['lat'], veh_table_i['long']),
                                       unit=hs.Unit.METERS)
 
     veh_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
@@ -220,8 +220,8 @@ def choose_ch(table, veh_table_i,
         prev_bus_long = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_long'] +
                          area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_long']) / 2
 
-        euclidian_distance = hs.haversine((prev_bus_long, prev_bus_lat),
-                                          (table.values(j)['long'], table.values(j)['lat']),
+        euclidian_distance = hs.haversine((prev_bus_lat, prev_bus_long),
+                                          (table.values(j)['lat'], table.values(j)['long']),
                                           unit=hs.Unit.METERS)
 
         bus_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /

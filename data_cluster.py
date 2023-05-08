@@ -110,12 +110,11 @@ class DataTable:
         # or is not in its transmission_range anymore
         if (self.veh_table.values(veh_id)['in_area'] is True) & (self.veh_table.values(veh_id)['primary_CH']
                                                                  is not None):
-            dist_to_primaryCH = hs.haversine([self.veh_table.values(veh_id)["long"],
-                                              self.veh_table.values(veh_id)["lat"]],
-                                             [self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
-                                                  'long'],
-                                              self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
-                                                  'lat']], unit=hs.Unit.METERS)
+            dist_to_primaryCH = hs.haversine((self.veh_table.values(veh_id)["lat"],
+                                              self.veh_table.values(veh_id)["long"]),
+                                             (self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['lat'],
+                                              self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['long']
+                                              ), unit=hs.Unit.METERS)
             if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
                                         self.bus_table.values(self.veh_table.values(veh_id)
                                                               ['primary_CH'])['trans_range']):

@@ -20,7 +20,7 @@ class ZoneID:
         """
         self.area = config.area
         self.un_pad_area = dict()
-        self.x_area = hs.haversine((self.area["min_long"], 0), (self.area["max_long"], 0), unit=hs.Unit.KILOMETERS)
+        self.x_area = hs.haversine((0, self.area["min_long"]), (0, self.area["max_long"]), unit=hs.Unit.KILOMETERS)
         self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
         self.area_surface = self.x_area * self.y_area
         self.lat_rows = np.linspace(self.area["min_lat"], self.area["max_lat"],
@@ -358,8 +358,9 @@ class ZoneID:
                     ]
 
 
-# configs = Configs()
-# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-# a = ZoneID(configs.config)
-# a.zones()
-# print(a.det_zone(44, -79.30198263788123))
+from configs.config import Configs
+configs = Configs().config
+area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+a = ZoneID(configs)
+a.zones()
+print(a.det_zone(44, -79.30198263788123))
