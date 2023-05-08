@@ -91,9 +91,9 @@ class DataTable:
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.bus_table.remove(k)
 
-        # removing the vehicles, that have left the understudied area, from self.veh_table and veh.zone_buses
+        # removing the vehicles, that have left the understudied area, from self.veh_table and self.zone_vehicles
         for k in (self.veh_table.ids() - veh_ids):
-            self.veh_buses[self.veh_table.values(k)['zone']].remove(k)
+            self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
 
     def update_cluster(self, veh_id, config, zones):
