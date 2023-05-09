@@ -102,6 +102,7 @@ class DataTable:
         :return: cluster heads and connection between them including through the bridges
         """
         self.veh_table.values(veh_id)['other_CHs'] = set()
+        print(veh_id)
         # determining the buses and cluster_head in neighbor zones
         bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                          self.zone_buses, self.zone_vehicles)

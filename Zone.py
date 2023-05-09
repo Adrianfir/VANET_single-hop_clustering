@@ -358,9 +358,9 @@ class ZoneID:
                     ]
 
 
-from configs.config import Configs
-configs = Configs().config
-area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
-a = ZoneID(configs)
-a.zones()
-print(a.det_zone(44, -79.30198263788123))
+# from configs.config import Configs
+# configs = Configs().config
+# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+# a = ZoneID(configs)
+# a.zones()
+# print(a.det_zone(44, -79.30198263788123))
