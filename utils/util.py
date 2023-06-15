@@ -39,6 +39,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 cluster_head=True,
                 other_CHs=set(),
                 cluster_members=Graph(veh.getAttribute('id')),
+                bridge_CHs=set(),
                 bridges=dict(),
                 IP=None,
                 MAC=mac_address(),
