@@ -30,7 +30,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 pos=float(veh.getAttribute('pos')),
                 lane=veh.getAttribute('lane'),
                 zone=zone_id,
-                prev_zone=None,
+                prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
                 in_area=presence(understudied_area, veh),
                 trans_range=config.trans_range,
@@ -39,7 +39,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 cluster_head=True,
                 other_CHs=set(),
                 cluster_members=Graph(veh.getAttribute('id')),
-                bridges=set(),
+                bridges=dict(),
                 IP=None,
                 MAC=mac_address(),
                 counter=config.counter
@@ -63,7 +63,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 pos=float(veh.getAttribute('pos')),
                 lane=veh.getAttribute('lane'),
                 zone=zone_id,
-                prev_zone=None,
+                prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
                 in_area=presence(understudied_area, veh),
                 trans_range=config.trans_range,
@@ -73,7 +73,8 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 primary_CH=None,
                 other_CHs=set(),
                 cluster_members=None,  # This will be a Graph if the vehicle is a CH
-                bridges=set(),
+                bridges=dict(),
+                bridge_CHs=set(),
                 IP=None,
                 MAC=mac_address(),
                 counter=3  # a counter_time to search and join a cluster
@@ -210,7 +211,7 @@ def choose_ch(table, veh_table_i,
     veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
-    nominee = ''
+    # nominee = ''
     min_ef = 10
     for j in bus_candidates:
         # latitude of the centre of previous zone that bus were in
@@ -285,7 +286,8 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
         bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-        bus_table.values(veh.getAttribute('id'))['bridges'] = set()
+        bus_table.values(veh.getAttribute('id'))['bridge_CHs'] = set()
+        bus_table.values(veh.getAttribute('id'))['bridges'] = dict()
         bus_table.values(veh.getAttribute('id'))['other_CHs'] = set()
 
         zone_buses[zone_id].add(veh.getAttribute('id'))
@@ -331,7 +333,8 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
         veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-        veh_table.values(veh.getAttribute('id'))['bridges'] = set()
+        veh_table.values(veh.getAttribute('id'))['bridge_CHs'] = set()
+        veh_table.values(veh.getAttribute('id'))['bridges'] = dict()
         veh_table.values(veh.getAttribute('id'))['other_CHs'] = set()
 
         zone_vehicles[zone_id].add(veh.getAttribute('id'))

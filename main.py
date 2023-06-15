@@ -22,7 +22,11 @@ if __name__ == "__main__":
     a.update(configs, area_zones)
     for i in a.veh_table.ids():
         a.update_cluster(i, configs, area_zones)
+    print('n_bus: ', len(a.bus_table.ids()))
+    print('n_veh: ', len(a.veh_table.ids()))
     print('bus-ids: ', a.bus_table.ids())
     print('vehicles-ids: ', a.veh_table.ids())
     print('\n')
     a.print_table()
+    z = 2+2
+
