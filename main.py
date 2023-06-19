@@ -28,5 +28,3 @@ if __name__ == "__main__":
     print('vehicles-ids: ', a.veh_table.ids())
     print('\n')
     a.print_table()
-    z = 2+2
-

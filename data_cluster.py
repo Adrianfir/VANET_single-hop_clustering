@@ -99,7 +99,7 @@ class DataTable:
     def update_cluster(self, veh_id, config, zones):
         """
         This method is designed for finding a cluster for veh_id
-        :return: cluster heads and connection between them including through the bridge_CHs
+        :return: cluster heads and connection between them including through the gate_CHs
         """
         self.veh_table.values(veh_id)['other_CHs'] = set()
         print(veh_id)
@@ -107,7 +107,7 @@ class DataTable:
         bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                          self.zone_buses, self.zone_vehicles)
         if len(bus_candidates) == 0 & len(ch_candidates) == 0 & \
-                (self.veh_table.values(veh_id)['primary_CH'] is not None) & \
+                (self.veh_table.values(veh_id)['primary_CH'] is None) & \
                 (self.veh_table.values(veh_id)['cluster_head'] is False):
             self.stand_alone = self.stand_alone.add(veh_id)
 
@@ -161,16 +161,16 @@ class DataTable:
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
-                    # updating the bridge_CHs of the bus_ch: if a=self.bus_table.values(bus_ch)['bridge_CHs'], and
+                    # updating the gate_CHs of the bus_ch: if a=self.bus_table.values(bus_ch)['gate_CHs'], and
                     # b=self.veh_table.values(veh_id)['other_CHs']
                     # then a.update(a.union(b.difference(a)))
-                    # then update the bus_ch's bridges
+                    # then update the bus_ch's gates
                     if len(self.veh_table.values(veh_id)['other_CHs']) > 0:
-                        self.bus_table.values(bus_ch)['bridge_CHs'].update(
-                            self.bus_table.values(bus_ch)['bridge_CHs'].
+                        self.bus_table.values(bus_ch)['gate_CHs'].update(
+                            self.bus_table.values(bus_ch)['gate_CHs'].
                             union(self.veh_table.values(veh_id)['other_CHs'].
-                                  difference(self.bus_table.values(bus_ch)['bridge_CHs'])))
-                        self.bus_table.values(bus_ch)['bridges'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
+                                  difference(self.bus_table.values(bus_ch)['gate_CHs'])))
+                        self.bus_table.values(bus_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
                 return veh_id + "is now in a bus cluster"
             elif len(ch_candidates) > 0:
                 if len(ch_candidates) == 1:
@@ -191,17 +191,17 @@ class DataTable:
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.bus_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
                     self.bus_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
-                    # updating the bridge_CHs of the CH: if a=self.veh_table.values(veh_ch)['bridge_CHs'], and
+                    # updating the gate_CHs of the CH: if a=self.veh_table.values(veh_ch)['gate_CHs'], and
                     # b=self.veh_table.values(veh_id)['other_CHs']
                     # then a.update(a.union(b.difference(a)))
-                    # then update the veh_ch's bridges
+                    # then update the veh_ch's gates
                     if len(self.veh_table.values(veh_id)['other_CHs']) > 0:
-                        self.veh_table.values(veh_ch)['bridge_CHs'].update(
-                            self.veh_table.values(veh_ch)['bridge_CHs'].
+                        self.veh_table.values(veh_ch)['gate_CHs'].update(
+                            self.veh_table.values(veh_ch)['gate_CHs'].
                             union(self.veh_table.values(veh_id)['other_CHs'].
-                                  difference(self.veh_table.values(veh_ch)['bridge_CHs'])))
-                        self.veh_table.values(veh_id)['bridges'].add()
-                        self.veh_table.values(veh_ch)['bridges'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
+                                  difference(self.veh_table.values(veh_ch)['gate_CHs'])))
+                        self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
+                return veh_id + "is now in a CH cluster"
             else:
                 if self.veh_table.values(veh_id)['counter'] > 1:
                     self.veh_table.values(veh_id)['counter'] -= 1
@@ -220,6 +220,7 @@ class DataTable:
                 if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
                     self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id)
                     self.veh_table.values(veh_id)['cluster_head'] = False
+                    self.stand_alone.add(veh_id)
                     self.update_cluster(veh_id)
                 else:
                     for m in self.veh_table.values(veh_id).adj_list:
@@ -230,6 +231,7 @@ class DataTable:
                                              ), unit=hs.Unit.METERS)
                         if dist > config.trans_range:
                             self.veh_table.values(veh_id)['cluster_members'].remove_vertex(m)
+
 
     # def create_cluster(self):
     #     near_veh = dict()
