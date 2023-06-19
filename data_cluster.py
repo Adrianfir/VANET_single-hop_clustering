@@ -109,7 +109,7 @@ class DataTable:
         if len(bus_candidates) == 0 & len(ch_candidates) == 0 & \
                 (self.veh_table.values(veh_id)['primary_CH'] is None) & \
                 (self.veh_table.values(veh_id)['cluster_head'] is False):
-            self.stand_alone = self.stand_alone.add(veh_id)
+            self.stand_alone.add(veh_id)
 
         # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
         # or is not in its transmission_range anymore
@@ -220,7 +220,6 @@ class DataTable:
                 if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
                     self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id)
                     self.veh_table.values(veh_id)['cluster_head'] = False
-                    self.stand_alone.add(veh_id)
                     self.update_cluster(veh_id)
                 else:
                     for m in self.veh_table.values(veh_id).adj_list:
@@ -231,6 +230,7 @@ class DataTable:
                                              ), unit=hs.Unit.METERS)
                         if dist > config.trans_range:
                             self.veh_table.values(veh_id)['cluster_members'].remove_vertex(m)
+            # Update the other_CHs in transmission range of a CLuster head
 
 
     # def create_cluster(self):

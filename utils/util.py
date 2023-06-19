@@ -161,26 +161,27 @@ def det_near_ch(veh_id, veh_table, bus_table,
             bus_candidates.add(j)
 
     for j in neigh_ch:
-        euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
-                                       veh_table.values(veh_id)["long"]),
-                                      (veh_table.values(j)['lat'],
-                                       veh_table.values(j)['long']), unit=hs.Unit.METERS)
+        if veh_table.values(j)['cluster_head'] is True:
+            euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
+                                           veh_table.values(veh_id)["long"]),
+                                          (veh_table.values(j)['lat'],
+                                           veh_table.values(j)['long']), unit=hs.Unit.METERS)
 
-        if (euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range'])) & \
-                (veh_table.values(j)['cluster_head'] is True):
-            ch_candidates.add(j)
+            if (euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range'])) & \
+                    (veh_table.values(j)['cluster_head'] is True):
+                ch_candidates.add(j)
 
     return bus_candidates, ch_candidates
 
 
-def det_other_CH(veh_id, veh_table, bus_table,
-                 zone_buses, zone_vehicles):
-    if veh_table.values(veh_id)['primary_CH'] is not None:
-        all_near_chs = set()
-        near_buses, near_chs = det_near_ch(veh_id, veh_table, bus_table,
-                                           zone_buses, zone_vehicles)
-        all_near_chs.union(near_chs)
-        all_near_chs.union(near_buses)
+# def det_other_CH(veh_id, veh_table, bus_table,
+#                  zone_buses, zone_vehicles):
+#     if veh_table.values(veh_id)['primary_CH'] is not None:
+#         all_near_chs = set()
+#         near_buses, near_chs = det_near_ch(veh_id, veh_table, bus_table,
+#                                            zone_buses, zone_vehicles)
+#         all_near_chs.union(near_chs)
+#         all_near_chs.union(near_buses)
 
 
 def choose_ch(table, veh_table_i,
