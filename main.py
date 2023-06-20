@@ -6,6 +6,8 @@ This project is related to clustering and routing problem in VANET
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
+import networkx as nx
+import matplotlib.pyplot as plt
 
 from data_cluster import DataTable
 from configs.config import Configs
@@ -28,3 +30,7 @@ if __name__ == "__main__":
     print('vehicles-ids: ', a.veh_table.ids())
     print('\n')
     a.print_table()
+
+    # G = nx.Graph(a.bus_table.values('bus124')['cluster_members'].adj_list)
+    # nx.draw(G, with_labels=True, node_color='lightblue', node_size=500, font_weight='bold')
+    # plt.show()

@@ -81,6 +81,7 @@ class DataTable:
                 self.bus_table, self.zone_buses = util.update_bus_table(veh, self.bus_table, zone_id,
                                                                         self.understudied_area, zones,
                                                                         config, self.zone_buses)
+                self.all_CHs.add(veh.getAttribute('id'))
             else:
                 veh_ids.add(veh.getAttribute('id'))
                 self.veh_table, self.zone_vehicles = util.update_veh_table(veh, self.veh_table, zone_id,
@@ -102,7 +103,6 @@ class DataTable:
         :return: cluster heads and connection between them including through the gate_CHs
         """
         self.veh_table.values(veh_id)['other_CHs'] = set()
-        print(veh_id)
         # determining the buses and cluster_head in neighbor zones
         bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                          self.zone_buses, self.zone_vehicles)
@@ -111,6 +111,29 @@ class DataTable:
                 (self.veh_table.values(veh_id)['cluster_head'] is False):
             self.stand_alone.add(veh_id)
 
+        elif (self.veh_table.values(veh_id)['in_area'] is True) & \
+                (self.veh_table.values(veh_id)['primary_CH'] is None) & \
+                (self.veh_table.values(veh_id)['cluster_head'] is True):
+
+            for m in self.veh_table.values(veh_id).adj_list:
+                dist = hs.haversine((self.veh_table.values(veh_id)["lat"],
+                                     self.veh_table.values(veh_id)["long"]),
+                                    (self.veh_table.values(self.veh_table.values(m))['lat'],
+                                     self.veh_table.values(self.veh_table.values(m))['long']
+                                     ), unit=hs.Unit.METERS)
+                if dist > config.trans_range:
+                    self.veh_table.values(veh_id)['cluster_members'].remove_vertex(m)
+            # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
+            # unless get selected by another vehicles or can't find a cluster head after the counter
+            if len(self.veh_table.values(veh_id))['cluster_members'].adj_list == 1:
+                if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
+                    self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id)
+                    self.veh_table.values(veh_id)['cluster_head'] = False
+                    self.update_cluster(veh_id)
+
+            self.veh_table.values(veh_id)['other_CHs'].add(bus_candidates)
+            self.veh_table.values(veh_id)['other_CHs'].add(ch_candidates)
+            
         # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
         # or is not in its transmission_range anymore
         elif (self.veh_table.values(veh_id)['in_area'] is True) & \
@@ -211,26 +234,6 @@ class DataTable:
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id)
                     self.stand_alone.remove(veh_id)
-        elif (self.veh_table.values(veh_id)['in_area'] is True) & \
-                (self.veh_table.values(veh_id)['primary_CH'] is None) & \
-                (self.veh_table.values(veh_id)['cluster_head'] is True):
-            # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
-            # unless get selected by another vehicles or can't find a cluster head after the counter
-            if len(self.veh_table.values(veh_id))['cluster_members'].adj_list == 1:
-                if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
-                    self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id)
-                    self.veh_table.values(veh_id)['cluster_head'] = False
-                    self.update_cluster(veh_id)
-                else:
-                    for m in self.veh_table.values(veh_id).adj_list:
-                        dist = hs.haversine((self.veh_table.values(veh_id)["lat"],
-                                             self.veh_table.values(veh_id)["long"]),
-                                            (self.veh_table.values(self.veh_table.values(m))['lat'],
-                                             self.veh_table.values(self.veh_table.values(m))['long']
-                                             ), unit=hs.Unit.METERS)
-                        if dist > config.trans_range:
-                            self.veh_table.values(veh_id)['cluster_members'].remove_vertex(m)
-            # Update the other_CHs in transmission range of a CLuster head
 
 
     # def create_cluster(self):
