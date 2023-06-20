@@ -174,14 +174,28 @@ def det_near_ch(veh_id, veh_table, bus_table,
     return bus_candidates, ch_candidates
 
 
-# def det_other_CH(veh_id, veh_table, bus_table,
-#                  zone_buses, zone_vehicles):
-#     if veh_table.values(veh_id)['primary_CH'] is not None:
-#         all_near_chs = set()
-#         near_buses, near_chs = det_near_ch(veh_id, veh_table, bus_table,
-#                                            zone_buses, zone_vehicles)
-#         all_near_chs.union(near_chs)
-#         all_near_chs.union(near_buses)
+def det_buses_other_CH(bus_id, veh_table, bus_table,
+                       zone_buses, zone_CH):
+
+    all_near_chs = set()
+    all_chs = set()
+    for zone in bus_table.values(bus_id)['neighbor_zones']:
+        all_chs = all_chs.union(zone_CH[zone])
+        all_chs = all_chs.union(zone_buses[zone])
+
+    for ch in all_chs:
+        if 'bus' in ch:
+            ch_table = bus_table
+        else:
+            ch_table = veh_table
+        euclidian_dist = hs.haversine((bus_table.values(bus_id)["lat"],
+                                       bus_table.values(bus_id)["long"]),
+                                      (ch_table.values(ch)['lat'],
+                                       ch_table.values(ch)['long']), unit=hs.Unit.METERS)
+
+        if euclidian_dist < min(bus_table.values(bus_id)['trans_range'], ch_table.values(ch)['trans_range']):
+            all_near_chs.add(ch)
+    return all_near_chs
 
 
 def choose_ch(table, veh_table_i,

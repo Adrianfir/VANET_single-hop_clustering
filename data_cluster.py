@@ -153,7 +153,7 @@ class DataTable:
                 if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
                                             self.bus_table.values(self.veh_table.values(veh_id)
                                                                   ['primary_CH'])['trans_range']):
-                    return veh_id + "is still in its current primary_CH transmission range"
+                    continue
                 # here the 'primary_CH' will be changed to None and recursion is applied
                 else:
                     ch_id = self.veh_table.values(veh_id)['primary_CH']
@@ -201,7 +201,7 @@ class DataTable:
                                 union(self.veh_table.values(veh_id)['other_CHs'].
                                       difference(self.bus_table.values(bus_ch)['gate_CHs'])))
                             self.bus_table.values(bus_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
-                    return veh_id + "is now in a bus cluster"
+                    continue
                 elif len(ch_candidates) > 0:
                     if len(ch_candidates) == 1:
                         veh_ch = list(ch_candidates)[0]
@@ -231,7 +231,7 @@ class DataTable:
                                 union(self.veh_table.values(veh_id)['other_CHs'].
                                       difference(self.veh_table.values(veh_ch)['gate_CHs'])))
                             self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
-                    return veh_id + "is now in a CH cluster"
+                    continue
                 else:
                     if self.veh_table.values(veh_id)['counter'] > 1:
                         self.veh_table.values(veh_id)['counter'] -= 1
@@ -241,6 +241,13 @@ class DataTable:
                         self.veh_table.values(veh_id)['counter'] = config.counter
                         self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id)
                         self.stand_alone.remove(veh_id)
+        # finding buses' other_CHs
+        for bus in self.bus_table.ids():
+            self.bus_table.values(bus)['other_CHs'] = set()
+            nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
+                                                 self.zone_buses, self.zone_CH)
+            self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)
+            self.bus_table.values(bus)['other_CHs'].remove(bus)
 
     # def create_cluster(self):
     #     near_veh = dict()
