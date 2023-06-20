@@ -22,8 +22,7 @@ if __name__ == "__main__":
     a = DataTable(configs, area_zones)
     a.print_table()
     a.update(configs, area_zones)
-    for i in a.veh_table.ids():
-        a.update_cluster(i, configs, area_zones)
+    a.update_cluster(configs, area_zones)
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))
     print('bus-ids: ', a.bus_table.ids())
