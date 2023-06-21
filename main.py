@@ -29,6 +29,7 @@ if __name__ == "__main__":
     print('vehicles-ids: ', a.veh_table.ids())
     print('\n')
     a.print_table()
+    print(a.all_CHs)
 
     # G = nx.Graph(a.bus_table.values('bus124')['cluster_members'].adj_list)
     # nx.draw(G, with_labels=True, node_color='lightblue', node_size=500, font_weight='bold')

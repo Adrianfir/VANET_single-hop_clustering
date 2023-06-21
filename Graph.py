@@ -6,26 +6,29 @@ Greater Toronto Area (GTA) would affect the space complexity
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['Graph']
 
+import networkx as nx
+
 import Hash
 
 
 class Graph:
 
-    def __init__(self, head):
-        self.adj_list = {head: []}
+    def __init__(self, head, pos):
+        self.adj_list = {head: {'pos': pos, 'edges': []}}
 
     def print_graph(self):
         for vertex in self.adj_list:
-            print(vertex, ':', self.adj_list[vertex])
+            print(vertex, ':', self.adj_list[vertex]['edges'])
 
-    def add_vertex(self, vertex):
+    def add_vertex(self, vertex, pos):
         """
-        this method is for adding a a new vertex
+        this method is for adding a new vertex
+        :param pos: location latitude and longitude
         :param vertex: the vertex is either a cluster-head or a bridge
         :return:
         """
         if vertex not in self.adj_list.keys():
-            self.adj_list[vertex] = []
+            self.adj_list[vertex] = {'pos': pos, 'edges': []}
 
     def add_edge(self, v1, v2):
         """
@@ -36,8 +39,8 @@ class Graph:
         :return:
         """
         if v1 in self.adj_list.keys() and v2 in self.adj_list.keys():
-            self.adj_list[v1].append(v2)
-            self.adj_list[v2].append(v1)
+            self.adj_list[v1]['edges'].append(v2)
+            self.adj_list[v2]['edges'].append(v1)
             return True
         return False
 

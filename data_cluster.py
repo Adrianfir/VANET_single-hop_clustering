@@ -13,6 +13,10 @@ import utils.util as util
 import Hash
 
 
+def det_graphnet():
+    return True
+
+
 class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
     # and defining IP addresses by using trace (which is sumo_trace)
@@ -40,6 +44,7 @@ class DataTable:
                                 )
                             )
         self.stand_alone = set()
+        self.all_CHs = set()
         self.time = config.start_time
         self.understudied_area = zones.understudied_area()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
@@ -70,7 +75,7 @@ class DataTable:
         self.time += 1
         bus_ids = set()
         veh_ids = set()
-
+        self.all_CHs = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -83,6 +88,7 @@ class DataTable:
                 self.bus_table, self.zone_buses = util.update_bus_table(veh, self.bus_table, zone_id,
                                                                         self.understudied_area, zones,
                                                                         config, self.zone_buses)
+                self.all_CHs.add(veh.getAttribute('id'))
             else:
                 veh_ids.add(veh.getAttribute('id'))
                 self.veh_table, self.zone_vehicles = util.update_veh_table(veh, self.veh_table, zone_id,
@@ -125,7 +131,8 @@ class DataTable:
                                          self.veh_table.values(self.veh_table.values(m))['long']
                                          ), unit=hs.Unit.METERS)
                     if dist > config.trans_range:
-                        self.veh_table.values(veh_id)['cluster_members'].remove_vertex(m)
+                        self.veh_table.values(veh_id)['cluster_members'].remove_edge(veh_id, m)
+
                 # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
                 # unless get selected by another vehicles or can't find a cluster head after the counter
                 if len(self.veh_table.values(veh_id))['cluster_members'].adj_list == 1:
@@ -138,6 +145,7 @@ class DataTable:
                 self.veh_table.values(veh_id)['other_CHs'].add(bus_candidates)
                 self.veh_table.values(veh_id)['other_CHs'].add(ch_candidates)
                 self.zone_CH[self.veh_table.values('zone')].add(veh_id)
+                self.all_CHs.add(veh_id)
 
             # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
             # or is not in its transmission_range anymore
@@ -176,7 +184,9 @@ class DataTable:
                         bus_ch = list(bus_candidates)[0]
                         self.veh_table.values(veh_id)['primary_CH'] = bus_ch
                         self.veh_table.values(veh_id)['counter'] = config.counter
-                        self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
+                        self.bus_table.values(bus_ch)['cluster_members'].\
+                            add_vertex(veh_id, (self.veh_table.values(veh_id)['lat'],
+                                                self.veh_table.values(veh_id)['long']))
                         self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                     else:
                         bus_ch = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
@@ -189,7 +199,9 @@ class DataTable:
                             update(self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates))
                         self.veh_table.values(veh_id)['other_CHs']. \
                             update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
-                        self.bus_table.values(bus_ch)['cluster_members'].add_vertex(veh_id)
+                        self.bus_table.values(bus_ch)['cluster_members'].\
+                            add_vertex(veh_id, (self.veh_table.values(veh_id)['lat'],
+                                       self.veh_table.values(veh_id)['long']))
                         self.bus_table.values(bus_ch)['cluster_members'].add_edge(bus_ch, veh_id)
                         # updating the gate_CHs of the bus_ch: if a=self.bus_table.values(bus_ch)['gate_CHs'], and
                         # b=self.veh_table.values(veh_id)['other_CHs']
@@ -207,7 +219,9 @@ class DataTable:
                         veh_ch = list(ch_candidates)[0]
                         self.veh_table.values(veh_id)['primary_CH'] = veh_ch
                         self.veh_table.values(veh_id)['counter'] = config.counter
-                        self.veh_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
+                        self.veh_table.values(veh_ch)['cluster_members'].\
+                            add_vertex(veh_id, (self.veh_table.values(veh_id)['lat'],
+                                                self.veh_table.values(veh_id)['long']))
                         self.veh_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
                     else:
                         veh_ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
@@ -219,7 +233,9 @@ class DataTable:
                         bus_candidates.remove(veh_ch)
                         self.veh_table.values(veh_id)['other_CHs']. \
                             update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
-                        self.bus_table.values(veh_ch)['cluster_members'].add_vertex(veh_id)
+                        self.bus_table.values(veh_ch)['cluster_members'].\
+                            add_vertex(veh_id, (self.veh_table.values(veh_id)['lat'],
+                                                self.veh_table.values(veh_id)['long']))
                         self.bus_table.values(veh_ch)['cluster_members'].add_edge(veh_ch, veh_id)
                         # updating the gate_CHs of the CH: if a=self.veh_table.values(veh_ch)['gate_CHs'], and
                         # b=self.veh_table.values(veh_id)['other_CHs']
@@ -239,7 +255,10 @@ class DataTable:
                     else:
                         self.veh_table.values(veh_id)['cluster_head'] = True
                         self.veh_table.values(veh_id)['counter'] = config.counter
-                        self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id)
+                        self.veh_table.values(veh_id)['cluster_members'] = Graph(veh_id,
+                                                                                 (self.veh_table.values(veh_id)['lat'],
+                                                                                  self.veh_table.values(veh_id)['long'])
+                                                                                 )
                         self.stand_alone.remove(veh_id)
         # finding buses' other_CHs
         for bus in self.bus_table.ids():
@@ -247,7 +266,6 @@ class DataTable:
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)
-            self.bus_table.values(bus)['other_CHs'].remove(bus)
 
     # def create_cluster(self):
     #     near_veh = dict()

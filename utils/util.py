@@ -38,7 +38,8 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=True,
                 other_CHs=set(),
-                cluster_members=Graph(veh.getAttribute('id')),
+                cluster_members=Graph(veh.getAttribute('id'), (float(veh.getAttribute('y')),
+                                                               float(veh.getAttribute('x')))),
                 gate_CHs=set(),
                 gates=dict(),
                 IP=None,
@@ -184,7 +185,9 @@ def det_buses_other_CH(bus_id, veh_table, bus_table,
         all_chs = all_chs.union(zone_buses[zone])
 
     for ch in all_chs:
-        if 'bus' in ch:
+        if ch == bus_id:
+            continue
+        elif 'bus' in ch:
             ch_table = bus_table
         else:
             ch_table = veh_table
