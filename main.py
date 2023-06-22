@@ -29,8 +29,24 @@ if __name__ == "__main__":
     print('vehicles-ids: ', a.veh_table.ids())
     print('\n')
     a.print_table()
-    print(a.all_CHs)
+    # print(a.all_CHs)
 
-    # G = nx.Graph(a.bus_table.values('bus124')['cluster_members'].adj_list)
-    # nx.draw(G, with_labels=True, node_color='lightblue', node_size=500, font_weight='bold')
+    # Create a networkx graph
+    # G = nx.Graph()
+    #
+    # # Add nodes and edges with coordinates to the networkx graph
+    # for vertex, data in a.bus_table.values('bus127')['cluster_members'].adj_list.items():
+    #     G.add_node(vertex, pos=data['pos'])
+    #     for edge in data['edges']:
+    #         G.add_edge(vertex, edge)
+    #
+    # # Extract positions from node attributes
+    # pos = nx.get_node_attributes(G, 'pos')
+    #
+    # # Plot the graph on a map
+    # plt.figure(figsize=(10, 8))
+    # nx.draw(G, pos, with_labels=True, node_size=100, font_size=6, font_weight='bold', alpha=0.5, node_color='lightblue',
+    #         edge_color='gray', width=1.0)
+    #
+    # # Show the plot
     # plt.show()

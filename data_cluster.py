@@ -47,8 +47,10 @@ class DataTable:
         self.all_CHs = set()
         self.time = config.start_time
         self.understudied_area = zones.understudied_area()
+        self.init_count = 0             # this counter is just for defining the self.net_graph for the very first time
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
+            self.init_count +=1
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
@@ -65,6 +67,18 @@ class DataTable:
                                                                                       self.understudied_area))
                 # Here the vehicles will be added to zone_vehicles
                 self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
+
+            # create the self.net_graph or add the new vertex
+            if self.init_count == 1:
+                self.net_graph = Graph(veh.getAttribute('id'), (float(veh.getAttribute('y')),
+                                                                float(veh.getAttribute('x'))
+                                                                )
+                                       )
+            else:
+                self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
+                                                                   float(veh.getAttribute('x'))
+                                                                   )
+                                          )
 
     def update(self, config, zones):
         """
@@ -89,20 +103,28 @@ class DataTable:
                                                                         self.understudied_area, zones,
                                                                         config, self.zone_buses)
                 self.all_CHs.add(veh.getAttribute('id'))
+
             else:
                 veh_ids.add(veh.getAttribute('id'))
                 self.veh_table, self.zone_vehicles = util.update_veh_table(veh, self.veh_table, zone_id,
                                                                            self.understudied_area, zones,
                                                                            config, self.zone_vehicles)
+            # add the vertex to the graph
+            self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
+                                                               float(veh.getAttribute('x'))
+                                                               )
+                                      )
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.bus_table.remove(k)
+            self.net_graph.remove_vertex(k)
 
         # removing the vehicles, that have left the understudied area, from self.veh_table and self.zone_vehicles
         for k in (self.veh_table.ids() - veh_ids):
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
+            self.net_graph.remove_vertex(k)
 
     def update_cluster(self, config, zones):
 
