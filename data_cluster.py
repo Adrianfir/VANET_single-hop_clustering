@@ -265,7 +265,9 @@ class DataTable:
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)
-
+            for node in self.bus_table.values(bus)['other_CHs']:
+                self.net_graph.add_edge(bus, node)
+                
     def show_graph(self):
         """
         this function will illustrate the self.net_graph
