@@ -13,8 +13,8 @@ import Hash
 
 class Graph:
 
-    def __init__(self, head, pos):
-        self.adj_list = {head: {'pos': pos, 'edges': []}}
+    def __init__(self, vertex, pos):
+        self.adj_list = {vertex: {'pos': pos, 'edges': []}}
 
     def print_graph(self):
         for vertex in self.adj_list:
@@ -64,21 +64,21 @@ class Graph:
         return False
 
 
-graph = Graph("A", (40.7128, -74.0060))  # New York
-
-# Add vertices and edges with coordinates
-graph.add_vertex("B", (34.0522, -118.2437))  # Los Angeles
-graph.add_vertex("C", (51.5074, -0.1278))  # London
-graph.add_vertex("D", (48.8566, 2.3522))  # Paris
-
-graph.add_edge("A", "B")
-graph.add_edge("B", "C")
-graph.add_edge("C", "D")
+# graph = Graph("A", (40.7128, -74.0060))  # New York
 #
-# # Create a networkx graph
-G = nx.Graph()
+# # Add vertices and edges with coordinates
+# graph.add_vertex("B", (34.0522, -118.2437))  # Los Angeles
+# graph.add_vertex("C", (51.5074, -0.1278))  # London
+# graph.add_vertex("D", (48.8566, 2.3522))  # Paris
 #
-# # Add nodes and edges with coordinates to the networkx graph
+# graph.add_edge("A", "B")
+# graph.add_edge("B", "C")
+# graph.add_edge("C", "D")
+# #
+# # # Create a networkx graph
+# G = nx.Graph()
+# #
+# # # Add nodes and edges with coordinates to the networkx graph
 # for vertex, data in graph.adj_list.items():
 #     G.add_node(vertex, pos=data['pos'])
 #     for edge in data['edges']:

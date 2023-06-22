@@ -3,7 +3,7 @@ This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
-           'middle_zone', 'presence', 'choose_ch', 'det_veh_ch',
+           'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
            'det_near_ch', 'update_bus_table', 'update_veh_table']
 
 import numpy as np
@@ -38,8 +38,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=True,
                 other_CHs=set(),
-                cluster_members=Graph(veh.getAttribute('id'), (float(veh.getAttribute('y')),
-                                                               float(veh.getAttribute('x')))),
+                cluster_members=set(),
                 gate_CHs=set(),
                 gates=dict(),
                 IP=None,
@@ -74,7 +73,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 cluster_head=False,  # if the vehicle is a CH, it will be True
                 primary_CH=None,
                 other_CHs=set(),
-                cluster_members=None,  # This will be a Graph if the vehicle is a CH
+                cluster_members=set(),  # This will be a Graph if the vehicle is a CH
                 gates=dict(),
                 gate_CHs=set(),
                 IP=None,
