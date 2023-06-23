@@ -10,8 +10,8 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 import haversine as hs
 import networkx as nx
 import folium
-from folium.plugins import MarkerCluster, PolyLineTextPath
-import matplotlib.pyplot as plt
+from folium.plugins import MarkerCluster
+import webbrowser
 
 from Graph import Graph
 import utils.util as util
@@ -52,7 +52,8 @@ class DataTable:
         self.all_CHs = set()
         self.time = config.start_time
         self.understudied_area = zones.understudied_area()
-        self.init_count = 0             # this counter is just for defining the self.net_graph for the very first time
+        self.init_count = 0  # this counter is just for defining the self.net_graph for the very first time
+        self.edge_color = ''
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             self.init_count += 1
@@ -280,10 +281,6 @@ class DataTable:
         # Add nodes and edges with coordinates to the networkx graph
         node_colors = dict()
         for vertex, data in self.net_graph.adj_list.items():
-            if 'bus' in vertex:
-                node_colors[vertex] = 'red'
-            else:
-                node_colors[vertex] = 'blue'
             G.add_node(vertex, pos=data['pos'])
             for edge in data['edges']:
                 G.add_edge(vertex, edge)
@@ -291,37 +288,25 @@ class DataTable:
         # Extract positions from node attributes
         pos = nx.get_node_attributes(G, 'pos')
 
-        # Plot the graph on a map
-        # plt.figure(figsize=(10, 8))
-        # ax = plt.axes(projection=ccrs.PlateCarree())
-        #
-        # # Add map features
-        # ax.coastlines()
-        # ax.add_feature(cartopy.feature.LAND, color='lightgray')
-        # ax.add_feature(cartopy.feature.OCEAN, color='white')
-        # ax.add_feature(cartopy.feature.BORDERS, linestyle='-', edgecolor='gray')
-        #
-        # # Convert the node positions to map coordinates
-        # x, y = zip(*[pos[node] for node in G.nodes()])
-        #
-        # nx.draw(G, pos, with_labels=True, node_size=100, font_size=6, font_weight='bold', alpha=0.5,
-        #         node_color=[node_colors.get(node, 'lightblue') for node in G.nodes()],
-        #         edge_color='gray', width=1.0)
-        #
-        # # Show the plot
-        # plt.show()
-
         # Create a folium map centered around the first node
         map_center = list(pos.values())[0]
-        m = folium.Map(location=map_center, zoom_start=15)
+        m = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron')
 
         # Create a MarkerCluster group for the networkx graph nodes
-        marker_cluster = MarkerCluster(name='Graph Nodes')
+        marker_cluster = MarkerCluster(name='VANET')
 
         # Add nodes to the MarkerCluster group
         for node, node_pos in pos.items():
-            marker = folium.CircleMarker(location=node_pos, radius=10, color='black', fill=True,
-                                         fill_color='lightblue')
+            if 'bus' in node:
+                marker = folium.CircleMarker(location=node_pos, radius=10, color='red', fill=True,
+                                             fill_color='red')
+            else:
+                if self.veh_table.values(node)['cluster_head'] is True:
+                    marker = folium.CircleMarker(location=node_pos, radius=10, color='red', fill=True,
+                                                 fill_color='red')
+                else:
+                    marker = folium.CircleMarker(location=node_pos, radius=5, color='lightblue', fill=True,
+                                                 fill_color='lightblue')
             marker.add_to(marker_cluster)
 
         # Add the MarkerCluster group to the map
@@ -335,9 +320,34 @@ class DataTable:
             start_pos = pos[edge[0]]
             end_pos = pos[edge[1]]
             locations = [start_pos, end_pos]
-            folium.PolyLine(locations=locations, color='gray').add_to(edge_group)
-            # folium.Marker(location=start_pos, icon=folium.DivIcon(
-            #     html=f'<div style="font-size: 10pt; color: red;">{edge[0]}-{edge[1]}</div>')).add_to(edge_group)
+            # determine the edge colors
+            if ('bus' in edge[0]) & ('bus' in edge[1]):
+                self.edge_color = 'pink'
+            elif ('veh' in edge[0]) & ('bus' in edge[1]):
+                if self.veh_table.values(edge[0])['cluster_head'] is True:
+                    self.edge_color = 'pink'
+                else:
+                    if self.veh_table.values(edge[0])['primary_CH'] == edge[1]:
+                        self.edge_color = 'green'
+                    else:
+                        self.edge_color = 'gray'
+            elif ('bus' in edge[0]) & ('veh' in edge[1]):
+                if self.veh_table.values(edge[1])['cluster_head'] is True:
+                    self.edge_color = 'pink'
+                else:
+                    if self.veh_table.values(edge[1])['primary_CH'] == edge[0]:
+                        self.edge_color = 'green'
+                    else:
+                        self.edge_color = 'gray'
+            elif ('veh' in edge[0]) & ('veh' in edge[1]):
+                if self.veh_table.values(edge[0])['cluster_head'] is True:
+                    if self.veh_table.values(edge[1])['cluster_head'] is True:
+                        self.edge_color = 'pink'
+                    else:
+                        self.edge_color = 'green'
+                else:
+                    self.edge_color = 'green'
+            folium.PolyLine(locations=locations, color=self.edge_color).add_to(edge_group)
 
         # Create a feature group for the networkx graph nodes
         node_group = folium.FeatureGroup(name='Graph Nodes')
@@ -360,7 +370,6 @@ class DataTable:
         m.save("graph_map.html")
 
         # Open the HTML file in a web browser
-        import webbrowser
         webbrowser.open("graph_map.html")
 
     def print_table(self):
