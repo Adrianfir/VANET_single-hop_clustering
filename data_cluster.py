@@ -9,6 +9,8 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 
 import haversine as hs
 import networkx as nx
+import folium
+from folium.plugins import MarkerCluster, PolyLineTextPath
 import matplotlib.pyplot as plt
 
 from Graph import Graph
@@ -267,7 +269,7 @@ class DataTable:
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)
             for node in self.bus_table.values(bus)['other_CHs']:
                 self.net_graph.add_edge(bus, node)
-                
+
     def show_graph(self):
         """
         this function will illustrate the self.net_graph
@@ -290,13 +292,76 @@ class DataTable:
         pos = nx.get_node_attributes(G, 'pos')
 
         # Plot the graph on a map
-        plt.figure(figsize=(10, 8))
-        nx.draw(G, pos, with_labels=True, node_size=100, font_size=6, font_weight='bold', alpha=0.5,
-                node_color=[node_colors.get(node, 'lightblue') for node in G.nodes()],
-                edge_color='gray', width=1.0)
+        # plt.figure(figsize=(10, 8))
+        # ax = plt.axes(projection=ccrs.PlateCarree())
+        #
+        # # Add map features
+        # ax.coastlines()
+        # ax.add_feature(cartopy.feature.LAND, color='lightgray')
+        # ax.add_feature(cartopy.feature.OCEAN, color='white')
+        # ax.add_feature(cartopy.feature.BORDERS, linestyle='-', edgecolor='gray')
+        #
+        # # Convert the node positions to map coordinates
+        # x, y = zip(*[pos[node] for node in G.nodes()])
+        #
+        # nx.draw(G, pos, with_labels=True, node_size=100, font_size=6, font_weight='bold', alpha=0.5,
+        #         node_color=[node_colors.get(node, 'lightblue') for node in G.nodes()],
+        #         edge_color='gray', width=1.0)
+        #
+        # # Show the plot
+        # plt.show()
 
-        # Show the plot
-        plt.show()
+        # Create a folium map centered around the first node
+        map_center = list(pos.values())[0]
+        m = folium.Map(location=map_center, zoom_start=15)
+
+        # Create a MarkerCluster group for the networkx graph nodes
+        marker_cluster = MarkerCluster(name='Graph Nodes')
+
+        # Add nodes to the MarkerCluster group
+        for node, node_pos in pos.items():
+            marker = folium.CircleMarker(location=node_pos, radius=10, color='black', fill=True,
+                                         fill_color='lightblue')
+            marker.add_to(marker_cluster)
+
+        # Add the MarkerCluster group to the map
+        marker_cluster.add_to(m)
+
+        # Create a feature group for the networkx graph edges
+        edge_group = folium.FeatureGroup(name='Graph Edges')
+
+        # Add edges to the feature group
+        for edge in G.edges():
+            start_pos = pos[edge[0]]
+            end_pos = pos[edge[1]]
+            locations = [start_pos, end_pos]
+            folium.PolyLine(locations=locations, color='gray').add_to(edge_group)
+            # folium.Marker(location=start_pos, icon=folium.DivIcon(
+            #     html=f'<div style="font-size: 10pt; color: red;">{edge[0]}-{edge[1]}</div>')).add_to(edge_group)
+
+        # Create a feature group for the networkx graph nodes
+        node_group = folium.FeatureGroup(name='Graph Nodes')
+
+        # Add nodes to the feature group
+        for node, node_pos in pos.items():
+            folium.Marker(location=node_pos,
+                          icon=folium.DivIcon(html=f'<div style="font-size: 10pt; color: blue;">{node}</div>')).add_to(
+                node_group)
+
+        # Add the feature group to the map
+        node_group.add_to(m)
+        # Add the edge group to the map
+        edge_group.add_to(m)
+
+        # Add the map layer control
+        folium.LayerControl().add_to(m)
+
+        # Save the map as an HTML file
+        m.save("graph_map.html")
+
+        # Open the HTML file in a web browser
+        import webbrowser
+        webbrowser.open("graph_map.html")
 
     def print_table(self):
         self.bus_table.print_hash_table()
