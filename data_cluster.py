@@ -48,6 +48,10 @@ class DataTable:
                                 [set() for j in range(len(zones.zone_hash.ids()))]
                                 )
                             )
+        self.zone_stand_alone = dict(zip(zones.zone_hash.ids(),
+                                         [set() for j in range(len(zones.zone_hash.ids()))]
+                                         )
+                                     )
         self.stand_alone = set()
         self.all_CHs = set()
         self.time = config.start_time
@@ -150,10 +154,12 @@ class DataTable:
                 if self.veh_table.values(veh_id)['counter'] > 1:
                     self.veh_table.values(veh_id)['counter'] -= 1
                     self.stand_alone.add(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
                 else:
                     self.veh_table.values(veh_id)['cluster_head'] = True
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     self.stand_alone.remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
 
             elif (self.veh_table.values(veh_id)['in_area'] is True) & \
                     (self.veh_table.values(veh_id)['primary_CH'] is None) & \
