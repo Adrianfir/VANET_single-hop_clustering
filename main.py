@@ -20,6 +20,7 @@ if __name__ == "__main__":
     a = DataTable(configs, area_zones)
     a.print_table()
     a.update(configs, area_zones)
+    a.update(configs, area_zones)
     a.update_cluster(configs, area_zones)
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     print('\n')
     a.print_table()
     a.show_graph()
-    # print(a.all_CHs)
+    print(a.stand_alone)
 
     # Create a networkx graph
 

@@ -251,13 +251,14 @@ def choose_ch(table, veh_table_i,
 
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [bus_vector_x, bus_vector_y])
         theta_sim = np.arccos(cos_sim) / 2 * np.pi
+        theta_dist = euclidian_distance/min(table.values(j)['trans_range'], veh_table_i['trans_range'])
         # since it might return RuntimeWarning regarding the division, the warning will be ignored
         with np.errstate(divide='ignore', invalid='ignore'):
             speed_sim = np.divide(np.abs(table.values(j)['speed'] - veh_table_i['speed']),
                                   np.abs(table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for buses
-        ef = theta_sim + speed_sim
+        ef = theta_sim + speed_sim + theta_dist
 
         if ef < min_ef:
             nominee = j
