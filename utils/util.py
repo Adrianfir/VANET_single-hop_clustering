@@ -411,15 +411,15 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
             if dist < min(veh_table.values(k)['cluster_head'],
                           veh_table.values(j)['cluster_head']):
                 if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] == 2:
-                    veh_table.values(k)['other_CH'].add(j)
-                    veh_table.values(j)['other_CH'].add(k)
+                    veh_table.values(k)['other_CHs'].add(j)
+                    veh_table.values(j)['other_CHs'].add(k)
                     net_graph.add_edge(k, j)
 
                 elif (veh_table.values(k)['cluster_head'] is True) &\
                      (veh_table.values(j)['cluster_head'] is False):
 
                     if veh_table.values(j)['primary_CH'] != k:
-                        veh_table.values(j)['other_CH'].add(k)
+                        veh_table.values(j)['other_CHs'].add(k)
                         veh_table.values(veh_table.values(j)['primary_CH'])['gates'][j].add(k)
                         veh_table.values(veh_table.values(j)['primary_CH'])['gate_CHs'].add(k)
 
@@ -427,7 +427,7 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
                      (veh_table.values(k)['cluster_head'] is False):
 
                     if veh_table.values(k)['primary_CH'] != j:
-                        veh_table.values(k)['other_CH'].add(j)
+                        veh_table.values(k)['other_CHs'].add(j)
                         veh_table.values(veh_table.values(k)['primary_CH'])['gates'][k].add(j)
                         veh_table.values(veh_table.values(k)['primary_CH'])['gate_CHs'].add(j)
 

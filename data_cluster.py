@@ -279,7 +279,7 @@ class DataTable:
             for node in self.bus_table.values(bus)['other_CHs']:
                 self.net_graph.add_edge(bus, node)
 
-    def stand_alones_cluster(self):
+    def stand_alones_cluster(self, configs, zones):
         near_sa = dict()
         n_near_sa = dict()
         pot_ch = dict()
@@ -297,19 +297,37 @@ class DataTable:
             else:
                 continue
 
-        unique_pot_ch = set(pot_ch.items())
+        unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
-        for veh_id in self.stand_alone:
-            ch = util.choose_ch((self.veh_table, self.veh_table.values(veh_id), self.area_zones, unique_pot_ch))
+        temp = self.stand_alone.copy()
+        for veh_id in temp:
+            ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones, unique_pot_ch)
             selected_chs.add(ch)
-            self.stand_alone.remove(ch)
-            self.stand_alone.remove(veh_id)
-            self.veh_table.values(ch)['cluster_head'] = True
-            self.veh_table.values(ch)['cluster_members'].add(veh_id)
-            self.veh_table.values(veh_id)['primary_ch'] = ch
-            self.net_graph.add_edge(ch, veh_id)
-            self.all_CHs.add(ch)
-            self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
+
+            if ch == veh_id:
+                if self.veh_table.values(veh_id)['counter'] == 1:
+                    self.veh_table.values(veh_id)['cluster_head'] = True
+                    self.veh_table.values(veh_id)['counter'] = configs.counter
+                    self.all_CHs.add(veh_id)
+                    self.zone_CH[self.veh_table.values(veh_id)['zone']] = veh_id
+                else:
+                    self.veh_table.values(veh_id)['counter'] -= 1
+                    continue
+
+            if ch != veh_id:
+                self.veh_table.values(ch)['cluster_head'] = True
+                self.veh_table.values(ch)['cluster_members'].add(veh_id)
+                self.veh_table.values(veh_id)['primary_ch'] = ch
+                self.veh_table.values(veh_id)['counter'] = configs.counter
+                self.veh_table.values(ch)['counter'] = configs.counter
+                self.net_graph.add_edge(ch, veh_id)
+                self.all_CHs.add(ch)
+                self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
+                self.stand_alone.remove(veh_id)
+                continue
+
+        for k in selected_chs:
+            self.stand_alone.remove(k)
 
         # Determining the updating self.veh_tale and self.net_graph
         for k in near_sa.keys():
