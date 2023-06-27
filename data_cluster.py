@@ -289,7 +289,7 @@ class DataTable:
                                                )
             n_near_sa[veh_id] = len(near_sa[veh_id])
         for veh_id in near_sa.keys():
-            if n_near_sa[veh_id]>0:
+            if n_near_sa[veh_id] > 0:
                 pot_ch[veh_id] = veh_id
                 for mem in near_sa[veh_id]:
                     if n_near_sa[mem] > n_near_sa[pot_ch[veh_id]]:
@@ -311,10 +311,10 @@ class DataTable:
             self.all_CHs.add(ch)
             self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
 
-
         # Determine the nearby_chs and gates
         for k in near_sa.keys():
-            near_sa_ch = util.find_other_sa_ch(self.veh_table, k, near_sa)
+            self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
+
     def show_graph(self):
         """
         this function will illustrate the self.net_graph

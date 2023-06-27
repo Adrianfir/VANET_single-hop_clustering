@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
            'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
            'det_near_ch', 'update_bus_table', 'update_veh_table',
-           'find_other_sa_ch']
+           'update_sa_net_graph']
 
 import numpy as np
 import random
@@ -234,17 +234,17 @@ def choose_ch(table, veh_table_i,
     for j in candidates:
         # latitude of the centre of previous zone that ch were in
         prev_ch_lat = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_lat'] +
-                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2
+                       area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2
         # latitude of the centre of previous zone that ch were in
         prev_ch_long = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_long'] +
-                         area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_long']) / 2
+                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_long']) / 2
 
         euclidian_distance = hs.haversine((prev_ch_lat, prev_ch_long),
                                           (table.values(j)['lat'], table.values(j)['long']),
                                           unit=hs.Unit.METERS)
 
         ch_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
-                              (prev_veh_lat - veh_table_i['lat']))
+                             (prev_veh_lat - veh_table_i['lat']))
 
         ch_vector_x = np.multiply(euclidian_distance, np.cos(ch_alpha))
         ch_vector_y = np.multiply(euclidian_distance, np.sin(ch_alpha))
@@ -391,12 +391,14 @@ def det_near_sa(veh_id, veh_table,
 
     return result
 
-def find_other_sa_ch(veh_table, k, near_sa):
+
+def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     """
     this function is used to determine chs among the stand-alones to k which is ch too
     :param veh_table:
     :param k:
     :param near_sa:
+    :param net_graph:
     :return: chs among the stand-alones to k which is ch too
     """
     result = set()
@@ -404,9 +406,29 @@ def find_other_sa_ch(veh_table, k, near_sa):
         if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] > 0:
             dist = hs.haversine((veh_table.values(k)["lat"],
                                  veh_table.values(k)["long"]),
-                                 (veh_table.values(j)['lat'],
-                                  veh_table.values(j)['long']), unit=hs.Unit.METERS)
+                                (veh_table.values(j)['lat'],
+                                 veh_table.values(j)['long']), unit=hs.Unit.METERS)
             if dist < min(veh_table.values(k)['cluster_head'],
-                          veh_table.values(j)['cluster_head']) :
-                if
+                          veh_table.values(j)['cluster_head']):
+                if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] == 2:
+                    veh_table.values(k)['other_CH'].add(j)
+                    veh_table.values(j)['other_CH'].add(k)
+                    net_graph.add_edge(k, j)
 
+                elif (veh_table.values(k)['cluster_head'] is True) &\
+                     (veh_table.values(j)['cluster_head'] is False):
+
+                    if veh_table.values(j)['primary_CH'] != k:
+                        veh_table.values(j)['other_CH'].add(k)
+                        veh_table.values(veh_table.values(j)['primary_CH'])['gates'][j].add(k)
+                        veh_table.values(veh_table.values(j)['primary_CH'])['gate_CHs'].add(k)
+
+                elif (veh_table.values(j)['cluster_head'] is True) &\
+                     (veh_table.values(k)['cluster_head'] is False):
+
+                    if veh_table.values(k)['primary_CH'] != j:
+                        veh_table.values(k)['other_CH'].add(j)
+                        veh_table.values(veh_table.values(k)['primary_CH'])['gates'][k].add(j)
+                        veh_table.values(veh_table.values(k)['primary_CH'])['gate_CHs'].add(j)
+
+    return veh_table, net_graph
