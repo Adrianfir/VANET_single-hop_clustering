@@ -299,7 +299,7 @@ class DataTable:
 
         unique_pot_ch = set(pot_ch.items())
         for veh_id in self.stand_alone:
-            ch = util.det_sa_ch((self.veh_table, veh_id, self.area_zones, unique_pot_ch))
+            ch = util.choose_ch((self.veh_table, self.veh_table.values(veh_id), self.area_zones, unique_pot_ch))
             self.stand_alone.remove(ch)
             self.veh_table.values(ch)['cluster_head'] = True
             self.veh_table.values(ch)['cluster_members'].add(veh_id)
