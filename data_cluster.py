@@ -306,7 +306,7 @@ class DataTable:
             self.veh_table.values(veh_id)['primary_ch'] = ch
             self.net_graph.add_edge(ch, veh_id)
 
-        # Remember to determine the neaby_chs and gates
+        # Remember to determine the nearby_chs and gates
 
     def show_graph(self):
         """
