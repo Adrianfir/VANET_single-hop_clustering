@@ -311,7 +311,7 @@ class DataTable:
             self.all_CHs.add(ch)
             self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
 
-        # Determine the nearby_chs and gates
+        # Determining the updating self.veh_tale and self.net_graph
         for k in near_sa.keys():
             self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
 
