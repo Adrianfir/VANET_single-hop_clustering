@@ -430,7 +430,7 @@ def det_sa_ch(veh_table, veh_id,
                             area_zones.zone_hash.values(veh_table.values(j)['prev_zone'])['min_long']) / 2
 
         euclidian_distance = hs.haversine((prev_pot_ch_lat, prev_pot_ch_long),
-                                          (table.values(j)['lat'], veh_table.values(j)['long']),
+                                          (veh_table.values(j)['lat'], veh_table.values(j)['long']),
                                           unit=hs.Unit.METERS)
 
         pot_ch_alpha = np.arctan((prev_veh_long - veh_table.values(veh_id)['long']) /
