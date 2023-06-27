@@ -301,30 +301,49 @@ class DataTable:
         selected_chs = set()
         temp = self.stand_alone.copy()
         for veh_id in temp:
-            ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones, unique_pot_ch)
-            selected_chs.add(ch)
-
-            if ch == veh_id:
-                if self.veh_table.values(veh_id)['counter'] == 1:
-                    self.veh_table.values(veh_id)['cluster_head'] = True
-                    self.veh_table.values(veh_id)['counter'] = configs.counter
-                    self.all_CHs.add(veh_id)
-                    self.zone_CH[self.veh_table.values(veh_id)['zone']] = veh_id
-                else:
-                    self.veh_table.values(veh_id)['counter'] -= 1
-                    continue
-
-            if ch != veh_id:
-                self.veh_table.values(ch)['cluster_head'] = True
-                self.veh_table.values(ch)['cluster_members'].add(veh_id)
-                self.veh_table.values(veh_id)['primary_ch'] = ch
-                self.veh_table.values(veh_id)['counter'] = configs.counter
-                self.veh_table.values(ch)['counter'] = configs.counter
-                self.net_graph.add_edge(ch, veh_id)
-                self.all_CHs.add(ch)
-                self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
-                self.stand_alone.remove(veh_id)
+            ch = ''
+            if self.veh_table.values(veh_id)['primary_CH'] is True:
                 continue
+            if len(unique_pot_ch.intersection(near_sa[veh_id])) > 1:
+                ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
+                                    unique_pot_ch.intersection(near_sa[veh_id])
+                                    )
+                selected_chs.add(ch)
+                if ch == veh_id:
+                    if n_near_sa[veh_id] == 0:
+                        if self.veh_table.values(veh_id)['counter'] == 1:
+                            self.veh_table.values(veh_id)['cluster_head'] = True
+                            self.veh_table.values(veh_id)['counter'] = configs.counter
+                            self.all_CHs.add(veh_id)
+                            self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                        else:
+                            self.veh_table.values(veh_id)['counter'] -= 1
+                            continue
+                    # if just 2 vehicles are in trans_range of each other
+                    elif n_near_sa[veh_id] == 1:
+                        self.veh_table.values(veh_id)['cluster_head'] = True
+                        self.veh_table.values(veh_id)['counter'] = configs.counter
+                        self.veh_table.values(near_sa[veh_id][0])['counter'] = configs.counter
+                        self.veh_table.values(veh_id)['cluster_members'].add(near_sa[veh_id][0])
+                        self.veh_table.values(veh_id)['cluster_members'].add(near_sa[veh_id][0])
+                        self.veh_table.values(near_sa[veh_id][0])['primary_CH'] = veh_id
+                        self.all_CHs.add(veh_id)
+                        self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                        self.net_graph.add_edge(veh_id, near_sa[veh_id][0])
+                        self.stand_alone.remove(veh_id)
+                        self.stand_alone.remove(near_sa[veh_id][0])
+
+                if (ch != veh_id) & (ch != ''):
+                    self.veh_table.values(ch)['cluster_head'] = True
+                    self.veh_table.values(ch)['cluster_members'].add(veh_id)
+                    self.veh_table.values(veh_id)['primary_ch'] = ch
+                    self.veh_table.values(veh_id)['counter'] = configs.counter
+                    self.veh_table.values(ch)['counter'] = configs.counter
+                    self.net_graph.add_edge(ch, veh_id)
+                    self.all_CHs.add(ch)
+                    self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
+                    self.stand_alone.remove(veh_id)
+                    continue
 
         for k in selected_chs:
             self.stand_alone.remove(k)

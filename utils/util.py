@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
            'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
            'det_near_ch', 'update_bus_table', 'update_veh_table',
-           'update_sa_net_graph']
+           'update_sa_net_graph', 'det_near_sa']
 
 import numpy as np
 import random
@@ -212,6 +212,7 @@ def choose_ch(table, veh_table_i,
     :return: it This function will return the best candidate near to i (vehicle_i) to be
      its cluster head
     """
+
     # latitude of the centre of previous zone that vehicle were in
     prev_veh_lat = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_lat'] +
                     area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_lat']) / 2
@@ -232,6 +233,7 @@ def choose_ch(table, veh_table_i,
     # nominee = ''
     min_ef = 10
     for j in candidates:
+
         # latitude of the centre of previous zone that ch were in
         prev_ch_lat = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_lat'] +
                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2
@@ -380,14 +382,15 @@ def det_near_sa(veh_id, veh_table,
         neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the buses in the neighbor zones to a list
 
     for j in neigh_stand_alones:
-        euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
-                                       veh_table.values(veh_id)["long"]),
-                                      (veh_table.values(j)['lat'],
-                                       veh_table.values(j)['long']), unit=hs.Unit.METERS)
+        if j != veh_id:
+            euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
+                                           veh_table.values(veh_id)["long"]),
+                                          (veh_table.values(j)['lat'],
+                                           veh_table.values(j)['long']), unit=hs.Unit.METERS)
 
-        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
-                                 veh_table.values(j)['trans_range']):
-            result.add(j)
+            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                     veh_table.values(j)['trans_range']):
+                result.add(j)
 
     return result
 
