@@ -4,7 +4,7 @@ This is the utils file including the small functions
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
            'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
-           'det_near_ch', 'update_bus_table', 'update_veh_table']
+           'det_near_ch', 'update_bus_table', 'update_veh_table', 'near_sa']
 
 import numpy as np
 import random
@@ -176,7 +176,6 @@ def det_near_ch(veh_id, veh_table, bus_table,
 
 def det_buses_other_CH(bus_id, veh_table, bus_table,
                        zone_buses, zone_CH):
-
     all_near_chs = set()
     all_chs = set()
     for zone in bus_table.values(bus_id)['neighbor_zones']:
@@ -251,7 +250,7 @@ def choose_ch(table, veh_table_i,
 
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [bus_vector_x, bus_vector_y])
         theta_sim = np.arccos(cos_sim) / 2 * np.pi
-        theta_dist = euclidian_distance/min(table.values(j)['trans_range'], veh_table_i['trans_range'])
+        theta_dist = euclidian_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
         # since it might return RuntimeWarning regarding the division, the warning will be ignored
         with np.errstate(divide='ignore', invalid='ignore'):
             speed_sim = np.divide(np.abs(table.values(j)['speed'] - veh_table_i['speed']),
@@ -362,3 +361,96 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
                                                                     config, understudied_area))
     return veh_table, zone_vehicles
+
+
+def det_near_sa(veh_id, veh_table,
+                stand_alone, zone_stand_alone):
+    """
+    This function would determine the nearby stand_alone vehicles to veh_id
+    :param veh_id: the stand-alone vehicle that we want to find the other stand-alones to it
+    :param veh_table: self.vehicle_table in the data_cluster.py
+    :param stand_alone: self.stand_alone in the data_cluster.py
+    :param zone_stand_alone: self.zone_stand_alone in the data_cluster.py
+    :return: nearby stand-alone vehicles to veh_id
+    """
+    result = set()
+    neigh_stand_alones = []
+    for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
+        neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the buses in the neighbor zones to a list
+
+    for j in neigh_stand_alones:
+        euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
+                                       veh_table.values(veh_id)["long"]),
+                                      (veh_table.values(j)['lat'],
+                                       veh_table.values(j)['long']), unit=hs.Unit.METERS)
+
+        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                 veh_table.values(j)['trans_range']):
+            result.add(j)
+
+    return result
+
+
+def det_sa_ch(veh_table, veh_id,
+              area_zones, ch_candidates):
+    """
+    this function is used to select a ch for stand-alone vehicle veh_id
+    :param veh_id:
+    :param veh_table:
+    :param area_zones:
+    :param ch_candidates:
+    :return: it This function will return the best candidate among all the chs near to i (vehicle_i) to be
+     its cluster head
+    """
+    # latitude of the centre of previous zone that vehicle were in
+    prev_veh_lat = (area_zones.zone_hash.values(veh_table.values(veh_id)['prev_zone'])['max_lat'] +
+                    area_zones.zone_hash.values(veh_table.values(veh_id)['prev_zone'])['min_lat']) / 2
+    # longitude of the centre of previous zone that vehicle were in
+    prev_veh_long = (area_zones.zone_hash.values(veh_table.values(veh_id)['prev_zone'])['max_long'] +
+                     area_zones.zone_hash.values(veh_table.values(veh_id)['prev_zone'])['min_long']) / 2
+
+    euclidian_distance = hs.haversine((prev_veh_lat, prev_veh_long),
+                                      (veh_table.values(veh_id)['lat'], veh_table.values(veh_id)['long']),
+                                      unit=hs.Unit.METERS)
+
+    veh_alpha = np.arctan((prev_veh_long - veh_table.values(veh_id)['long']) /
+                          (prev_veh_lat - veh_table.values(veh_id)['lat']))
+
+    veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
+    veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
+
+    # nominee = ''
+    min_ef = 10
+    for j in ch_candidates:
+        # latitude of the centre of previous zone that pot_ch were in
+        prev_pot_ch_lat = (area_zones.zone_hash.values(veh_table.values(j)['prev_zone'])['max_lat'] +
+                           area_zones.zone_hash.values(veh_table.values(j)['prev_zone'])['min_lat']) / 2
+        # latitude of the centre of previous zone that ch were in
+        prev_pot_ch_long = (area_zones.zone_hash.values(veh_table.values(j)['prev_zone'])['max_long'] +
+                            area_zones.zone_hash.values(veh_table.values(j)['prev_zone'])['min_long']) / 2
+
+        euclidian_distance = hs.haversine((prev_pot_ch_lat, prev_pot_ch_long),
+                                          (table.values(j)['lat'], veh_table.values(j)['long']),
+                                          unit=hs.Unit.METERS)
+
+        pot_ch_alpha = np.arctan((prev_veh_long - veh_table.values(veh_id)['long']) /
+                              (prev_veh_lat - veh_table.values(veh_id)['lat']))
+
+        pot_ch_vector_x = np.multiply(euclidian_distance, np.cos(pot_ch_alpha))
+        pot_ch_vector_y = np.multiply(euclidian_distance, np.sin(pot_ch_alpha))
+
+        cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [pot_ch_vector_x, pot_ch_vector_y])
+        theta_sim = np.arccos(cos_sim) / 2 * np.pi
+        theta_dist = euclidian_distance / min(veh_table.values(j)['trans_range'], veh_table.values(veh_id)['trans_range'])
+        # since it might return RuntimeWarning regarding the division, the warning will be ignored
+        with np.errstate(divide='ignore', invalid='ignore'):
+            speed_sim = np.divide(np.abs(veh_table.values(j)['speed'] - veh_table.values(veh_id)['speed']),
+                                  np.abs(veh_table.values(j)['speed']))
+
+        # calculate the Eligibility Factor (EF) for bpot_ches
+        ef = theta_sim + speed_sim + theta_dist
+
+        if ef < min_ef:
+            nominee = j
+
+    return nominee

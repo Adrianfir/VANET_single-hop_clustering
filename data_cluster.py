@@ -12,6 +12,7 @@ import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
 import webbrowser
+import operator
 
 from Graph import Graph
 import utils.util as util
@@ -100,6 +101,7 @@ class DataTable:
         bus_ids = set()
         veh_ids = set()
         self.all_CHs = set()
+        self.stand_alone = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -276,6 +278,35 @@ class DataTable:
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)
             for node in self.bus_table.values(bus)['other_CHs']:
                 self.net_graph.add_edge(bus, node)
+
+    def stand_alones_cluster(self):
+        near_sa = dict()
+        n_near_sa = dict()
+        pot_ch = dict()
+        for veh_id in self.stand_alone:
+            near_sa[veh_id] = util.det_near_sa(veh_id, self.veh_table,
+                                               self.stand_alone, self.zone_stand_alone
+                                               )
+            n_near_sa[veh_id] = len(near_sa[veh_id])
+        for veh_id in near_sa.keys():
+            if n_near_sa[veh_id]>0:
+                pot_ch[veh_id] = veh_id
+                for mem in near_sa[veh_id]:
+                    if n_near_sa[mem] > n_near_sa[pot_ch[veh_id]]:
+                        pot_ch[veh_id] = mem
+            else:
+                continue
+
+        unique_pot_ch = set(pot_ch.items())
+        for veh_id in self.stand_alone:
+            ch = util.det_sa_ch((self.veh_table, veh_id, self.area_zones, unique_pot_ch))
+            self.stand_alone.remove(ch)
+            self.veh_table.values(ch)['cluster_head'] = True
+            self.veh_table.values(ch)['cluster_members'].add(veh_id)
+            self.veh_table.values(veh_id)['primary_ch'] = ch
+            self.net_graph.add_edge(ch, veh_id)
+
+        # Remember to determine the neaby_chs and gates
 
     def show_graph(self):
         """
