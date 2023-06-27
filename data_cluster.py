@@ -298,16 +298,23 @@ class DataTable:
                 continue
 
         unique_pot_ch = set(pot_ch.items())
+        selected_chs = set()
         for veh_id in self.stand_alone:
             ch = util.choose_ch((self.veh_table, self.veh_table.values(veh_id), self.area_zones, unique_pot_ch))
+            selected_chs.add(ch)
             self.stand_alone.remove(ch)
+            self.stand_alone.remove(veh_id)
             self.veh_table.values(ch)['cluster_head'] = True
             self.veh_table.values(ch)['cluster_members'].add(veh_id)
             self.veh_table.values(veh_id)['primary_ch'] = ch
             self.net_graph.add_edge(ch, veh_id)
+            self.all_CHs.add(ch)
+            self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
 
-        # Remember to determine the nearby_chs and gates
 
+        # Determine the nearby_chs and gates
+        for k in near_sa.keys():
+            near_sa_ch = util.find_other_sa_ch(self.veh_table, k, near_sa)
     def show_graph(self):
         """
         this function will illustrate the self.net_graph

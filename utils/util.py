@@ -4,7 +4,8 @@ This is the utils file including the small functions
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
            'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
-           'det_near_ch', 'update_bus_table', 'update_veh_table', 'near_sa']
+           'det_near_ch', 'update_bus_table', 'update_veh_table',
+           'find_other_sa_ch']
 
 import numpy as np
 import random
@@ -389,4 +390,23 @@ def det_near_sa(veh_id, veh_table,
             result.add(j)
 
     return result
+
+def find_other_sa_ch(veh_table, k, near_sa):
+    """
+    this function is used to determine chs among the stand-alones to k which is ch too
+    :param veh_table:
+    :param k:
+    :param near_sa:
+    :return: chs among the stand-alones to k which is ch too
+    """
+    result = set()
+    for j in near_sa[k]:
+        if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] > 0:
+            dist = hs.haversine((veh_table.values(k)["lat"],
+                                 veh_table.values(k)["long"]),
+                                 (veh_table.values(j)['lat'],
+                                  veh_table.values(j)['long']), unit=hs.Unit.METERS)
+            if dist < min(veh_table.values(k)['cluster_head'],
+                          veh_table.values(j)['cluster_head']) :
+                if
 
