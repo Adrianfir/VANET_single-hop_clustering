@@ -157,11 +157,13 @@ class DataTable:
                     self.veh_table.values(veh_id)['counter'] -= 1
                     self.stand_alone.add(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                    continue
                 else:
                     self.veh_table.values(veh_id)['cluster_head'] = True
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     self.stand_alone.remove(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    continue
 
             elif (self.veh_table.values(veh_id)['in_area'] is True) & \
                     (self.veh_table.values(veh_id)['primary_CH'] is None) & \
@@ -193,7 +195,7 @@ class DataTable:
                     self.net_graph.add_edge(veh_id, other_ch)
                 self.zone_CH[self.veh_table.values('zone')].add(veh_id)
                 self.all_CHs.add(veh_id)
-
+                continue
             # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
             # or is not in its transmission_range anymore
             elif (self.veh_table.values(veh_id)['in_area'] is True) & \
@@ -233,6 +235,7 @@ class DataTable:
                         self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
                         self.net_graph.add_edge(bus_ch, veh_id)
                     else:
+                        print(veh_id)
                         bus_ch = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
                                                 bus_candidates)  # determine the most suitable from bus_candidates
 

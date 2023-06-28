@@ -27,7 +27,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
     return dict(long=float(veh.getAttribute('x')),
                 lat=float(veh.getAttribute('y')),
                 angle=float(veh.getAttribute('angle')),
-                speed=float(veh.getAttribute('speed')),
+                speed=float(veh.getAttribute('speed')) + 0.01,
                 pos=float(veh.getAttribute('pos')),
                 lane=veh.getAttribute('lane'),
                 zone=zone_id,
@@ -61,7 +61,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
     return dict(long=float(veh.getAttribute('x')),
                 lat=float(veh.getAttribute('y')),
                 angle=float(veh.getAttribute('angle')),
-                speed=float(veh.getAttribute('speed')),
+                speed=float(veh.getAttribute('speed')) + 0.01,
                 pos=float(veh.getAttribute('pos')),
                 lane=veh.getAttribute('lane'),
                 zone=zone_id,
@@ -231,7 +231,7 @@ def choose_ch(table, veh_table_i,
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
     # nominee = ''
-    min_ef = 10
+    min_ef = 1000
     for j in candidates:
 
         # latitude of the centre of previous zone that ch were in
