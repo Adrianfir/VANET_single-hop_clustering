@@ -301,9 +301,27 @@ class DataTable:
         selected_chs = set()
         temp = self.stand_alone.copy()
         for veh_id in temp:
-            ch = ''
-            if self.veh_table.values(veh_id)['primary_CH'] is True:
+            if (self.veh_table.values(veh_id)['cluster_head'] is True) | \
+                    (self.veh_table.values(veh_id)['primary_CH'] is not None):
                 continue
+            if n_near_sa[veh_id] == 1:
+                if n_near_sa[list(near_sa[veh_id])[0]] == 1:
+                    veh_id_2 = list(near_sa[veh_id])[0]
+                    self.veh_table.values(veh_id)['cluster_head'] = True
+                    self.veh_table.values(veh_id_2)['cluster_head'] = True
+                    self.veh_table.values(veh_id)['counter'] = configs.counter
+                    self.veh_table.values(veh_id_2)['counter'] = configs.counter
+                    self.veh_table.values(veh_id)['other_CHs'].add(veh_id_2)
+                    self.veh_table.values(veh_id_2)['other_CHs'].add(veh_id)
+                    self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                    self.zone_CH[self.veh_table.values(veh_id_2)['zone']].add(veh_id_2)
+                    self.all_CHs.add(veh_id)
+                    self.all_CHs.add(veh_id_2)
+                    self.stand_alone.remove(veh_id)
+                    self.stand_alone.remove(veh_id_2)
+                    self.net_graph.add_edge(veh_id, veh_id_2)
+                    continue
+
             if len(unique_pot_ch.intersection(near_sa[veh_id])) > 1:
                 ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                     unique_pot_ch.intersection(near_sa[veh_id])
