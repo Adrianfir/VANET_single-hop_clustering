@@ -138,20 +138,20 @@ class DataTable:
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
 
-    def update_cluster(self, config, zones):
+    def update_cluster(self, veh_ids, config, zones):
 
         """
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the gate_CHs
         """
-        for veh_id in self.veh_table.ids():
+        for veh_id in veh_ids:
             self.veh_table.values(veh_id)['other_CHs'] = set()
             # determining the buses and cluster_head in neighbor zones
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                              self.zone_buses, self.zone_vehicles)
-            if len(bus_candidates) == 0 & len(ch_candidates) == 0 & \
-                    (self.veh_table.values(veh_id)['in_area'] is True) & \
-                    (self.veh_table.values(veh_id)['primary_CH'] is None) & \
+            if (len(bus_candidates) == 0) and (len(ch_candidates) == 0) and \
+                    (self.veh_table.values(veh_id)['in_area'] is True) and \
+                    (self.veh_table.values(veh_id)['primary_CH'] is None) and \
                     (self.veh_table.values(veh_id)['cluster_head'] is False):
                 if self.veh_table.values(veh_id)['counter'] > 1:
                     self.veh_table.values(veh_id)['counter'] -= 1
@@ -165,11 +165,11 @@ class DataTable:
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
                     continue
 
-            elif (self.veh_table.values(veh_id)['in_area'] is True) & \
-                    (self.veh_table.values(veh_id)['primary_CH'] is None) & \
+            elif (self.veh_table.values(veh_id)['in_area'] is True) and \
+                    (self.veh_table.values(veh_id)['primary_CH'] is None) and \
                     (self.veh_table.values(veh_id)['cluster_head'] is True):
 
-                for m in self.veh_table.values(veh_id).adj_list:
+                for m in self.veh_table.values(veh_id)['cluster_members']:
                     dist = hs.haversine((self.veh_table.values(veh_id)["lat"],
                                          self.veh_table.values(veh_id)["long"]),
                                         (self.veh_table.values(self.veh_table.values(m))['lat'],
@@ -187,7 +187,7 @@ class DataTable:
                         self.veh_table.values(veh_id)['cluster_head'] = False
                         self.zone_CH[self.veh_table.values('zone')].remove(veh_id)
                         self.all_CHs.remove(veh_id)
-                        self.update_cluster(veh_id)
+                        self.update_cluster([veh_id, ], config, zones)
 
                 self.veh_table.values(veh_id)['other_CHs'].add(bus_candidates)
                 self.veh_table.values(veh_id)['other_CHs'].add(ch_candidates)
@@ -198,12 +198,12 @@ class DataTable:
                 continue
             # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
             # or is not in its transmission_range anymore
-            elif (self.veh_table.values(veh_id)['in_area'] is True) & \
+            elif (self.veh_table.values(veh_id)['in_area'] is True) and \
                     (self.veh_table.values(veh_id)['primary_CH'] is not None):
                 dist_to_primaryCH = hs.haversine((self.veh_table.values(veh_id)["lat"],
                                                   self.veh_table.values(veh_id)["long"]),
-                                                 (self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
-                                                      'lat'],
+                                                 (self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])
+                                                  ['lat'],
                                                   self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
                                                       'long']
                                                   ), unit=hs.Unit.METERS)
@@ -220,11 +220,11 @@ class DataTable:
                         self.veh_table.values(ch_id)['cluster_members'].remove(veh_id)
                     self.net_graph.remove_edge(ch_id, veh_id)
                     self.veh_table.values(veh_id)['primary_CH'] = None
-                    self.update_cluster(veh_id)
+                    self.update_cluster([veh_id, ], config, zones)
 
-            # checking if the vehicle is in the understudied-area & if it's not in any cluster & if it's not a CH
-            elif (self.veh_table.values(veh_id)['in_area'] is True) & \
-                    (self.veh_table.values(veh_id)['primary_CH'] is None) & \
+            # checking if the vehicle is in the understudied-area and if it's not in any cluster and if it's not a CH
+            elif (self.veh_table.values(veh_id)['in_area'] is True) and \
+                    (self.veh_table.values(veh_id)['primary_CH'] is None) and \
                     (self.veh_table.values(veh_id)['cluster_head'] is False):
 
                 if len(bus_candidates) > 0:
@@ -304,7 +304,7 @@ class DataTable:
         selected_chs = set()
         temp = self.stand_alone.copy()
         for veh_id in temp:
-            if (self.veh_table.values(veh_id)['cluster_head'] is True) | \
+            if (self.veh_table.values(veh_id)['cluster_head'] is True) or \
                     (self.veh_table.values(veh_id)['primary_CH'] is not None):
                 continue
             if n_near_sa[veh_id] == 1:
@@ -354,10 +354,10 @@ class DataTable:
                         self.stand_alone.remove(veh_id)
                         self.stand_alone.remove(near_sa[veh_id][0])
 
-                if (ch != veh_id) & (ch != ''):
+                if (ch != veh_id) and (ch != ''):
                     self.veh_table.values(ch)['cluster_head'] = True
                     self.veh_table.values(ch)['cluster_members'].add(veh_id)
-                    self.veh_table.values(veh_id)['primary_ch'] = ch
+                    self.veh_table.values(veh_id)['primary_CH'] = ch
                     self.veh_table.values(veh_id)['counter'] = configs.counter
                     self.veh_table.values(ch)['counter'] = configs.counter
                     self.net_graph.add_edge(ch, veh_id)
@@ -372,6 +372,8 @@ class DataTable:
         # Determining the updating self.veh_tale and self.net_graph
         for k in near_sa.keys():
             self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
+
+        self.update_cluster(list(temp), configs, zones)
 
     def show_graph(self):
         """
@@ -423,9 +425,9 @@ class DataTable:
             end_pos = pos[edge[1]]
             locations = [start_pos, end_pos]
             # determine the edge colors
-            if ('bus' in edge[0]) & ('bus' in edge[1]):
+            if ('bus' in edge[0]) and ('bus' in edge[1]):
                 self.edge_color = 'pink'
-            elif ('veh' in edge[0]) & ('bus' in edge[1]):
+            elif ('veh' in edge[0]) and ('bus' in edge[1]):
                 if self.veh_table.values(edge[0])['cluster_head'] is True:
                     self.edge_color = 'pink'
                 else:
@@ -433,7 +435,7 @@ class DataTable:
                         self.edge_color = 'green'
                     else:
                         self.edge_color = 'gray'
-            elif ('bus' in edge[0]) & ('veh' in edge[1]):
+            elif ('bus' in edge[0]) and ('veh' in edge[1]):
                 if self.veh_table.values(edge[1])['cluster_head'] is True:
                     self.edge_color = 'pink'
                 else:
@@ -441,7 +443,7 @@ class DataTable:
                         self.edge_color = 'green'
                     else:
                         self.edge_color = 'gray'
-            elif ('veh' in edge[0]) & ('veh' in edge[1]):
+            elif ('veh' in edge[0]) and ('veh' in edge[1]):
                 if self.veh_table.values(edge[0])['cluster_head'] is True:
                     if self.veh_table.values(edge[1])['cluster_head'] is True:
                         self.edge_color = 'pink'

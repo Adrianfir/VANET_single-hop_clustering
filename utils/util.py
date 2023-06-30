@@ -122,9 +122,9 @@ def presence(area_cord, veh_cord):
     :return: it returns True or False
     """
     if (
-            (float(veh_cord.getAttribute('x')) < area_cord['max_long']) &
-            (float(veh_cord.getAttribute('x')) > area_cord['min_long']) &
-            (float(veh_cord.getAttribute('y')) < area_cord['max_lat']) &
+            (float(veh_cord.getAttribute('x')) < area_cord['max_long']) and
+            (float(veh_cord.getAttribute('x')) > area_cord['min_long']) and
+            (float(veh_cord.getAttribute('y')) < area_cord['max_lat']) and
             (float(veh_cord.getAttribute('y')) > area_cord['min_lat'])
     ):
         return True
@@ -146,10 +146,10 @@ def det_near_ch(veh_id, veh_table, bus_table,
     bus_candidates = set()
     ch_candidates = set()
     neigh_bus = []
-    neigh_ch = []
+    neigh_veh = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
         neigh_bus += zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
-        neigh_ch += zone_vehicles[neigh_z]
+        neigh_veh += zone_vehicles[neigh_z]
 
     for j in neigh_bus:
         euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
@@ -161,15 +161,14 @@ def det_near_ch(veh_id, veh_table, bus_table,
                                  bus_table.values(j)['trans_range']):
             bus_candidates.add(j)
 
-    for j in neigh_ch:
+    for j in neigh_veh:
         if veh_table.values(j)['cluster_head'] is True:
             euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
                                            veh_table.values(veh_id)["long"]),
                                           (veh_table.values(j)['lat'],
                                            veh_table.values(j)['long']), unit=hs.Unit.METERS)
 
-            if (euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range'])) & \
-                    (veh_table.values(j)['cluster_head'] is True):
+            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range']):
                 ch_candidates.add(j)
 
     return bus_candidates, ch_candidates
@@ -231,7 +230,7 @@ def choose_ch(table, veh_table_i,
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
     # nominee = ''
-    min_ef = 1000
+    min_ef = 1000000
     for j in candidates:
 
         # latitude of the centre of previous zone that ch were in
@@ -418,16 +417,16 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
                     veh_table.values(j)['other_CHs'].add(k)
                     net_graph.add_edge(k, j)
 
-                elif (veh_table.values(k)['cluster_head'] is True) &\
-                     (veh_table.values(j)['cluster_head'] is False):
+                elif (veh_table.values(k)['cluster_head'] is True) and \
+                        (veh_table.values(j)['cluster_head'] is False):
 
                     if veh_table.values(j)['primary_CH'] != k:
                         veh_table.values(j)['other_CHs'].add(k)
                         veh_table.values(veh_table.values(j)['primary_CH'])['gates'][j].add(k)
                         veh_table.values(veh_table.values(j)['primary_CH'])['gate_CHs'].add(k)
 
-                elif (veh_table.values(j)['cluster_head'] is True) &\
-                     (veh_table.values(k)['cluster_head'] is False):
+                elif (veh_table.values(j)['cluster_head'] is True) and \
+                        (veh_table.values(k)['cluster_head'] is False):
 
                     if veh_table.values(k)['primary_CH'] != j:
                         veh_table.values(k)['other_CHs'].add(j)
