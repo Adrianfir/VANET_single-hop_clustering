@@ -196,7 +196,8 @@ class DataTable:
                                                                   union(ch_candidates))
                 for other_ch in self.veh_table.values(veh_id)['other_CHs']:
                     self.net_graph.add_edge(veh_id, other_ch)
-                self.zone_CH[self.veh_table.values('zone')].add(veh_id)
+                print('error:' + veh_id)
+                self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
                 self.all_CHs.add(veh_id)
                 continue
             # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
