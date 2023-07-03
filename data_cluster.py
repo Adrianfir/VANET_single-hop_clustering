@@ -173,8 +173,8 @@ class DataTable:
                 for m in self.veh_table.values(veh_id)['cluster_members']:
                     dist = hs.haversine((self.veh_table.values(veh_id)["lat"],
                                          self.veh_table.values(veh_id)["long"]),
-                                        (self.veh_table.values(self.veh_table.values(m))['lat'],
-                                         self.veh_table.values(self.veh_table.values(m))['long']
+                                        (self.veh_table.values(m)['lat'],
+                                         self.veh_table.values(m)['long']
                                          ), unit=hs.Unit.METERS)
                     if dist > config.trans_range:
                         self.veh_table.values(veh_id)['cluster_members'].remove(m)
