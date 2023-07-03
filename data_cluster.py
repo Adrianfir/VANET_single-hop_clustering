@@ -145,6 +145,7 @@ class DataTable:
         :return: cluster heads and connection between them including through the gate_CHs
         """
         for veh_id in veh_ids:
+            print(veh_id)
             self.veh_table.values(veh_id)['other_CHs'] = set()
             # determining the buses and cluster_head in neighbor zones
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
@@ -189,8 +190,10 @@ class DataTable:
                         self.all_CHs.remove(veh_id)
                         self.update_cluster([veh_id, ], config, zones)
 
-                self.veh_table.values(veh_id)['other_CHs'].add(bus_candidates)
-                self.veh_table.values(veh_id)['other_CHs'].add(ch_candidates)
+                self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
+                                                                  union(bus_candidates))
+                self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
+                                                                  union(ch_candidates))
                 for other_ch in self.veh_table.values(veh_id)['other_CHs']:
                     self.net_graph.add_edge(veh_id, other_ch)
                 self.zone_CH[self.veh_table.values('zone')].add(veh_id)
@@ -200,24 +203,26 @@ class DataTable:
             # or is not in its transmission_range anymore
             elif (self.veh_table.values(veh_id)['in_area'] is True) and \
                     (self.veh_table.values(veh_id)['primary_CH'] is not None):
+                if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
+                    temp_table = self.bus_table
+                else:
+                    temp_table = self.veh_table
                 dist_to_primaryCH = hs.haversine((self.veh_table.values(veh_id)["lat"],
                                                   self.veh_table.values(veh_id)["long"]),
-                                                 (self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])
+                                                 (temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
                                                   ['lat'],
-                                                  self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])[
-                                                      'long']
+                                                  temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
+                                                  ['long']
                                                   ), unit=hs.Unit.METERS)
+
                 if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
-                                            self.bus_table.values(self.veh_table.values(veh_id)
-                                                                  ['primary_CH'])['trans_range']):
+                                            temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
+                                            ['trans_range']):
                     continue
                 # here the 'primary_CH' will be changed to None and recursion is applied
                 else:
                     ch_id = self.veh_table.values(veh_id)['primary_CH']
-                    if 'bus' in ch_id:
-                        self.bus_table.values(ch_id)['cluster_members'].remove(veh_id)
-                    else:
-                        self.veh_table.values(ch_id)['cluster_members'].remove(veh_id)
+                    temp_table.values(ch_id)['cluster_members'].remove(veh_id)
                     self.net_graph.remove_edge(ch_id, veh_id)
                     self.veh_table.values(veh_id)['primary_CH'] = None
                     self.update_cluster([veh_id, ], config, zones)
@@ -235,7 +240,6 @@ class DataTable:
                         self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
                         self.net_graph.add_edge(bus_ch, veh_id)
                     else:
-                        print(veh_id)
                         bus_ch = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
                                                 bus_candidates)  # determine the most suitable from bus_candidates
 
