@@ -147,6 +147,8 @@ class DataTable:
         for veh_id in veh_ids:
             print(veh_id)
             self.veh_table.values(veh_id)['other_CHs'] = set()
+            self.veh_table.values(veh_id)['gates'] = dict()
+            self.veh_table.values(veh_id)['gate_CHs'] = set()
             # determining the buses and cluster_head in neighbor zones
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                              self.zone_buses, self.zone_vehicles)
@@ -194,15 +196,15 @@ class DataTable:
                                                                   union(bus_candidates))
                 self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
                                                                   union(ch_candidates))
-                for other_ch in self.veh_table.values(veh_id)['other_CHs']:
-                    self.net_graph.add_edge(veh_id, other_ch)
-                print('error:' + veh_id)
                 self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
                 self.all_CHs.add(veh_id)
+                for other_ch in self.veh_table.values(veh_id)['other_CHs']:
+                    self.net_graph.add_edge(veh_id, other_ch)
                 continue
             # checking if the vehicle is understudied-area and still in transmission range of its current primary_CH
             # or is not in its transmission_range anymore
             elif (self.veh_table.values(veh_id)['in_area'] is True) and \
+                    (self.veh_table.values(veh_id)['cluster_head'] is False) and \
                     (self.veh_table.values(veh_id)['primary_CH'] is not None):
                 if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
                     temp_table = self.bus_table
@@ -219,6 +221,26 @@ class DataTable:
                 if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
                                             temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
                                             ['trans_range']):
+                    self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
+                                                                      union(bus_candidates))
+                    self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
+                                                                      union(ch_candidates))
+                    self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
+                    # updating 'gates' and 'gate_CHs' considering if the primary_CH is bus or not
+                    if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
+                        self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gates'][veh_id] = \
+                            self.veh_table.values(veh_id)['other_CHs']
+                        self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs'].\
+                            update(self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs'].
+                                   union(self.veh_table.values(veh_id)['other_CHs']))
+                    else:
+                        self.veh_table.values(self.veh_table.values(veh_id)['primary_CH'])['gates'][veh_id] = \
+                            self.veh_table.values(veh_id)['other_CHs']
+                        self.veh_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs']. \
+                            update(self.veh_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs'].
+                                   union(self.veh_table.values(veh_id)['other_CHs']))
+                    for other_ch in self.veh_table.values(veh_id)['other_CHs']:
+                        self.net_graph.add_edge(veh_id, other_ch)
                     continue
                 # here the 'primary_CH' will be changed to None and recursion is applied
                 else:
@@ -331,6 +353,7 @@ class DataTable:
                     continue
 
             if len(unique_pot_ch.intersection(near_sa[veh_id])) > 1:
+                print('nominee error:' + veh_id)
                 ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                     unique_pot_ch.intersection(near_sa[veh_id])
                                     )
@@ -378,7 +401,7 @@ class DataTable:
         for k in near_sa.keys():
             self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
 
-        self.update_cluster(list(temp), configs, zones)
+        self.update_cluster(self.veh_table.ids(), configs, zones)
 
     def show_graph(self):
         """

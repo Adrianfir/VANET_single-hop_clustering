@@ -38,7 +38,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_dest={},
                 message_source={},
                 cluster_head=True,
-                other_CHs=set(),
+                other_CHs=set(),        # other CHs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),
                 gate_CHs=set(),
                 gates=dict(),
@@ -73,7 +73,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=False,  # if the vehicle is a CH, it will be True
                 primary_CH=None,
-                other_CHs=set(),
+                other_CHs=set(),     # other CHs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),  # This will be a Graph if the vehicle is a CH
                 gates=dict(),
                 gate_CHs=set(),
@@ -263,7 +263,6 @@ def choose_ch(table, veh_table_i,
 
         if ef < min_ef:
             nominee = j
-
     return nominee
 
 
@@ -309,7 +308,6 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['gate_CHs'] = set()
         bus_table.values(veh.getAttribute('id'))['gates'] = dict()
         bus_table.values(veh.getAttribute('id'))['other_CHs'] = set()
-
         zone_buses[zone_id].add(veh.getAttribute('id'))
 
     except TypeError:
@@ -356,7 +354,6 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
         veh_table.values(veh.getAttribute('id'))['gate_CHs'] = set()
         veh_table.values(veh.getAttribute('id'))['gates'] = dict()
         veh_table.values(veh.getAttribute('id'))['other_CHs'] = set()
-
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
 
     except TypeError:
