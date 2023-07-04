@@ -480,10 +480,17 @@ class DataTable:
                 if self.veh_table.values(edge[0])['cluster_head'] is True:
                     if self.veh_table.values(edge[1])['cluster_head'] is True:
                         self.edge_color = 'pink'
-                    else:
+                    elif (self.veh_table.values(edge[1])['cluster_head'] is False) and \
+                            (self.veh_table.values(edge[1])['primary_CH'] == edge[0]):
                         self.edge_color = 'green'
+                    else:
+                        self.edge_color = 'gray'
                 else:
-                    self.edge_color = 'green'
+                    if self.veh_table.values(edge[1])['cluster_head'] is True:
+                        if self.veh_table.values(edge[0])['primary_CH'] == edge[1]:
+                            self.edge_color = 'green'
+                        else:
+                            self.edge_color = 'gray'
             folium.PolyLine(locations=locations, color=self.edge_color).add_to(edge_group)
 
         # Create a feature group for the networkx graph nodes

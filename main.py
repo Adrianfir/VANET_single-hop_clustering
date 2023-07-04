@@ -20,7 +20,6 @@ if __name__ == "__main__":
     a = DataTable(configs, area_zones)
     a.print_table()
     a.update(configs, area_zones)
-    a.update(configs, area_zones)
     a.update_cluster(a.veh_table.ids(), configs, area_zones)
     a.stand_alones_cluster(configs, area_zones)
     print('n_bus: ', len(a.bus_table.ids()))
