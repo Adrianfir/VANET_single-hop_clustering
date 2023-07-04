@@ -163,6 +163,8 @@ class DataTable:
                     continue
                 else:
                     self.veh_table.values(veh_id)['cluster_head'] = True
+                    self.all_CHs.add(veh_id)
+                    self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     self.stand_alone.remove(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
@@ -270,14 +272,14 @@ class DataTable:
                         self.veh_table.values(veh_id)['counter'] = config.counter
                         bus_candidates.remove(bus_ch)
                         self.veh_table.values(veh_id)['other_CHs']. \
-                            update(bus_candidates)
+                            update(self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates))
                         self.veh_table.values(veh_id)['other_CHs']. \
-                            update(ch_candidates)
-                        for other_ch in self.veh_table.values(veh_id)['other_CHs']:
-                            self.net_graph.add_edge(veh_id, other_ch)
+                            update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                         self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
-                        self.net_graph.add_edge(bus_ch, veh_id)
                         self.bus_table.values(bus_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
+                        self.net_graph.add_edge(bus_ch, veh_id)
+                        for other_ch in self.veh_table.values(veh_id)['other_CHs']:
+                            self.net_graph.add_edge(other_ch, veh_id)
                     continue
                 elif len(ch_candidates) > 0:
                     if len(ch_candidates) == 1:
@@ -294,10 +296,13 @@ class DataTable:
                         self.veh_table.values(veh_id)['primary_CH'] = veh_ch
                         self.veh_table.values(veh_id)['counter'] = config.counter
                         ch_candidates.remove(veh_ch)
-                        self.veh_table.values(veh_id)['other_CHs'].update(ch_candidates)
+                        self.veh_table.values(veh_id)['other_CHs'].\
+                            update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                         self.bus_table.values(veh_ch)['cluster_members'].add(veh_id)
                         self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
                         self.net_graph.add_edge(veh_ch, veh_id)
+                        for other_ch in self.veh_table.values(veh_id)['other_CHs']:
+                            self.net_graph.add_edge(other_ch, veh_id)
                     continue
 
         # finding buses' other_CHs
