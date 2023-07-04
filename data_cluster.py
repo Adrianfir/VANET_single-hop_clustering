@@ -145,7 +145,6 @@ class DataTable:
         :return: cluster heads and connection between them including through the gate_CHs
         """
         for veh_id in veh_ids:
-            print(veh_id)
             self.veh_table.values(veh_id)['other_CHs'] = set()
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_CHs'] = set()
@@ -358,7 +357,6 @@ class DataTable:
                     continue
 
             if len(unique_pot_ch.intersection(near_sa[veh_id])) > 1:
-                print('nominee error:' + veh_id)
                 ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                     unique_pot_ch.intersection(near_sa[veh_id])
                                     )
