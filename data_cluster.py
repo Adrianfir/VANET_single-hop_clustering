@@ -127,15 +127,30 @@ class DataTable:
                                       )
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
+            for m in self.bus_table.values(k)['cluster_members']:
+                self.veh_table.values(m)['primary_CH'] = None
+                self.veh_table.values(m)['counter'] = config.counter
+                self.stand_alone.add(m)
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
 
         # removing the vehicles, that have left the understudied area, from self.veh_table and self.zone_vehicles
         for k in (self.veh_table.ids() - veh_ids):
+            if self.veh_table.values(k)['cluster_head'] is True:
+                for m in self.veh_table.values(k)['cluster_members']:
+                    self.veh_table.values(m)['primary_CH'] = None
+                    self.veh_table.values(m)['counter'] = config.counter
+                    self.stand_alone.add(m)
+            elif self.veh_table.values(k)['primary_CH'] is not None:
+                if self.veh_table.values(k)['primary_CH'] in veh_ids:
+                    k_ch = self.veh_table.values(k)['primary_CH']
+                    self.veh_table.values(k_ch)['cluster_members'].remove(k)
+
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
+
 
     def update_cluster(self, veh_ids, config, zones):
 
