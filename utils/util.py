@@ -151,19 +151,21 @@ def det_near_ch(veh_id, veh_table, bus_table,
         neigh_bus += zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
         neigh_veh += zone_vehicles[neigh_z]
 
-    for j in neigh_bus:
-        euclidian_dist = det_dist(veh_id, veh_table, j, bus_table)
+    if len(neigh_bus) != 0:
+        for j in neigh_bus:
+            euclidian_dist = det_dist(veh_id, veh_table, j, bus_table)
 
-        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
-                                 bus_table.values(j)['trans_range']):
-            bus_candidates.add(j)
+            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                     bus_table.values(j)['trans_range']):
+                bus_candidates.add(j)
+    if len(neigh_veh) != 0:
+        for j in neigh_veh:
+            print(j)
+            if veh_table.values(j)['cluster_head'] is True:
+                euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
 
-    for j in neigh_veh:
-        if veh_table.values(j)['cluster_head'] is True:
-            euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
-
-            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range']):
-                ch_candidates.add(j)
+                if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range']):
+                    ch_candidates.add(j)
 
     return bus_candidates, ch_candidates
 

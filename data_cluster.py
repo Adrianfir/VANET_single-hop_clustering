@@ -7,12 +7,10 @@ understudied area and creating and updating the clusters using recursion.
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
-import haversine as hs
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
 import webbrowser
-import operator
 
 from Graph import Graph
 import utils.util as util
@@ -156,7 +154,7 @@ class DataTable:
                     (self.veh_table.values(veh_id)['in_area'] is True) and \
                     (self.veh_table.values(veh_id)['primary_CH'] is None) and \
                     (self.veh_table.values(veh_id)['cluster_head'] is False):
-                if self.veh_table.values(veh_id)['counter'] > 1:
+                if self.veh_table.values(veh_id)['counter'] >= 1:
                     self.veh_table.values(veh_id)['counter'] -= 1
                     self.stand_alone.add(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
@@ -357,7 +355,7 @@ class DataTable:
                 selected_chs.add(ch)
                 if ch == veh_id:
                     if n_near_sa[veh_id] == 0:
-                        if self.veh_table.values(veh_id)['counter'] == 1:
+                        if self.veh_table.values(veh_id)['counter'] == 0:
                             self.veh_table.values(veh_id)['cluster_head'] = True
                             self.veh_table.values(veh_id)['counter'] = configs.counter
                             self.all_CHs.add(veh_id)
