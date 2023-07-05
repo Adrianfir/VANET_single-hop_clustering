@@ -160,7 +160,6 @@ def det_near_ch(veh_id, veh_table, bus_table,
                 bus_candidates.add(j)
     if len(neigh_veh) != 0:
         for j in neigh_veh:
-            print(j)
             if veh_table.values(j)['cluster_head'] is True:
                 euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
 

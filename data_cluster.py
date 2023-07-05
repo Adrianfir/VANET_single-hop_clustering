@@ -147,10 +147,12 @@ class DataTable:
                     k_ch = self.veh_table.values(k)['primary_CH']
                     self.veh_table.values(k_ch)['cluster_members'].remove(k)
 
+            elif k in self.stand_alone:
+                self.stand_alone.remove(k)
+
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
-
 
     def update_cluster(self, veh_ids, config, zones):
 
