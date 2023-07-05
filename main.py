@@ -18,9 +18,10 @@ if __name__ == "__main__":
     area_zones.zones()
     start_time = time.time()
     a = DataTable(configs, area_zones)
-    a.update(configs, area_zones)
-    a.update_cluster(a.veh_table.ids(), configs, area_zones)
-    a.stand_alones_cluster(configs, area_zones)
+    for i in range(200):
+        a.update(configs, area_zones)
+        a.update_cluster(a.veh_table.ids(), configs, area_zones)
+        a.stand_alones_cluster(configs, area_zones)
     end_time = time.time()
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))

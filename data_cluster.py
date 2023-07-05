@@ -174,7 +174,8 @@ class DataTable:
                     (self.veh_table.values(veh_id)['primary_CH'] is None) and \
                     (self.veh_table.values(veh_id)['cluster_head'] is True):
 
-                for m in self.veh_table.values(veh_id)['cluster_members']:
+                temp_mem = self.veh_table.values(veh_id)['cluster_members'].copy()
+                for m in temp_mem:
                     dist = util.det_dist(veh_id, self.veh_table, m, self.veh_table)
 
                     if dist > config.trans_range:

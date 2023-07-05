@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
            'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
            'det_near_ch', 'update_bus_table', 'update_veh_table',
-           'update_sa_net_graph', 'det_near_sa']
+           'update_sa_net_graph', 'det_near_sa', 'det_dist']
 
 import numpy as np
 import random
