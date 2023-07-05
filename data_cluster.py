@@ -255,7 +255,10 @@ class DataTable:
                 # here the 'primary_CH' will be changed to None and recursion is applied
                 else:
                     ch_id = self.veh_table.values(veh_id)['primary_CH']
-                    temp_table.values(ch_id)['cluster_members'].remove(veh_id)
+                    if 'bus' in ch_id:
+                        self.bus_table.values(ch_id)['cluster_members'].remove(veh_id)
+                    else:
+                        self.veh_table.values(ch_id)['cluster_members'].remove(veh_id)
                     self.net_graph.remove_edge(ch_id, veh_id)
                     self.veh_table.values(veh_id)['primary_CH'] = None
                     self.update_cluster([veh_id, ], config, zones)
