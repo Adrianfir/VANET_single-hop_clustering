@@ -98,6 +98,7 @@ class DataTable:
         :return:
         """
         self.time += 1
+        print(self.time)
         bus_ids = set()
         veh_ids = set()
         self.all_CHs = set()
@@ -174,11 +175,8 @@ class DataTable:
                     (self.veh_table.values(veh_id)['cluster_head'] is True):
 
                 for m in self.veh_table.values(veh_id)['cluster_members']:
-                    dist = hs.haversine((self.veh_table.values(veh_id)["lat"],
-                                         self.veh_table.values(veh_id)["long"]),
-                                        (self.veh_table.values(m)['lat'],
-                                         self.veh_table.values(m)['long']
-                                         ), unit=hs.Unit.METERS)
+                    dist = util.det_dist(veh_id, self.veh_table, m, self.veh_table)
+
                     if dist > config.trans_range:
                         self.veh_table.values(veh_id)['cluster_members'].remove(m)
                         self.net_graph.remove_edge(veh_id, m)
@@ -211,13 +209,8 @@ class DataTable:
                     temp_table = self.bus_table
                 else:
                     temp_table = self.veh_table
-                dist_to_primaryCH = hs.haversine((self.veh_table.values(veh_id)["lat"],
-                                                  self.veh_table.values(veh_id)["long"]),
-                                                 (temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
-                                                  ['lat'],
-                                                  temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
-                                                  ['long']
-                                                  ), unit=hs.Unit.METERS)
+                dist_to_primaryCH = util.det_dist(veh_id, self.veh_table,
+                                                  self.veh_table.values(veh_id)['primary_CH'], temp_table)
 
                 if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
                                             temp_table.values(self.veh_table.values(veh_id)['primary_CH'])

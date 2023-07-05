@@ -75,7 +75,6 @@ class ZoneID:
             if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
                     ((lat <= self.zone_hash.values(temp)["max_lat"]) &
                      (long <= self.zone_hash.values(temp)["max_long"])):
-                print(i)
                 return temp
 
             elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):

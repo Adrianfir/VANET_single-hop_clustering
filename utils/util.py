@@ -38,7 +38,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_dest={},
                 message_source={},
                 cluster_head=True,
-                other_CHs=set(),        # other CHs in the trans range of veh.getAttribute('id)
+                other_CHs=set(),  # other CHs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),
                 gate_CHs=set(),
                 gates=dict(),
@@ -73,7 +73,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=False,  # if the vehicle is a CH, it will be True
                 primary_CH=None,
-                other_CHs=set(),     # other CHs in the trans range of veh.getAttribute('id)
+                other_CHs=set(),  # other CHs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),  # This will be a Graph if the vehicle is a CH
                 gates=dict(),
                 gate_CHs=set(),
@@ -152,10 +152,7 @@ def det_near_ch(veh_id, veh_table, bus_table,
         neigh_veh += zone_vehicles[neigh_z]
 
     for j in neigh_bus:
-        euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
-                                       veh_table.values(veh_id)["long"]),
-                                      (bus_table.values(j)['lat'],
-                                       bus_table.values(j)['long']), unit=hs.Unit.METERS)
+        euclidian_dist = det_dist(veh_id, veh_table, j, bus_table)
 
         if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
                                  bus_table.values(j)['trans_range']):
@@ -163,10 +160,7 @@ def det_near_ch(veh_id, veh_table, bus_table,
 
     for j in neigh_veh:
         if veh_table.values(j)['cluster_head'] is True:
-            euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
-                                           veh_table.values(veh_id)["long"]),
-                                          (veh_table.values(j)['lat'],
-                                           veh_table.values(j)['long']), unit=hs.Unit.METERS)
+            euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
 
             if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'], veh_table.values(j)['trans_range']):
                 ch_candidates.add(j)
@@ -189,10 +183,7 @@ def det_buses_other_CH(bus_id, veh_table, bus_table,
             ch_table = bus_table
         else:
             ch_table = veh_table
-        euclidian_dist = hs.haversine((bus_table.values(bus_id)["lat"],
-                                       bus_table.values(bus_id)["long"]),
-                                      (ch_table.values(ch)['lat'],
-                                       ch_table.values(ch)['long']), unit=hs.Unit.METERS)
+        euclidian_dist = det_dist(bus_id, bus_table, ch, ch_table)
 
         if euclidian_dist < min(bus_table.values(bus_id)['trans_range'], ch_table.values(ch)['trans_range']):
             all_near_chs.add(ch)
@@ -379,10 +370,7 @@ def det_near_sa(veh_id, veh_table,
 
     for j in neigh_stand_alones:
         if j != veh_id:
-            euclidian_dist = hs.haversine((veh_table.values(veh_id)["lat"],
-                                           veh_table.values(veh_id)["long"]),
-                                          (veh_table.values(j)['lat'],
-                                           veh_table.values(j)['long']), unit=hs.Unit.METERS)
+            euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
 
             if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
                                      veh_table.values(j)['trans_range']):
@@ -403,10 +391,8 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     result = set()
     for j in near_sa[k]:
         if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] > 0:
-            dist = hs.haversine((veh_table.values(k)["lat"],
-                                 veh_table.values(k)["long"]),
-                                (veh_table.values(j)['lat'],
-                                 veh_table.values(j)['long']), unit=hs.Unit.METERS)
+            dist = det_dist(k, veh_table, j, veh_table)
+
             if dist < min(veh_table.values(k)['cluster_head'],
                           veh_table.values(j)['cluster_head']):
                 if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] == 2:
@@ -431,3 +417,13 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
                         veh_table.values(veh_table.values(k)['primary_CH'])['gate_CHs'].add(j)
 
     return veh_table, net_graph
+
+
+def det_dist(id1, table1, id2, table2):
+    dist = hs.haversine((table1.values(id1)["lat"],
+                         table1.values(id1)["long"]),
+                        (table2.values(id2)['lat'],
+                         table2.values(id2)['long']),
+                        unit=hs.Unit.METERS)
+
+    return dist
