@@ -131,6 +131,7 @@ class DataTable:
                 self.veh_table.values(m)['primary_CH'] = None
                 self.veh_table.values(m)['counter'] = config.counter
                 self.stand_alone.add(m)
+                self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
@@ -142,6 +143,7 @@ class DataTable:
                     self.veh_table.values(m)['primary_CH'] = None
                     self.veh_table.values(m)['counter'] = config.counter
                     self.stand_alone.add(m)
+                    self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
             elif self.veh_table.values(k)['primary_CH'] is not None:
                 if self.veh_table.values(k)['primary_CH'] in veh_ids:
                     k_ch = self.veh_table.values(k)['primary_CH']
@@ -149,6 +151,7 @@ class DataTable:
 
             elif k in self.stand_alone:
                 self.stand_alone.remove(k)
+                self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
 
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
@@ -181,8 +184,11 @@ class DataTable:
                     self.all_CHs.add(veh_id)
                     self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.veh_table.values(veh_id)['counter'] = config.counter
-                    self.stand_alone.remove(veh_id)
-                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    try:
+                        self.stand_alone.remove(veh_id)
+                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    except KeyError:
+                        continue
                     continue
 
             elif (self.veh_table.values(veh_id)['in_area'] is True) and \
@@ -203,8 +209,11 @@ class DataTable:
                     if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
                         self.veh_table.values(veh_id)['cluster_members'] = set()
                         self.veh_table.values(veh_id)['cluster_head'] = False
-                        self.zone_CH[self.veh_table.values('zone')].remove(veh_id)
-                        self.all_CHs.remove(veh_id)
+                        try:
+                            self.zone_CH[self.veh_table.values('zone')].remove(veh_id)
+                            self.all_CHs.remove(veh_id)
+                        except KeyError:
+                            self.update_cluster([veh_id, ], config, zones)
                         self.update_cluster([veh_id, ], config, zones)
 
                 self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
@@ -235,7 +244,10 @@ class DataTable:
                                                                       union(bus_candidates))
                     self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
                                                                       union(ch_candidates))
-                    self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
+                    try:
+                        self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
+                    except KeyError:
+                        self.veh_table.values(veh_id)['other_CHs'] = self.veh_table.values(veh_id)['other_CHs']
                     # updating 'gates' and 'gate_CHs' considering if the primary_CH is bus or not
                     if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gates'][veh_id] = \
@@ -255,9 +267,9 @@ class DataTable:
                 # here the 'primary_CH' will be changed to None and recursion is applied
                 else:
                     ch_id = self.veh_table.values(veh_id)['primary_CH']
-                    if 'bus' in ch_id:
+                    if ('bus' in ch_id) and (veh_id in self.bus_table.values(ch_id)['cluster_members']):
                         self.bus_table.values(ch_id)['cluster_members'].remove(veh_id)
-                    else:
+                    elif ('veh' in ch_id) and (veh_id in self.veh_table.values(ch_id)['cluster_members']):
                         self.veh_table.values(ch_id)['cluster_members'].remove(veh_id)
                     self.net_graph.remove_edge(ch_id, veh_id)
                     self.veh_table.values(veh_id)['primary_CH'] = None
@@ -309,7 +321,7 @@ class DataTable:
                         ch_candidates.remove(veh_ch)
                         self.veh_table.values(veh_id)['other_CHs'].\
                             update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
-                        self.bus_table.values(veh_ch)['cluster_members'].add(veh_id)
+                        self.veh_table.values(veh_ch)['cluster_members'].add(veh_id)
                         self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
                         self.net_graph.add_edge(veh_ch, veh_id)
                         for other_ch in self.veh_table.values(veh_id)['other_CHs']:
@@ -334,8 +346,7 @@ class DataTable:
                                                self.stand_alone, self.zone_stand_alone
                                                )
             n_near_sa[veh_id] = len(near_sa[veh_id])
-        # print('before: ', self.stand_alone)
-        # print((near_sa.keys()))
+
         for veh_id in near_sa.keys():
             if n_near_sa[veh_id] > 0:
                 pot_ch[veh_id] = veh_id
@@ -353,7 +364,7 @@ class DataTable:
             if (self.veh_table.values(veh_id)['cluster_head'] is True) or \
                     (self.veh_table.values(veh_id)['primary_CH'] is not None):
                 continue
-            if n_near_sa[veh_id] == 1:
+            if (n_near_sa[veh_id] == 1) and (list(near_sa[veh_id])[0] in near_sa.keys()):
                 if n_near_sa[list(near_sa[veh_id])[0]] == 1:
                     veh_id_2 = list(near_sa[veh_id])[0]
                     self.veh_table.values(veh_id)['cluster_head'] = True
@@ -368,6 +379,8 @@ class DataTable:
                     self.all_CHs.add(veh_id_2)
                     self.stand_alone.remove(veh_id)
                     self.stand_alone.remove(veh_id_2)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id_2)['zone']].remove(veh_id_2)
                     self.net_graph.add_edge(veh_id, veh_id_2)
                     continue
 
@@ -383,6 +396,8 @@ class DataTable:
                             self.veh_table.values(veh_id)['counter'] = configs.counter
                             self.all_CHs.add(veh_id)
                             self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                            self.stand_alone.remove(veh_id)
+                            self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
                         else:
                             self.veh_table.values(veh_id)['counter'] -= 1
                             continue
@@ -399,6 +414,9 @@ class DataTable:
                         self.net_graph.add_edge(veh_id, near_sa[veh_id][0])
                         self.stand_alone.remove(veh_id)
                         self.stand_alone.remove(near_sa[veh_id][0])
+                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                        self.zone_stand_alone[self.veh_table.values(near_sa[veh_id][0])['zone']].\
+                            remove(near_sa[veh_id][0])
 
                 if (ch != veh_id) and (ch != ''):
                     self.veh_table.values(ch)['cluster_head'] = True
@@ -410,10 +428,20 @@ class DataTable:
                     self.all_CHs.add(ch)
                     self.zone_CH[self.veh_table.values(ch)['zone']].add(ch)
                     self.stand_alone.remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    try:
+                        self.stand_alone.remove(ch)
+                        self.zone_stand_alone[self.veh_table.values(ch)['zone']].remove(ch)
+                    except KeyError:
+                        ch = ch
                     continue
 
         for k in selected_chs:
-            self.stand_alone.remove(k)
+            try:
+                self.stand_alone.remove(k)
+                self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
+            except KeyError:
+                continue
 
         # Determining the updating self.veh_tale and self.net_graph
         for k in near_sa.keys():
