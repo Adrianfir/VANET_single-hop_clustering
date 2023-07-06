@@ -209,6 +209,8 @@ class DataTable:
                     if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
                         self.veh_table.values(veh_id)['cluster_members'] = set()
                         self.veh_table.values(veh_id)['cluster_head'] = False
+                        self.zone_CH[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                        self.all_CHs.remove(veh_id)
                         try:
                             self.zone_CH[self.veh_table.values('zone')].remove(veh_id)
                             self.all_CHs.remove(veh_id)
@@ -331,6 +333,7 @@ class DataTable:
         # finding buses' other_CHs
         for bus in self.bus_table.ids():
             self.bus_table.values(bus)['other_CHs'] = set()
+            print(bus)
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)
