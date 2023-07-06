@@ -334,12 +334,15 @@ class DataTable:
                                                self.stand_alone, self.zone_stand_alone
                                                )
             n_near_sa[veh_id] = len(near_sa[veh_id])
+        # print('before: ', self.stand_alone)
+        # print((near_sa.keys()))
         for veh_id in near_sa.keys():
             if n_near_sa[veh_id] > 0:
                 pot_ch[veh_id] = veh_id
                 for mem in near_sa[veh_id]:
-                    if n_near_sa[mem] > n_near_sa[pot_ch[veh_id]]:
-                        pot_ch[veh_id] = mem
+                    if mem in near_sa.keys():
+                        if n_near_sa[mem] > n_near_sa[pot_ch[veh_id]]:
+                            pot_ch[veh_id] = mem
             else:
                 continue
 
