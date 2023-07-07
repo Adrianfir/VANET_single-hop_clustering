@@ -275,11 +275,12 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
     :return: updated bus_table and zone_buses
     """
     try:
-        bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
-            bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
-        zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+        if bus_table.values(veh.getAttribute('id'))['zone'] != zone_id:
+            bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
+                bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
+        zone_buses[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
-        zone_CH[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+        zone_CH[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
@@ -297,9 +298,10 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         zone_CH[zone_id].add(veh.getAttribute('id'))
 
     except TypeError:
-        if veh.getAttribute('id') not in bus_table.ids():
-            bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
-                                                                        config, understudied_area))
+        bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
+                                                                    config, understudied_area))
+        zone_buses[zone_id].add(veh.getAttribute('id'))
+        zone_CH[zone_id].add(veh.getAttribute('id'))
     return bus_table, zone_buses, zone_CH
 
 
@@ -316,12 +318,13 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
     :return: updated veh_table and zone_vehicles
     """
     try:
-        veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
-            veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
-        zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']].\
+        if veh_table.values(veh.getAttribute('id'))['zone'] != zone_id:
+            veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
+                veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
+        zone_vehicles[veh_table.values(veh.getAttribute('id'))['zone']].\
             remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
-            zone_CH[veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
+            zone_CH[veh_table.values(veh.getAttribute('id'))['zone']]. \
                 remove(veh.getAttribute('id'))
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
@@ -342,6 +345,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
     except TypeError:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
                                                                     config, understudied_area))
+        zone_vehicles[zone_id].add(veh.getAttribute('id'))
     return veh_table, zone_vehicles, zone_CH
 
 

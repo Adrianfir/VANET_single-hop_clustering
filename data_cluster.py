@@ -103,6 +103,7 @@ class DataTable:
         # self.stand_alone = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
+            tt = veh.getAttribute('id')
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
