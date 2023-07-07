@@ -163,6 +163,9 @@ class DataTable:
                 if self.veh_table.values(k)['primary_CH'] in veh_ids:
                     k_ch = self.veh_table.values(k)['primary_CH']
                     self.veh_table.values(k_ch)['cluster_members'].remove(k)
+                elif self.veh_table.values(k)['primary_CH'] in bus_ids:
+                    k_ch = self.veh_table.values(k)['primary_CH']
+                    self.bus_table.values(k_ch)['cluster_members'].remove(k)
             elif k in self.stand_alone:
                 self.stand_alone.remove(k)
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
@@ -170,7 +173,6 @@ class DataTable:
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
-        return self
 
     def update_cluster(self, veh_ids, config, zones):
 
@@ -183,6 +185,7 @@ class DataTable:
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_CHs'] = set()
             # determining the buses and cluster_head in neighbor zones
+            print(self.veh_table.ids())
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                              self.zone_buses, self.zone_vehicles)
             if (len(bus_candidates) == 0) and (len(ch_candidates) == 0) and \
