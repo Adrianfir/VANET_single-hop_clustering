@@ -99,7 +99,6 @@ class DataTable:
         print(self.time)
         bus_ids = set()
         veh_ids = set()
-        self.all_CHs = set()
         self.stand_alone = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
@@ -133,6 +132,8 @@ class DataTable:
                 self.stand_alone.add(m)
                 self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
+            self.zone_CH[self.bus_table.values(k)['zone']].remove(k)
+            self.all_CHs.remove(k)
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
 
@@ -140,15 +141,20 @@ class DataTable:
         for k in (self.veh_table.ids() - veh_ids):
             if self.veh_table.values(k)['cluster_head'] is True:
                 for m in self.veh_table.values(k)['cluster_members']:
-                    self.veh_table.values(m)['primary_CH'] = None
-                    self.veh_table.values(m)['counter'] = config.counter
-                    self.stand_alone.add(m)
-                    self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
+                    if m in self.veh_table.ids():
+                        self.veh_table.values(m)['primary_CH'] = None
+                        self.veh_table.values(m)['counter'] = config.counter
+                        self.stand_alone.add(m)
+                        self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
+                self.zone_CH[self.veh_table.values(k)['zone']].remove(k)
+                try:
+                    self.all_CHs.remove(k)
+                except KeyError:
+                    pass
             elif self.veh_table.values(k)['primary_CH'] is not None:
                 if self.veh_table.values(k)['primary_CH'] in veh_ids:
                     k_ch = self.veh_table.values(k)['primary_CH']
                     self.veh_table.values(k_ch)['cluster_members'].remove(k)
-
             elif k in self.stand_alone:
                 self.stand_alone.remove(k)
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
@@ -156,6 +162,7 @@ class DataTable:
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
+        return self
 
     def update_cluster(self, veh_ids, config, zones):
 
@@ -188,7 +195,7 @@ class DataTable:
                         self.stand_alone.remove(veh_id)
                         self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
                     except KeyError:
-                        continue
+                        pass
                     continue
 
             elif (self.veh_table.values(veh_id)['in_area'] is True) and \
@@ -436,7 +443,7 @@ class DataTable:
                         self.stand_alone.remove(ch)
                         self.zone_stand_alone[self.veh_table.values(ch)['zone']].remove(ch)
                     except KeyError:
-                        ch = ch
+                        pass
                     continue
 
         for k in selected_chs:
@@ -444,7 +451,7 @@ class DataTable:
                 self.stand_alone.remove(k)
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
             except KeyError:
-                continue
+                pass
 
         # Determining the updating self.veh_tale and self.net_graph
         for k in near_sa.keys():
