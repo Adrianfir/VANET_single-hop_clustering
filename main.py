@@ -18,17 +18,17 @@ if __name__ == "__main__":
     area_zones.zones()
     start_time = time.time()
     a = DataTable(configs, area_zones)
-    for i in range(100):
-        b = a.time
+    for i in range(1000):
         a.update(configs, area_zones)
+        b = a.time
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
+        a.show_graph()
     end_time = time.time()
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))
     print('\n')
     a.print_table()
-    a.show_graph()
     print('stand_alones: ', a.stand_alone)
     print("execution time: ", end_time - start_time)
 

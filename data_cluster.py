@@ -69,6 +69,7 @@ class DataTable:
                                                                                       self.understudied_area))
                 # Here the buses will be added to zone_buses
                 self.zone_buses[zone_id].add(veh.getAttribute('id'))
+                self.zone_CH[zone_id].add(veh.getAttribute('id'))
 
                 # the veh_table will be initiated here for the very first time self.understudied_area))
             else:
@@ -99,7 +100,7 @@ class DataTable:
         print(self.time)
         bus_ids = set()
         veh_ids = set()
-        self.stand_alone = set()
+        # self.stand_alone = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -109,16 +110,18 @@ class DataTable:
             # update the bus_table for the time step
             if 'bus' in veh.getAttribute('id'):
                 bus_ids.add(veh.getAttribute('id'))
-                self.bus_table, self.zone_buses = util.update_bus_table(veh, self.bus_table, zone_id,
-                                                                        self.understudied_area, zones,
-                                                                        config, self.zone_buses)
+                self.bus_table, self.zone_buses, self.zone_CH = util.update_bus_table(veh, self.bus_table, zone_id,
+                                                                                      self.understudied_area, zones,
+                                                                                      config, self.zone_buses,
+                                                                                      self.zone_CH)
                 self.all_CHs.add(veh.getAttribute('id'))
 
             else:
                 veh_ids.add(veh.getAttribute('id'))
-                self.veh_table, self.zone_vehicles = util.update_veh_table(veh, self.veh_table, zone_id,
-                                                                           self.understudied_area, zones,
-                                                                           config, self.zone_vehicles)
+                self.veh_table, self.zone_vehicles, self.zone_CH = util.update_veh_table(veh, self.veh_table, zone_id,
+                                                                                         self.understudied_area, zones,
+                                                                                         config, self.zone_vehicles,
+                                                                                         self.zone_CH)
             # add the vertex to the graph
             self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
                                                                float(veh.getAttribute('x'))
@@ -127,13 +130,17 @@ class DataTable:
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
             for m in self.bus_table.values(k)['cluster_members']:
-                self.veh_table.values(m)['primary_CH'] = None
-                self.veh_table.values(m)['counter'] = config.counter
-                self.stand_alone.add(m)
-                self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
-            self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
-            self.zone_CH[self.bus_table.values(k)['zone']].remove(k)
-            self.all_CHs.remove(k)
+                if m in self.veh_table.ids():
+                    self.veh_table.values(m)['primary_CH'] = None
+                    self.veh_table.values(m)['counter'] = config.counter
+                    self.stand_alone.add(m)
+                    self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
+            try:
+                self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
+                self.zone_CH[self.bus_table.values(k)['zone']].remove(k)
+                self.all_CHs.remove(k)
+            except KeyError:
+                pass
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
 
@@ -340,7 +347,6 @@ class DataTable:
         # finding buses' other_CHs
         for bus in self.bus_table.ids():
             self.bus_table.values(bus)['other_CHs'] = set()
-            print(bus)
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)

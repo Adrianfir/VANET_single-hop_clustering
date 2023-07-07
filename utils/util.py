@@ -184,7 +184,6 @@ def det_buses_other_CH(bus_id, veh_table, bus_table,
             ch_table = bus_table
         else:
             ch_table = veh_table
-        print(ch)
         euclidian_dist = det_dist(bus_id, bus_table, ch, ch_table)
 
         if euclidian_dist < min(bus_table.values(bus_id)['trans_range'], ch_table.values(ch)['trans_range']):
@@ -263,7 +262,7 @@ def choose_ch(table, veh_table_i,
 #                area_zones, bus_candidates):
 
 
-def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses):
+def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_CH):
     """
     this function updates the bus_tabel and zone_buses from main.py
     :param veh: it's the veh from .xml file
@@ -278,15 +277,10 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
     try:
         bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
             bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
-
-        try:
-            zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
-                remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
-        except KeyError:
-            bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
-                                                                        config, understudied_area)
-                               )
-
+        zone_buses[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+            remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
+        zone_CH[bus_table.values(veh.getAttribute('id'))['prev_zone']]. \
+            remove(veh.getAttribute('id'))
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
@@ -300,14 +294,16 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['gates'] = dict()
         bus_table.values(veh.getAttribute('id'))['other_CHs'] = set()
         zone_buses[zone_id].add(veh.getAttribute('id'))
+        zone_CH[zone_id].add(veh.getAttribute('id'))
 
     except TypeError:
-        bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
-                                                                    config, understudied_area))
-    return bus_table, zone_buses
+        if veh.getAttribute('id') not in bus_table.ids():
+            bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
+                                                                        config, understudied_area))
+    return bus_table, zone_buses, zone_CH
 
 
-def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, zone_vehicles):
+def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, zone_vehicles, zone_CH):
     """
     this function updates the veh_tabel and zone_vehicles from main.py
     :param veh: it's the veh from .xml file
@@ -322,15 +318,11 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
     try:
         veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
             veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
-
-        try:
-            zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']].\
-                remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
-        except KeyError:
-            # initiate the vehicle
-            veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
-                                                                        config, understudied_area)
-                               )
+        zone_vehicles[veh_table.values(veh.getAttribute('id'))['prev_zone']].\
+            remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
+        if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
+            zone_CH[veh_table.values(veh.getAttribute('id'))['prev_zone']]. \
+                remove(veh.getAttribute('id'))
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
@@ -344,11 +336,13 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
         veh_table.values(veh.getAttribute('id'))['gates'] = dict()
         veh_table.values(veh.getAttribute('id'))['other_CHs'] = set()
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
+        if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
+            zone_CH[zone_id].add(veh.getAttribute('id'))
 
     except TypeError:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
                                                                     config, understudied_area))
-    return veh_table, zone_vehicles
+    return veh_table, zone_vehicles, zone_CH
 
 
 def det_near_sa(veh_id, veh_table,
