@@ -185,7 +185,6 @@ class DataTable:
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_CHs'] = set()
             # determining the buses and cluster_head in neighbor zones
-            print(self.veh_table.ids())
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                              self.zone_buses, self.zone_vehicles)
             if (len(bus_candidates) == 0) and (len(ch_candidates) == 0) and \

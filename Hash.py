@@ -84,13 +84,12 @@ class HashTable:
                 print(f"{self.data_map[index].print_list()}")
 
 
-# table = HashTable(10)
-# table.set_item('bus0', {'x': 1, 'y': 1})
-# table.set_item('bus1', {'x': 2, 'y': 2})
-# table.values('bus1')['x'] = 15
-# table.values('bus1')['y'] = 11
-# table.set_item('bus2', {'x': -1, 'y': 1})
-# table.set_item('bus3', {'x': -1, 'y': 1})
-# table.remove('bus1')
+# table = HashTable(100)
+# table.set_item('bus001', {'x': 1, 'y': 1})
+# table.set_item('bus010', {'x': 12, 'y': 12})
+# table.set_item('bus02', {'x': -1, 'y': 1})
+# table.set_item('bus20', {'x': -14, 'y': 11})
+# table.set_item('bus03', {'x': -1, 'y': 1})
+# table.remove('bus010')
 # table.print_hash_table()
 # a = 2

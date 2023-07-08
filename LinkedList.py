@@ -108,7 +108,7 @@ class LinkedList:
         if self.get(0).key == key:
             return self.pop_first()
         elif self.get(self.length-1).key == key:
-            return self.pop_first()
+            return self.pop()
 
         for index in range(1, self.length-1):
             if self.get(index).key == key:
