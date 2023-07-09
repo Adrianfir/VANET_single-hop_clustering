@@ -222,7 +222,7 @@ class DataTable:
 
                 # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
                 # unless get selected by another vehicles or can't find a cluster head after the counter
-                if len(self.veh_table.values(veh_id)['cluster_members']) == 1:
+                if len(self.veh_table.values(veh_id)['cluster_members']) == 0:
                     if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
                         self.veh_table.values(veh_id)['cluster_members'] = set()
                         self.veh_table.values(veh_id)['cluster_head'] = False
@@ -253,6 +253,7 @@ class DataTable:
                     temp_table = self.bus_table
                 else:
                     temp_table = self.veh_table
+                    # print(veh_id, ',', self.veh_table.values(veh_id)['primary_CH'])
                 dist_to_primaryCH = util.det_dist(veh_id, self.veh_table,
                                                   self.veh_table.values(veh_id)['primary_CH'], temp_table)
 
@@ -266,7 +267,7 @@ class DataTable:
                     try:
                         self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
                     except KeyError:
-                        self.veh_table.values(veh_id)['other_CHs'] = self.veh_table.values(veh_id)['other_CHs']
+                        pass
                     # updating 'gates' and 'gate_CHs' considering if the primary_CH is bus or not
                     if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gates'][veh_id] = \

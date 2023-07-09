@@ -87,6 +87,7 @@ class HashTable:
 # table = HashTable(100)
 # table.set_item('bus001', {'x': 1, 'y': 1})
 # table.set_item('bus010', {'x': 12, 'y': 12})
+# table.set_item('bus100', {'x': 12, 'y': 12})
 # table.set_item('bus02', {'x': -1, 'y': 1})
 # table.set_item('bus20', {'x': -14, 'y': 11})
 # table.set_item('bus03', {'x': -1, 'y': 1})
