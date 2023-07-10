@@ -175,19 +175,20 @@ def det_buses_other_CH(bus_id, veh_table, bus_table,
     all_near_chs = set()
     all_chs = set()
     for zone in bus_table.values(bus_id)['neighbor_zones']:
-        all_chs = all_chs.union(zone_chs[zone])
-        all_chs = all_chs.union(zone_buses[zone])
-
+        all_chs.update(all_chs.union(zone_chs[zone]))
+        # all_chs.update(all_chs.union(zone_buses[zone]))
     for ch in all_chs:
         if ch == bus_id:
             continue
         elif 'bus' in ch:
             ch_table = bus_table
-        else:
+        elif 'veh' in ch:
             ch_table = veh_table
+        else:
+            continue
         euclidian_dist = det_dist(bus_id, bus_table, ch, ch_table)
 
-        if euclidian_dist < min(bus_table.values(bus_id)['trans_range'], ch_table.values(ch)['trans_range']):
+        if euclidian_dist <= min(bus_table.values(bus_id)['trans_range'], ch_table.values(ch)['trans_range']):
             all_near_chs.add(ch)
     return all_near_chs
 
