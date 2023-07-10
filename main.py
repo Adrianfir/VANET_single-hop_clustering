@@ -24,6 +24,10 @@ if __name__ == "__main__":
         b = a.time
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
+        try:
+            print(a.veh_table.values('veh150'))
+        except KeyError:
+            pass
         # try:
         #     print('veh: ', 'veh150', ', priamary_CH: ', a.veh_table.values('veh150')['primary_CH'],
         #           ',', a.veh_table.values('veh150')['cluster_head'], ',',

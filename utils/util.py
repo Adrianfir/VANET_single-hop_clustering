@@ -371,10 +371,10 @@ def det_near_sa(veh_id, veh_table,
     result = set()
     neigh_stand_alones = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
-        neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the buses in the neighbor zones to a list
+        neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the CHs in the neighbor zones to a list
 
     for j in neigh_stand_alones:
-        if (j != veh_id) and (j in stand_alone):
+        if j != veh_id:
             euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
 
             if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
