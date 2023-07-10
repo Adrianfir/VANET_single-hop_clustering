@@ -24,17 +24,6 @@ if __name__ == "__main__":
         b = a.time
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
-        try:
-            print(a.veh_table.values('veh150'))
-        except KeyError:
-            pass
-        # try:
-        #     print('veh: ', 'veh150', ', priamary_CH: ', a.veh_table.values('veh150')['primary_CH'],
-        #           ',', a.veh_table.values('veh150')['cluster_head'], ',',
-        #           a.veh_table.values('veh150')['cluster_members'], ',', a.veh_table.values('veh150')['zone'])
-            # print('veh: ', 'veh152', ', priamary_CH: ', a.veh_table.values('veh152')['primary_CH'])
-        # except KeyError:
-        #     pass
         a.show_graph()
     end_time = time.time()
     print('n_bus: ', len(a.bus_table.ids()))

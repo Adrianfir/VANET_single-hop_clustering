@@ -234,7 +234,6 @@ class DataTable:
                     self.stand_alone.add(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.update_cluster([veh_id, ], config, zones)
-                    continue
                 else:
                     ch_candidates.remove(veh_id)
                     self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
