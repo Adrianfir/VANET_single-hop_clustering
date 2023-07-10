@@ -225,22 +225,24 @@ class DataTable:
 
                 # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
                 # unless get selected by another vehicles or can't find a cluster head after the counter
-                if len(self.veh_table.values(veh_id)['cluster_members']) == 0:
-                    if self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']:
-                        self.veh_table.values(veh_id)['cluster_members'] = set()
-                        self.veh_table.values(veh_id)['cluster_head'] = False
-                        self.zone_CH[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                        self.all_CHs.remove(veh_id)
-                        self.stand_alone.add(veh_id)
-                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
-                        self.update_cluster([veh_id, ], config, zones)
-                ch_candidates.remove(veh_id)
-                self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
-                                                                  union(bus_candidates))
-                self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
-                                                                  union(ch_candidates))
-                self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
-                self.all_CHs.add(veh_id)
+                if (len(self.veh_table.values(veh_id)['cluster_members']) == 0) and \
+                        (self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']):
+                    self.veh_table.values(veh_id)['cluster_members'] = set()
+                    self.veh_table.values(veh_id)['cluster_head'] = False
+                    self.zone_CH[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    self.all_CHs.remove(veh_id)
+                    self.stand_alone.add(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                    self.update_cluster([veh_id, ], config, zones)
+                    continue
+                else:
+                    ch_candidates.remove(veh_id)
+                    self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
+                                                                      union(bus_candidates))
+                    self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
+                                                                      union(ch_candidates))
+                    self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                    self.all_CHs.add(veh_id)
                 for other_ch in self.veh_table.values(veh_id)['other_CHs']:
                     self.net_graph.add_edge(veh_id, other_ch)
                 continue
@@ -253,7 +255,6 @@ class DataTable:
                     temp_table = self.bus_table
                 else:
                     temp_table = self.veh_table
-                    # print(veh_id, ',', self.veh_table.values(veh_id)['primary_CH'])
                 dist_to_primaryCH = util.det_dist(veh_id, self.veh_table,
                                                   self.veh_table.values(veh_id)['primary_CH'], temp_table)
 
@@ -392,9 +393,6 @@ class DataTable:
             if (n_near_sa[veh_id] == 1) and (list(near_sa[veh_id])[0] in near_sa.keys()):
                 if n_near_sa[list(near_sa[veh_id])[0]] == 1:
                     veh_id_2 = list(near_sa[veh_id])[0]
-                    print(self.stand_alone)
-                    print(self.zone_stand_alone[self.veh_table.values(veh_id)['zone']])
-                    print(self.zone_stand_alone[self.veh_table.values(veh_id_2)['zone']])
                     self.veh_table.values(veh_id)['cluster_head'] = True
                     self.veh_table.values(veh_id_2)['cluster_head'] = True
                     self.veh_table.values(veh_id)['counter'] = configs.counter
