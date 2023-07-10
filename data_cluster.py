@@ -366,7 +366,6 @@ class DataTable:
         for bus in self.bus_table.ids():
             self.bus_table.values(bus)['other_CHs'] = set()
             print(veh_id, bus)
-            print(self.zone_CH[self.veh_table.values('veh158')['zone']])
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
             self.bus_table.values(bus)['other_CHs'] = self.bus_table.values(bus)['other_CHs'].union(nearby_chs)

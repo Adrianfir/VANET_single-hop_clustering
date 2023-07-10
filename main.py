@@ -25,10 +25,10 @@ if __name__ == "__main__":
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
         try:
-            print('veh: ', 'veh152', ', priamary_CH: ', a.veh_table.values('veh152')['primary_CH'],
-                  ',', a.veh_table.values('veh152')['cluster_head'], ',',
-                  a.veh_table.values('veh152')['cluster_members'], ',', a.veh_table.values('veh152')['zone'])
-        #     print('veh: ', 'veh152', ', priamary_CH: ', a.veh_table.values('veh152')['primary_CH'])
+            print('veh: ', 'veh150', ', priamary_CH: ', a.veh_table.values('veh150')['primary_CH'],
+                  ',', a.veh_table.values('veh150')['cluster_head'], ',',
+                  a.veh_table.values('veh150')['cluster_members'], ',', a.veh_table.values('veh150')['zone'])
+            # print('veh: ', 'veh152', ', priamary_CH: ', a.veh_table.values('veh152')['primary_CH'])
         except KeyError:
             pass
         a.show_graph()
