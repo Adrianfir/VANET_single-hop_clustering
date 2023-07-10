@@ -267,6 +267,7 @@ def choose_ch(table, veh_table_i,
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_CH):
     """
     this function updates the bus_tabel and zone_buses from main.py
+    :param zone_CH: the self.zone_CH dictionary
     :param veh: it's the veh from .xml file
     :param bus_table: its bus_table
     :param zone_id: the zon_id f the vehicle
@@ -276,7 +277,7 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
     :param zone_buses: zone_buses from the DataTable class in the main.py
     :return: updated bus_table and zone_buses
     """
-    try:
+    if veh.getAttribute('id') in bus_table.ids():
         if bus_table.values(veh.getAttribute('id'))['zone'] != zone_id:
             bus_table.values(veh.getAttribute('id'))['prev_zone'] = \
                 bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
@@ -299,7 +300,7 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         zone_buses[zone_id].add(veh.getAttribute('id'))
         zone_CH[zone_id].add(veh.getAttribute('id'))
 
-    except TypeError:
+    else:
         bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
                                                                     config, understudied_area))
         zone_buses[zone_id].add(veh.getAttribute('id'))
@@ -307,9 +308,13 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
     return bus_table, zone_buses, zone_CH
 
 
-def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, zone_vehicles, zone_CH):
+def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
+                     zone_vehicles, zone_CH, stand_alone, zone_stand_alone):
     """
     this function updates the veh_tabel and zone_vehicles from main.py
+    :param zone_stand_alone: its the self.zone_stand_alone
+    :param stand_alone: its the self.stand_alone
+    :param zone_CH: the self.zone_CH dictionary
     :param veh: it's the veh from .xml file
     :param veh_table: its veh_table
     :param zone_id: the zon_id f the vehicle
@@ -317,9 +322,9 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
     :param zones: the area_zones.zones() or zones table from the DataTable class in the main.py
     :param config:
     :param zone_vehicles: zone_vehicles from the DataTable class in the main.py
-    :return: updated veh_table and zone_vehicles
+    :return: updated veh_table, zone_vehicles, zone_CH, stand_alone, zone_stand_alone
     """
-    try:
+    if veh.getAttribute('id') in veh_table.ids():
         if veh_table.values(veh.getAttribute('id'))['zone'] != zone_id:
             veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
                 veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
@@ -344,11 +349,13 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config, 
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_CH[zone_id].add(veh.getAttribute('id'))
 
-    except TypeError:
+    else:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
                                                                     config, understudied_area))
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
-    return veh_table, zone_vehicles, zone_CH
+        stand_alone.add(veh.getAttribute('id'))
+        zone_stand_alone[veh_table.values(veh.getAttribute('id'))['zone']].add(veh.getAttribute('id'))
+    return veh_table, zone_vehicles, zone_CH, stand_alone, zone_stand_alone
 
 
 def det_near_sa(veh_id, veh_table,

@@ -70,6 +70,7 @@ class DataTable:
                 # Here the buses will be added to zone_buses
                 self.zone_buses[zone_id].add(veh.getAttribute('id'))
                 self.zone_CH[zone_id].add(veh.getAttribute('id'))
+                self.all_CHs.add(veh.getAttribute('id'))
 
                 # the veh_table will be initiated here for the very first time self.understudied_area))
             else:
@@ -77,6 +78,8 @@ class DataTable:
                                                                                       self.understudied_area))
                 # Here the vehicles will be added to zone_vehicles
                 self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
+                self.stand_alone.add(veh.getAttribute('id'))
+                self.zone_stand_alone[self.veh_table.values(veh.getAttribute('id'))['zone']].add(veh.getAttribute('id'))
 
             # create the self.net_graph or add the new vertex
             if self.init_count == 1:
@@ -103,7 +106,6 @@ class DataTable:
         # self.stand_alone = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
-            tt = veh.getAttribute('id')
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
                                      float(veh.getAttribute('x'))
                                      )
@@ -119,10 +121,12 @@ class DataTable:
 
             else:
                 veh_ids.add(veh.getAttribute('id'))
-                self.veh_table, self.zone_vehicles, self.zone_CH = util.update_veh_table(veh, self.veh_table, zone_id,
-                                                                                         self.understudied_area, zones,
-                                                                                         config, self.zone_vehicles,
-                                                                                         self.zone_CH)
+                self.veh_table, self.zone_vehicles, self.zone_CH, self.stand_alone, \
+                self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
+                                                              zones, config, self.zone_vehicles, self.zone_CH,
+                                                              self.stand_alone, self.zone_stand_alone)
+                if self.veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
+                    self.all_CHs.add(veh.getAttribute('id'))
             # add the vertex to the graph
             self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
                                                                float(veh.getAttribute('x'))
@@ -131,17 +135,16 @@ class DataTable:
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
             for m in self.bus_table.values(k)['cluster_members']:
-                if m in self.veh_table.ids():
+                if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
                     self.veh_table.values(m)['primary_CH'] = None
                     self.veh_table.values(m)['counter'] = config.counter
                     self.stand_alone.add(m)
                     self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
-            try:
-                self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
-                self.zone_CH[self.bus_table.values(k)['zone']].remove(k)
-                self.all_CHs.remove(k)
-            except KeyError:
-                pass
+
+            self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
+            self.zone_CH[self.bus_table.values(k)['zone']].remove(k)
+            self.all_CHs.remove(k)
+
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
 
@@ -149,17 +152,15 @@ class DataTable:
         for k in (self.veh_table.ids() - veh_ids):
             if self.veh_table.values(k)['cluster_head'] is True:
                 for m in self.veh_table.values(k)['cluster_members']:
-                    if m in self.veh_table.ids():
+                    if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
                         self.veh_table.values(m)['primary_CH'] = None
                         self.veh_table.values(m)['counter'] = config.counter
                         self.stand_alone.add(m)
                         self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
                 self.zone_CH[self.veh_table.values(k)['zone']].remove(k)
                 self.veh_table.values(k)['cluster_head'] = False
-                try:
-                    self.all_CHs.remove(k)
-                except KeyError:
-                    pass
+                self.all_CHs.remove(k)
+
             elif self.veh_table.values(k)['primary_CH'] is not None:
                 if self.veh_table.values(k)['primary_CH'] in veh_ids:
                     k_ch = self.veh_table.values(k)['primary_CH']
@@ -167,6 +168,7 @@ class DataTable:
                 elif self.veh_table.values(k)['primary_CH'] in bus_ids:
                     k_ch = self.veh_table.values(k)['primary_CH']
                     self.bus_table.values(k_ch)['cluster_members'].remove(k)
+
             elif k in self.stand_alone:
                 self.stand_alone.remove(k)
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
@@ -202,11 +204,8 @@ class DataTable:
                     self.all_CHs.add(veh_id)
                     self.zone_CH[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.veh_table.values(veh_id)['counter'] = config.counter
-                    try:
-                        self.stand_alone.remove(veh_id)
-                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                    except KeyError:
-                        pass
+                    self.stand_alone.remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
                     continue
 
             elif (self.veh_table.values(veh_id)['in_area'] is True) and \
@@ -219,6 +218,9 @@ class DataTable:
 
                     if dist > config.trans_range:
                         self.veh_table.values(veh_id)['cluster_members'].remove(m)
+                        self.veh_table.values(m)['primary_CH'] = None
+                        self.stand_alone.add(m)
+                        self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
                         self.net_graph.remove_edge(veh_id, m)
 
                 # if the veh_id is a CH and does not have any member, after changing its zone, it won't remain as a CH
@@ -229,10 +231,8 @@ class DataTable:
                         self.veh_table.values(veh_id)['cluster_head'] = False
                         self.zone_CH[self.veh_table.values(veh_id)['zone']].remove(veh_id)
                         self.all_CHs.remove(veh_id)
-                        try:
-                            self.zone_CH[self.veh_table.values('zone')].remove(veh_id)
-                        except KeyError:
-                            pass
+                        self.stand_alone.add(veh_id)
+                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
                         self.update_cluster([veh_id, ], config, zones)
 
                 self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
@@ -264,15 +264,13 @@ class DataTable:
                                                                       union(bus_candidates))
                     self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
                                                                       union(ch_candidates))
-                    try:
-                        self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
-                    except KeyError:
-                        pass
-                    # updating 'gates' and 'gate_CHs' considering if the primary_CH is bus or not
+                    self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
+
+                    # updating 'gates' and 'gate_CHs' considering if the primary_CH is bus or vehicle-ch
                     if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gates'][veh_id] = \
                             self.veh_table.values(veh_id)['other_CHs']
-                        self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs'].\
+                        self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs']. \
                             update(self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gate_CHs'].
                                    union(self.veh_table.values(veh_id)['other_CHs']))
                     else:
@@ -293,6 +291,8 @@ class DataTable:
                         self.veh_table.values(ch_id)['cluster_members'].remove(veh_id)
                     self.net_graph.remove_edge(ch_id, veh_id)
                     self.veh_table.values(veh_id)['primary_CH'] = None
+                    self.stand_alone.add(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.update_cluster([veh_id, ], config, zones)
 
             # checking if the vehicle is in the understudied-area and if it's not in any cluster and if it's not a CH
@@ -303,63 +303,53 @@ class DataTable:
                 if len(bus_candidates) > 0:
                     if len(bus_candidates) == 1:
                         bus_ch = list(bus_candidates)[0]
-                        self.veh_table.values(veh_id)['primary_CH'] = bus_ch
-                        self.veh_table.values(veh_id)['counter'] = config.counter
-                        self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
-                        try:
-                            self.stand_alone.remove(veh_id)
-                            self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                        except KeyError:
-                            pass
-                        self.net_graph.add_edge(bus_ch, veh_id)
                     else:
                         bus_ch = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
                                                 bus_candidates)  # determine the most suitable from bus_candidates
 
-                        self.veh_table.values(veh_id)['primary_CH'] = bus_ch
-                        self.veh_table.values(veh_id)['counter'] = config.counter
-                        bus_candidates.remove(bus_ch)
-                        self.veh_table.values(veh_id)['other_CHs']. \
-                            update(self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates))
-                        self.veh_table.values(veh_id)['other_CHs']. \
-                            update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
-                        self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
-                        self.bus_table.values(bus_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
-                        try:
-                            self.stand_alone.remove(veh_id)
-                            self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                        except KeyError:
-                            pass
-                        self.net_graph.add_edge(bus_ch, veh_id)
-                        for other_ch in self.veh_table.values(veh_id)['other_CHs']:
-                            self.net_graph.add_edge(other_ch, veh_id)
+                    self.veh_table.values(veh_id)['primary_CH'] = bus_ch
+                    self.veh_table.values(veh_id)['counter'] = config.counter
+                    bus_candidates.remove(bus_ch)
+                    self.veh_table.values(veh_id)['other_CHs']. \
+                        update(self.veh_table.values(veh_id)['other_CHs'].union(bus_candidates))
+                    self.veh_table.values(veh_id)['other_CHs']. \
+                        update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
+                    self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
+                    self.bus_table.values(bus_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
+                    self.bus_table.values(bus_ch)['gate_CHs']. \
+                        update(self.bus_table.values(bus_ch)['gate_CHs'].
+                               union(self.veh_table.values(veh_id)['other_CHs']))
+                    self.stand_alone.remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    self.net_graph.add_edge(bus_ch, veh_id)
+                    for other_ch in self.veh_table.values(veh_id)['other_CHs']:
+                        self.net_graph.add_edge(other_ch, veh_id)
+
                     continue
-                elif len(ch_candidates) > 0:
+                elif (len(bus_candidates) == 0) and (len(ch_candidates) > 0):
                     if len(ch_candidates) == 1:
                         veh_ch = list(ch_candidates)[0]
-                        self.veh_table.values(veh_id)['primary_CH'] = veh_ch
-                        self.veh_table.values(veh_id)['counter'] = config.counter
-                        self.veh_table.values(veh_ch)['cluster_members'].add(veh_id)
-                        self.stand_alone.remove(veh_id)
-                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                        self.net_graph.add_edge(veh_ch, veh_id)
                     else:
                         veh_ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
                                                 zones,
                                                 ch_candidates)  # determine the most suitable from bus_candidates
 
-                        self.veh_table.values(veh_id)['primary_CH'] = veh_ch
-                        self.veh_table.values(veh_id)['counter'] = config.counter
-                        ch_candidates.remove(veh_ch)
-                        self.veh_table.values(veh_id)['other_CHs'].\
-                            update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
-                        self.veh_table.values(veh_ch)['cluster_members'].add(veh_id)
-                        self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
-                        self.stand_alone.remove(veh_id)
-                        self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                        self.net_graph.add_edge(veh_ch, veh_id)
-                        for other_ch in self.veh_table.values(veh_id)['other_CHs']:
-                            self.net_graph.add_edge(other_ch, veh_id)
+                    self.veh_table.values(veh_id)['primary_CH'] = veh_ch
+                    self.veh_table.values(veh_id)['counter'] = config.counter
+                    ch_candidates.remove(veh_ch)
+                    self.veh_table.values(veh_id)['other_CHs']. \
+                        update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
+                    self.veh_table.values(veh_ch)['cluster_members'].add(veh_id)
+                    self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
+                    self.veh_table.values(veh_ch)['gate_CHs'].\
+                        update(self.veh_table.values(veh_ch)['gate_CHs'].
+                               union(self.veh_table.values(veh_id)['other_CHs']))
+                    self.stand_alone.remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    self.net_graph.add_edge(veh_ch, veh_id)
+                    for other_ch in self.veh_table.values(veh_id)['other_CHs']:
+                        self.net_graph.add_edge(other_ch, veh_id)
+
                     continue
 
         # finding buses' other_CHs
@@ -453,7 +443,7 @@ class DataTable:
                         self.stand_alone.remove(veh_id)
                         self.stand_alone.remove(near_sa[veh_id][0])
                         self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                        self.zone_stand_alone[self.veh_table.values(near_sa[veh_id][0])['zone']].\
+                        self.zone_stand_alone[self.veh_table.values(near_sa[veh_id][0])['zone']]. \
                             remove(near_sa[veh_id][0])
 
                 if (ch != veh_id) and (ch != ''):
