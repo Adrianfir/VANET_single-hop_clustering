@@ -19,17 +19,13 @@ if __name__ == "__main__":
     area_zones.zones()
     a = DataTable(configs, area_zones)
     start_time = time.time()
-    for i in range(1000):
+    for i in range(5):
         a.update(configs, area_zones)
-        try:
-            print(a.veh_table.ids())
-        except KeyError:
-            pass
         print(a.time)
-        b = a.time
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
         a.show_graph()
+        b = a.time
     end_time = time.time()
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))
