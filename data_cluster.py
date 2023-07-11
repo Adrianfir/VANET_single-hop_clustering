@@ -100,7 +100,6 @@ class DataTable:
         :return:
         """
         self.time += 1
-        print(self.time)
         bus_ids = set()
         veh_ids = set()
         # self.stand_alone = set()
@@ -355,7 +354,6 @@ class DataTable:
         # finding buses' other_CHs
         for bus in self.bus_table.ids():
             self.bus_table.values(bus)['other_CHs'] = set()
-            print(veh_id, bus)
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
             self.bus_table.values(bus)['other_CHs'].update(self.bus_table.values(bus)['other_CHs'].union(nearby_chs))
@@ -374,11 +372,7 @@ class DataTable:
 
         for veh_id in near_sa.keys():
             if n_near_sa[veh_id] > 0:
-                pot_ch[veh_id] = veh_id
-                for mem in near_sa[veh_id]:
-                    if mem in near_sa.keys():
-                        if n_near_sa[mem] > n_near_sa[pot_ch[veh_id]]:
-                            pot_ch[veh_id] = mem
+                pot_ch[veh_id] = util.det_pot_ch(veh_id, near_sa, n_near_sa)
             else:
                 continue
 
@@ -409,10 +403,13 @@ class DataTable:
                     self.net_graph.add_edge(veh_id, veh_id_2)
                     continue
 
-            if len(unique_pot_ch.intersection(near_sa[veh_id])) > 1:
-                ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
-                                    unique_pot_ch.intersection(near_sa[veh_id])
-                                    )
+            if len(unique_pot_ch.intersection(near_sa[veh_id])) >= 1:
+                if len(unique_pot_ch.intersection(near_sa[veh_id])) == 1:
+                    ch = list(near_sa[veh_id])[0]
+                else:
+                    ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
+                                        unique_pot_ch.intersection(near_sa[veh_id])
+                                        )
                 selected_chs.add(ch)
                 if ch == veh_id:
                     if n_near_sa[veh_id] == 0:

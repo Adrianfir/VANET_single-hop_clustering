@@ -328,7 +328,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         if veh_table.values(veh.getAttribute('id'))['zone'] != zone_id:
             veh_table.values(veh.getAttribute('id'))['prev_zone'] = \
                 veh_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
-        zone_vehicles[veh_table.values(veh.getAttribute('id'))['zone']].\
+        zone_vehicles[veh_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_CH[veh_table.values(veh.getAttribute('id'))['zone']]. \
@@ -432,3 +432,16 @@ def det_dist(id1, table1, id2, table2):
                         unit=hs.Unit.METERS)
 
     return dist
+
+
+def det_pot_ch(veh_id, near_sa, n_near_sa):
+    pot_ch = veh_id
+    for mem in near_sa[veh_id]:
+        if mem in near_sa.keys():
+            if n_near_sa[mem] > n_near_sa[pot_ch]:
+                pot_ch = mem
+            else:
+                continue
+        else:
+            continue
+    return pot_ch
