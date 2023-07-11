@@ -21,7 +21,12 @@ if __name__ == "__main__":
     start_time = time.time()
     for i in range(1000):
         a.update(configs, area_zones)
+        try:
+            print(a.veh_table.ids())
+        except KeyError:
+            pass
         print(a.time)
+        b = a.time
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
         a.show_graph()

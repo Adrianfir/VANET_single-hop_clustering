@@ -25,11 +25,12 @@ class ZoneID:
         self.area_surface = self.x_area * self.y_area
         self.lat_rows = np.linspace(self.area["min_lat"], self.area["max_lat"],
                                     num=int(np.floor(self.y_area)), endpoint=True)  # dividing longitude by almost 1km
+        self.n_rows = len(self.lat_rows) - 1
         # length
         self.long_cols = np.linspace(self.area["min_long"], self.area["max_long"],
                                      num=int(np.floor(self.x_area)),
                                      endpoint=True)  # dividing latitude by almost 1km length
-
+        self.n_cols = len(self.long_cols) - 1
         # Here we are going to have a Hash Table for zones
         self.zone_hash = Hash.HashTable(2000)
         self.n_zones = int()
@@ -40,7 +41,7 @@ class ZoneID:
     def zones(self):
         """
 
-        :return: uploading self.zone_hash by the zones and their min & max lat & long
+        :return: uploading self.zone_hash by the zones and their min and max lat and long
         """
         z = 0  # zone counter
         for r in range(len(self.lat_rows) - 1):
@@ -72,12 +73,14 @@ class ZoneID:
         i = 0
         while temp:
 
-            if ((lat >= self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["min_long"])) & \
-                    ((lat <= self.zone_hash.values(temp)["max_lat"]) &
+            if ((lat >= self.zone_hash.values(temp)["min_lat"]) and
+                (long >= self.zone_hash.values(temp)["min_long"])) and \
+                    ((lat <= self.zone_hash.values(temp)["max_lat"]) and
                      (long <= self.zone_hash.values(temp)["max_long"])):
                 return temp
 
-            elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
+            elif (lat >= self.zone_hash.values(temp)["max_lat"]) and \
+                    (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very North-East zone is considered as first prev
                     lower_row = temp_row
@@ -95,7 +98,8 @@ class ZoneID:
                                                                 lower_row, lower_col,
                                                                 len(self.long_cols) - 1)
 
-            elif (lat < self.zone_hash.values(temp)["min_lat"]) & (long < self.zone_hash.values(temp)["min_long"]):
+            elif (lat < self.zone_hash.values(temp)["min_lat"]) and \
+                    (long < self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
                     # the very North-East zone is considered as first prev
                     lower_row = 0
@@ -113,7 +117,8 @@ class ZoneID:
                                                                 lower_row, lower_col,
                                                                 len(self.long_cols) - 1)
 
-            elif (lat >= self.zone_hash.values(temp)["max_lat"]) & (long < self.zone_hash.values(temp)["min_long"]):
+            elif (lat >= self.zone_hash.values(temp)["max_lat"]) and \
+                    (long < self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
                     # the very North_East zone is considered as first prev
                     lower_row = temp_row
@@ -131,7 +136,8 @@ class ZoneID:
                                                                 lower_row, lower_col,
                                                                 len(self.long_cols) - 1)
 
-            elif (lat < self.zone_hash.values(temp)["min_lat"]) & (long >= self.zone_hash.values(temp)["max_long"]):
+            elif (lat < self.zone_hash.values(temp)["min_lat"]) and \
+                    (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very South_West zone is considered as first prev
                     lower_row = 0
@@ -151,8 +157,8 @@ class ZoneID:
 
                 i += 1
 
-            elif ((lat < self.zone_hash.values(temp)["max_lat"]) &
-                  (lat >= self.zone_hash.values(temp)["min_lat"])) & \
+            elif ((lat < self.zone_hash.values(temp)["max_lat"]) and
+                  (lat >= self.zone_hash.values(temp)["min_lat"])) and \
                     (long >= self.zone_hash.values(temp)["max_long"]):
                 if i == 0:
                     # the very South_West zone is considered as first prev
@@ -180,8 +186,8 @@ class ZoneID:
 
                 i += 1
 
-            elif ((lat < self.zone_hash.values(temp)["max_lat"]) &
-                  (lat >= self.zone_hash.values(temp)["min_lat"])) & \
+            elif ((lat < self.zone_hash.values(temp)["max_lat"]) and
+                  (lat >= self.zone_hash.values(temp)["min_lat"])) and \
                     (long < self.zone_hash.values(temp)["min_long"]):
                 if i == 0:
                     # the very South_West zone is considered as first prev
@@ -209,8 +215,8 @@ class ZoneID:
 
                 i += 1
 
-            elif (lat < self.zone_hash.values(temp)["max_lat"]) & \
-                    ((long < self.zone_hash.values(temp)["max_long"]) &
+            elif (lat < self.zone_hash.values(temp)["max_lat"]) and \
+                    ((long < self.zone_hash.values(temp)["max_long"]) and
                      (long > self.zone_hash.values(temp)["min_long"])):
                 if i == 0:
                     # the very South_West zone is considered as first prev
@@ -238,8 +244,8 @@ class ZoneID:
 
                 i += 1
 
-            elif (lat > self.zone_hash.values(temp)["max_lat"]) & \
-                    ((long < self.zone_hash.values(temp)["max_long"]) &
+            elif (lat > self.zone_hash.values(temp)["max_lat"]) and \
+                    ((long < self.zone_hash.values(temp)["max_long"]) and
                      (long > self.zone_hash.values(temp)["min_long"])):
                 if i == 0:
                     # the very South_West zone is considered as first prev
@@ -280,80 +286,80 @@ class ZoneID:
         row = np.floor(num / len(self.long_cols))  # row  = 0, 1, 2, ...
         col = num - row * len(self.long_cols)  # col  = 0, 1, 2, ...
         # Central zone's neighbors
-        if (col != (len(self.long_cols) - 1)) & (col != 0) & (row != (len(self.lat_rows) - 1)) & (row != 0):
+        if (col != (len(self.long_cols) - 1)) and (col != 0) and (row != (len(self.lat_rows) - 1)) and (row != 0):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - 1),
-                    'zone' + str(num + len(self.long_cols)),
-                    'zone' + str(num + len(self.long_cols) + 1),
-                    'zone' + str(num + len(self.long_cols) - 1),
-                    'zone' + str(num - len(self.long_cols)),
-                    'zone' + str(num - len(self.long_cols) + 1),
-                    'zone' + str(num - len(self.long_cols) - 1)
+                    'zone' + str(num + self.n_cols),
+                    'zone' + str(num + self.n_cols + 1),
+                    'zone' + str(num + self.n_cols - 1),
+                    'zone' + str(num - self.n_cols),
+                    'zone' + str(num - self.n_cols + 1),
+                    'zone' + str(num - self.n_cols - 1)
                     ]
         # South zone's neighbors (not the ones in the corners)
-        elif (row == 0) & (col != 0) & (col != len(self.long_cols) - 1):
+        elif (row == 0) and (col != 0) and (col != len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
-                    'zone' + str(num + len(self.long_cols)),
-                    'zone' + str(num + len(self.long_cols) + 1),
-                    'zone' + str(num + len(self.long_cols) - 1)
+                    'zone' + str(num + self.n_cols),
+                    'zone' + str(num + self.n_cols + 1),
+                    'zone' + str(num + self.n_cols - 1)
                     ]
         # North zone's neighbors (not the ones one the corners)
-        elif (row == len(self.lat_rows) - 1) & (col != 0) & (col != len(self.long_cols) - 1):
+        elif (row == len(self.lat_rows) - 1) and (col != 0) and (col != len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
-                    'zone' + str(num - len(self.long_cols)),
-                    'zone' + str(num - len(self.long_cols) + 1),
-                    'zone' + str(num - len(self.long_cols) - 1)
+                    'zone' + str(num - self.n_cols),
+                    'zone' + str(num - self.n_cols + 1),
+                    'zone' + str(num - self.n_cols - 1)
                     ]
         # East zone's neighbors (not the ones one the corners)
-        elif (col == len(self.long_cols) - 1) & (row != 0) & (row != len(self.lat_rows) - 1):
+        elif (col == len(self.long_cols) - 1) and (row != 0) and (row != len(self.lat_rows) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
-                    'zone' + str(num + len(self.long_cols)),
-                    'zone' + str(num + len(self.long_cols) - 1),
-                    'zone' + str(num - len(self.long_cols)),
-                    'zone' + str(num - len(self.long_cols) - 1)
+                    'zone' + str(num + self.n_cols),
+                    'zone' + str(num + self.n_cols - 1),
+                    'zone' + str(num - self.n_cols),
+                    'zone' + str(num - self.n_cols - 1)
                     ]
         # West zone's neighbors (not the ones one the corners)
-        elif (col == 0) & (row != 0) & (row != len(self.lat_rows) - 1):
+        elif (col == 0) and (row != 0) and (row != len(self.lat_rows) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
-                    'zone' + str(num + len(self.long_cols)),
-                    'zone' + str(num + len(self.long_cols) + 1),
-                    'zone' + str(num - len(self.long_cols)),
-                    'zone' + str(num - len(self.long_cols) + 1)
+                    'zone' + str(num + self.n_cols),
+                    'zone' + str(num + self.n_cols + 1),
+                    'zone' + str(num - self.n_cols),
+                    'zone' + str(num - self.n_cols + 1)
                     ]
         # South-East zone's neighbors
-        elif (row == 0) & (col == len(self.long_cols) - 1):
+        elif (row == 0) and (col == len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
-                    'zone' + str(num + len(self.long_cols)),
-                    'zone' + str(num + len(self.long_cols) - 1)
+                    'zone' + str(num + self.n_cols),
+                    'zone' + str(num + self.n_cols - 1)
                     ]
         # North-West zone's neighbors
-        elif (row == len(self.lat_rows) - 1) & (col == 0):
+        elif (row == len(self.lat_rows) - 1) and (col == 0):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
-                    'zone' + str(num - len(self.long_cols)),
-                    'zone' + str(num - len(self.long_cols) + 1)
+                    'zone' + str(num - self.n_cols),
+                    'zone' + str(num - self.n_cols + 1)
                     ]
         # North-East zone's neighbors
-        elif (row == len(self.lat_rows) - 1) & (col == len(self.long_cols) - 1):
+        elif (row == len(self.lat_rows) - 1) and (col == len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
-                    'zone' + str(num - len(self.long_cols)),
-                    'zone' + str(num - len(self.long_cols) - 1)
+                    'zone' + str(num - self.n_cols),
+                    'zone' + str(num - self.n_cols - 1)
                     ]
         # South-West zone's neighbors
-        elif (row == 0) & (col == 0):
+        elif (row == 0) and (col == 0):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
-                    'zone' + str(num + len(self.long_cols)),
-                    'zone' + str(num + len(self.long_cols) + 1),
+                    'zone' + str(num + self.n_cols),
+                    'zone' + str(num + self.n_cols + 1),
                     ]
 
 

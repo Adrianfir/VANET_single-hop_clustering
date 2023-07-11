@@ -259,12 +259,15 @@ class DataTable:
                 if dist_to_primaryCH <= min(self.veh_table.values(veh_id)['trans_range'],
                                             temp_table.values(self.veh_table.values(veh_id)['primary_CH'])
                                             ['trans_range']):
+                    print(veh_id)
+                    print('before: ', self.veh_table.values(veh_id)['other_CHs'], ',', self.veh_table.values(veh_id)['primary_CH'])
                     self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
                                                                       union(bus_candidates))
                     self.veh_table.values(veh_id)['other_CHs'].update(self.veh_table.values(veh_id)['other_CHs'].
                                                                       union(ch_candidates))
+                    print('after: ', self.veh_table.values(veh_id)['other_CHs'], ',', self.veh_table.values(veh_id)['primary_CH'])
                     self.veh_table.values(veh_id)['other_CHs'].remove(self.veh_table.values(veh_id)['primary_CH'])
-
+                    print('final: ', self.veh_table.values(veh_id)['other_CHs'], ',', self.veh_table.values(veh_id)['primary_CH'])
                     # updating 'gates' and 'gate_CHs' considering if the primary_CH is bus or vehicle-ch
                     if 'bus' in self.veh_table.values(veh_id)['primary_CH']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_CH'])['gates'][veh_id] = \
