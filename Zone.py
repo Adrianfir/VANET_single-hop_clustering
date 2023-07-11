@@ -298,7 +298,7 @@ class ZoneID:
                     'zone' + str(num + 1),
                     'zone' + str(num + len(self.long_cols)),
                     'zone' + str(num + len(self.long_cols) + 1),
-                    'zone' + str(num + len(self.long_cols) + 1)
+                    'zone' + str(num + len(self.long_cols) - 1)
                     ]
         # North zone's neighbors (not the ones one the corners)
         elif (row == len(self.lat_rows) - 1) & (col != 0) & (col != len(self.long_cols) - 1):
@@ -307,7 +307,7 @@ class ZoneID:
                     'zone' + str(num + 1),
                     'zone' + str(num - len(self.long_cols)),
                     'zone' + str(num - len(self.long_cols) + 1),
-                    'zone' + str(num - len(self.long_cols) + 1)
+                    'zone' + str(num - len(self.long_cols) - 1)
                     ]
         # East zone's neighbors (not the ones one the corners)
         elif (col == len(self.long_cols) - 1) & (row != 0) & (row != len(self.lat_rows) - 1):

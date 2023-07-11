@@ -17,11 +17,11 @@ if __name__ == "__main__":
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
-    start_time = time.time()
     a = DataTable(configs, area_zones)
-    for i in range(1):
+    start_time = time.time()
+    for i in range(1000):
         a.update(configs, area_zones)
-        b = a.time
+        print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
         a.show_graph()

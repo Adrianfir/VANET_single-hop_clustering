@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
            'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
            'det_near_ch', 'update_bus_table', 'update_veh_table',
-           'update_sa_net_graph', 'det_near_sa', 'det_dist']
+           'update_sa_net_graph', 'det_near_sa', 'det_dist', 'det_pot_ch']
 
 import numpy as np
 import random
@@ -348,6 +348,11 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_CH[zone_id].add(veh.getAttribute('id'))
+        elif (veh_table.values(veh.getAttribute('id'))['cluster_head'] is False) and \
+                (veh_table.values(veh.getAttribute('id'))['primary_CH'] is None):
+            stand_alone.add(veh.getAttribute('id'))
+            zone_stand_alone[veh_table.values(veh.getAttribute('id'))['prev_zone']].remove(veh.getAttribute('id'))
+            zone_stand_alone[veh_table.values(veh.getAttribute('id'))['zone']].add(veh.getAttribute('id'))
 
     else:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
