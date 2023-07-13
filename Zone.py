@@ -290,7 +290,7 @@ class ZoneID:
             row = np.ceil(row)
             col = (num + 1) - ((row-1) * self.n_cols)
         # Central zone's neighbors
-        if (col != (len(self.long_cols) - 1)) and (col != 0) and (row != (len(self.lat_rows) - 1)) and (row != 0):
+        if (col != (len(self.long_cols) - 1)) and (col != 1) and (row != (len(self.lat_rows) - 1)) and (row != 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - 1),
@@ -302,7 +302,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # South zone's neighbors (not the ones in the corners)
-        elif (row == 0) and (col != 0) and (col != len(self.long_cols) - 1):
+        elif (row == 1) and (col != 0) and (col != len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
@@ -311,7 +311,7 @@ class ZoneID:
                     'zone' + str(num + self.n_cols - 1)
                     ]
         # North zone's neighbors (not the ones one the corners)
-        elif (row == len(self.lat_rows) - 1) and (col != 0) and (col != len(self.long_cols) - 1):
+        elif (row == len(self.lat_rows) - 1) and (col != 1) and (col != len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
@@ -320,7 +320,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # East zone's neighbors (not the ones one the corners)
-        elif (col == len(self.long_cols) - 1) and (row != 0) and (row != len(self.lat_rows) - 1):
+        elif (col == len(self.long_cols) - 1) and (row != 1) and (row != len(self.lat_rows) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + self.n_cols),
@@ -329,7 +329,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # West zone's neighbors (not the ones one the corners)
-        elif (col == 0) and (row != 0) and (row != len(self.lat_rows) - 1):
+        elif (col == 1) and (row != 1) and (row != len(self.lat_rows) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num + self.n_cols),
@@ -338,14 +338,14 @@ class ZoneID:
                     'zone' + str(num - self.n_cols + 1)
                     ]
         # South-East zone's neighbors
-        elif (row == 0) and (col == len(self.long_cols) - 1):
+        elif (row == 1) and (col == len(self.long_cols) - 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + self.n_cols),
                     'zone' + str(num + self.n_cols - 1)
                     ]
         # North-West zone's neighbors
-        elif (row == len(self.lat_rows) - 1) and (col == 0):
+        elif (row == len(self.lat_rows) - 1) and (col == 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - self.n_cols),
@@ -359,7 +359,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # South-West zone's neighbors
-        elif (row == 0) and (col == 0):
+        elif (row == 1) and (col == 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num + self.n_cols),
@@ -372,5 +372,5 @@ class ZoneID:
 # area = configs.area
 # a = ZoneID(configs)
 # a.zones()
-# a.neighbor_zones('zone1471')
+# b = a.neighbor_zones('zone1408')
 # print(a.det_zone(44, -79.30198263788123))
