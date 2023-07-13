@@ -184,9 +184,6 @@ class DataTable:
         """
         for veh_id in veh_ids:
             self.veh_table.values(veh_id)['other_CHs'] = set()
-            self.net_graph.remove_vertex(veh_id)
-            self.net_graph.add_vertex(veh_id,(self.veh_table.values(veh_id)['lat'],
-                                              self.veh_table.values(veh_id)['long']))
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_CHs'] = set()
             # determining the buses and cluster_head in neighbor zones
