@@ -99,7 +99,7 @@ class DataTable:
         Attention: The properties related to clusters and IP addresses are going to be updated here
         :return:
         """
-        self.time += 1
+
         bus_ids = set()
         veh_ids = set()
         # self.stand_alone = set()
@@ -358,6 +358,8 @@ class DataTable:
             self.bus_table.values(bus)['other_CHs'].update(self.bus_table.values(bus)['other_CHs'].union(nearby_chs))
             for node in self.bus_table.values(bus)['other_CHs']:
                 self.net_graph.add_edge(bus, node)
+
+        self.time += 1
 
     def stand_alones_cluster(self, configs, zones):
         near_sa = dict()
