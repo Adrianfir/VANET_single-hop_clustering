@@ -283,8 +283,12 @@ class ZoneID:
 
     def neighbor_zones(self, zone_id):
         num = int(zone_id[4:])
-        row = np.floor(num / len(self.long_cols))  # row  = 0, 1, 2, ...
-        col = num - row * len(self.long_cols)  # col  = 0, 1, 2, ...
+        row = (num+1) / self.n_cols
+        if row == 0:
+            col = self.n_clos
+        else:
+            row = np.ceil(row)
+            col = (num + 1) - ((row-1) * self.n_cols)
         # Central zone's neighbors
         if (col != (len(self.long_cols) - 1)) and (col != 0) and (row != (len(self.lat_rows) - 1)) and (row != 0):
             return ['zone' + str(num),  # The zone itself must be included
@@ -365,7 +369,8 @@ class ZoneID:
 
 # from configs.config import Configs
 # configs = Configs().config
-# area = {"min_lat": 43.586568, "min_long": -79.540771, "max_lat": 44.012923, "max_long": -79.238069}
+# area = configs.area
 # a = ZoneID(configs)
 # a.zones()
+# a.neighbor_zones('zone1471')
 # print(a.det_zone(44, -79.30198263788123))
