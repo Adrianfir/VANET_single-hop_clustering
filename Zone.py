@@ -288,7 +288,7 @@ class ZoneID:
         col = (num + 1) - (row * self.n_cols)
         col = col - 1
         # Central zone's neighbors
-        if (col != self.n_cols) and (col != 1) and (row != self.n_rows) and (row != 1):
+        if (col != self.n_cols-1) and (col != 0) and (row != self.n_rows-1) and (row != 0):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - 1),
@@ -300,7 +300,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # South zone's neighbors (not the ones in the corners)
-        elif (row == 1) and (col != 0) and (col != self.n_cols):
+        elif (row == 0) and (col != 0) and (col != self.n_cols-1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
@@ -309,7 +309,7 @@ class ZoneID:
                     'zone' + str(num + self.n_cols - 1)
                     ]
         # North zone's neighbors (not the ones one the corners)
-        elif (row == self.n_rows) and (col != 1) and (col != self.n_cols):
+        elif (row == self.n_rows-1) and (col != 0) and (col != self.n_cols-1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
@@ -318,7 +318,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # East zone's neighbors (not the ones one the corners)
-        elif (col == self.n_cols) and (row != 1) and (row != self.n_rows):
+        elif (col == self.n_cols-1) and (row != 0) and (row != self.n_rows-1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + self.n_cols),
@@ -327,7 +327,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # West zone's neighbors (not the ones one the corners)
-        elif (col == 1) and (row != 1) and (row != self.n_rows):
+        elif (col == 0) and (row != 0) and (row != self.n_rows-1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num + self.n_cols),
@@ -336,28 +336,28 @@ class ZoneID:
                     'zone' + str(num - self.n_cols + 1)
                     ]
         # South-East zone's neighbors
-        elif (row == 1) and (col == self.n_cols):
+        elif (row == 0) and (col == self.n_cols-1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + self.n_cols),
                     'zone' + str(num + self.n_cols - 1)
                     ]
         # North-West zone's neighbors
-        elif (row == self.n_rows) and (col == 1):
+        elif (row == self.n_rows-1) and (col == 0):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - self.n_cols),
                     'zone' + str(num - self.n_cols + 1)
                     ]
         # North-East zone's neighbors
-        elif (row == self.n_rows) and (col == self.n_cols):
+        elif (row == self.n_rows-1) and (col == self.n_cols-1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num - self.n_cols),
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # South-West zone's neighbors
-        elif (row == 1) and (col == 1):
+        elif (row == 0) and (col == 0):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num + self.n_cols),
