@@ -22,7 +22,7 @@ class Inputs:
                     max_long=-79.238069)
         trans_range = 300
         start_time = 115
-        counter = 5
+        counter = 3
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--xml_path', default=trace_path, type=str,

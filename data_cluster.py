@@ -10,6 +10,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
+import googlemaps
 import webbrowser
 
 from Graph import Graph
@@ -482,12 +483,11 @@ class DataTable:
         :return: Graph
         """
         G = nx.Graph()
-
         # Add nodes and edges with coordinates to the networkx graph
         node_colors = dict()
         for vertex, data in self.net_graph.adj_list.items():
             G.add_node(vertex, pos=data['pos'])
-            for edge in data['edges']:
+            for edge in list(set(data['edges'])):
                 G.add_edge(vertex, edge)
 
         # Extract positions from node attributes
@@ -495,7 +495,7 @@ class DataTable:
 
         # Create a folium map centered around the first node
         map_center = list(pos.values())[0]
-        m = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron')
+        m = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron', attr='Google', name='Google Maps')
 
         # Create a MarkerCluster group for the networkx graph nodes
         marker_cluster = MarkerCluster(name='VANET')
