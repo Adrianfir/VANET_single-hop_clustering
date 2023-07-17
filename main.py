@@ -22,6 +22,10 @@ if __name__ == "__main__":
     for i in range(20):
         a.update(configs, area_zones)
         print(a.time)
+        try:
+            print(a.veh_table.values('veh9'))
+        except KeyError:
+            pass
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
     end_time = time.time()
@@ -31,7 +35,7 @@ if __name__ == "__main__":
     a.print_table()
     print('stand_alones: ', a.stand_alone)
     a.show_graph()
-    # print("execution time: ", end_time - start_time)
+    print("execution time: ", end_time - start_time)
 
     # Create a networkx graph
 
