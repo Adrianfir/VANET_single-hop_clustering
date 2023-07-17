@@ -99,7 +99,7 @@ class DataTable:
         Attention: The properties related to clusters and IP addresses are going to be updated here
         :return:
         """
-
+        self.time += 1
         bus_ids = set()
         veh_ids = set()
         # self.stand_alone = set()
@@ -186,6 +186,9 @@ class DataTable:
             self.veh_table.values(veh_id)['other_CHs'] = set()
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_CHs'] = set()
+            self.net_graph.remove_vertex(veh_id)
+            self.net_graph.add_vertex(veh_id, (self.veh_table.values(veh_id)['lat'],
+                                               self.veh_table.values(veh_id)['long']))
             # determining the buses and cluster_head in neighbor zones
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                              self.zone_buses, self.zone_vehicles)
@@ -215,7 +218,8 @@ class DataTable:
                 for m in temp_mem:
                     dist = util.det_dist(veh_id, self.veh_table, m, self.veh_table)
 
-                    if dist > config.trans_range:
+                    if dist > min(self.veh_table.values(veh_id)['trans_range'],
+                                  self.veh_table.values(m)['trans_range']):
                         self.veh_table.values(veh_id)['cluster_members'].remove(m)
                         self.veh_table.values(m)['primary_CH'] = None
                         self.stand_alone.add(m)
@@ -355,11 +359,12 @@ class DataTable:
             self.bus_table.values(bus)['other_CHs'] = set()
             nearby_chs = util.det_buses_other_CH(bus, self.veh_table, self.bus_table,
                                                  self.zone_buses, self.zone_CH)
+            if self.time == 135:
+                print(nearby_chs)
+                print(self.all_CHs)
             self.bus_table.values(bus)['other_CHs'].update(self.bus_table.values(bus)['other_CHs'].union(nearby_chs))
             for node in self.bus_table.values(bus)['other_CHs']:
                 self.net_graph.add_edge(bus, node)
-
-        self.time += 1
 
     def stand_alones_cluster(self, configs, zones):
         near_sa = dict()

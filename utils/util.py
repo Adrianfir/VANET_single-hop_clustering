@@ -79,7 +79,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 gate_CHs=set(),
                 IP=None,
                 MAC=mac_address(),
-                counter=3  # a counter_time to search and join a cluster
+                counter=config.counter  # a counter_time to search and join a cluster
                 )
 
 
@@ -95,9 +95,9 @@ def mac_address():
     return ':'.join(map(lambda x: "%02x" % x, mac))
 
 
-def middle_zone(u_row, u_col,
-                l_row, l_col,
-                n_cols):
+def middle_zone(u_row: object, u_col: object,
+                l_row: object, l_col: object,
+                n_cols: object) -> object:
     """
     This function is used in the Zone.py file
     :param u_row: The upper row id +1
@@ -110,7 +110,9 @@ def middle_zone(u_row, u_col,
     # the almost centre zone id will be obtained here
     middle_row = int(np.floor((u_row + l_row) / 2))
     middle_col = int(np.floor((u_col + l_col) / 2))
-    middle_zone_id = ((middle_row - 1) * n_cols) + middle_col
+    middle_zone_id = ((middle_row - 1) * n_cols) + middle_col - 1
+    middle_row -= 1             # because the formal numbering has been considered form 0 not 1
+    middle_col -= 1             # because the formal numbering has been considered form 0 not 1
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
@@ -151,13 +153,12 @@ def det_near_ch(veh_id, veh_table, bus_table,
         neigh_bus += zone_buses[neigh_z]  # adding all the buses in the neighbor zones to a list
         neigh_veh += zone_vehicles[neigh_z]
 
-    if len(neigh_bus) != 0:
-        for j in neigh_bus:
-            euclidian_dist = det_dist(veh_id, veh_table, j, bus_table)
+    for j in neigh_bus:
+        euclidian_dist = det_dist(veh_id, veh_table, j, bus_table)
 
-            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
-                                     bus_table.values(j)['trans_range']):
-                bus_candidates.add(j)
+        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                 bus_table.values(j)['trans_range']):
+            bus_candidates.add(j)
 
     for j in neigh_veh:
         if veh_table.values(j)['cluster_head'] is True:

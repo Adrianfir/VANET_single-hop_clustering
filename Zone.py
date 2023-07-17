@@ -44,8 +44,8 @@ class ZoneID:
         :return: uploading self.zone_hash by the zones and their min and max lat and long
         """
         z = 0  # zone counter
-        for r in range(len(self.lat_rows) - 1):
-            for c in range(len(self.long_cols) - 1):
+        for r in range(self.n_rows):
+            for c in range(self.n_cols):
                 self.zone_hash.set_item('zone' + str(z), dict(min_lat=self.lat_rows[r],
                                                               min_long=self.long_cols[c],
                                                               max_lat=self.lat_rows[r + 1],
@@ -68,8 +68,8 @@ class ZoneID:
             return None
 
         # middle_zone_id, its row+1, its col+1
-        temp, temp_row, temp_col = util.middle_zone(len(self.lat_rows) - 1, len(self.long_cols) - 1, 0, 0,
-                                                    len(self.long_cols) - 1)
+        temp, temp_row, temp_col = util.middle_zone(self.n_rows, self.n_cols,
+                                                    1, 1, self.n_cols)
         i = 0
         while temp:
 
@@ -85,18 +85,18 @@ class ZoneID:
                     # the very North-East zone is considered as first prev
                     lower_row = temp_row
                     lower_col = temp_col
-                    upper_row = len(self.lat_rows) - 1
-                    upper_col = len(self.long_cols) - 1
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    upper_row = self.n_rows
+                    upper_col = self.n_cols
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     lower_row = temp_row
                     lower_col = temp_col
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
             elif (lat < self.zone_hash.values(temp)["min_lat"]) and \
                     (long < self.zone_hash.values(temp)["min_long"]):
@@ -106,16 +106,16 @@ class ZoneID:
                     lower_col = 0
                     upper_row = temp_row
                     upper_col = temp_col
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     upper_row = temp_row
                     upper_col = temp_col
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
             elif (lat >= self.zone_hash.values(temp)["max_lat"]) and \
                     (long < self.zone_hash.values(temp)["min_long"]):
@@ -125,16 +125,16 @@ class ZoneID:
                     lower_col = 0
                     upper_row = len(self.lat_rows) - 1
                     upper_col = temp_col
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     lower_row = temp_row
                     upper_col = temp_col
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
             elif (lat < self.zone_hash.values(temp)["min_lat"]) and \
                     (long >= self.zone_hash.values(temp)["max_long"]):
@@ -144,16 +144,16 @@ class ZoneID:
                     lower_col = temp_col
                     upper_row = temp_row
                     upper_col = len(self.long_cols) - 1
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     upper_row = temp_row
                     lower_col = temp_col
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
                 i += 1
 
@@ -169,9 +169,9 @@ class ZoneID:
                     if (upper_col - lower_col) == 1:
                         lower_col = upper_col
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     upper_row = temp_row
@@ -180,9 +180,9 @@ class ZoneID:
                     if (upper_col - lower_col) == 1:
                         lower_col = upper_col
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
                 i += 1
 
@@ -198,9 +198,9 @@ class ZoneID:
                     if (upper_col - lower_col) == 1:
                         upper_col = lower_col
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     upper_row = temp_row
@@ -209,9 +209,9 @@ class ZoneID:
                     if (upper_col - lower_col) == 1:
                         upper_col = lower_col
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
                 i += 1
 
@@ -227,9 +227,9 @@ class ZoneID:
                     if (upper_row - lower_row) == 1:
                         upper_row = lower_row
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     upper_row = temp_row
@@ -238,9 +238,9 @@ class ZoneID:
                     if (upper_row - lower_row) == 1:
                         upper_row = lower_row
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
                 i += 1
 
@@ -256,9 +256,9 @@ class ZoneID:
                     if (upper_row - lower_row) == 1:
                         lower_row = upper_row
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
                     i += 1
                 else:
                     lower_row = temp_row
@@ -267,9 +267,9 @@ class ZoneID:
                     if (upper_row - lower_row) == 1:
                         lower_row = upper_row
 
-                    temp, temp_row, temp_col = util.middle_zone(upper_row, upper_col,
-                                                                lower_row, lower_col,
-                                                                len(self.long_cols) - 1)
+                    temp, temp_row, temp_col = util.middle_zone(upper_row+1, upper_col+1,
+                                                                lower_row+1, lower_col+1,
+                                                                self.n_cols)
 
                 i += 1
 
@@ -284,13 +284,11 @@ class ZoneID:
     def neighbor_zones(self, zone_id):
         num = int(zone_id[4:])
         row = (num+1) / self.n_cols
-        if row == 0:
-            col = self.n_clos
-        else:
-            row = np.ceil(row)
-            col = (num + 1) - ((row-1) * self.n_cols)
+        row = np.ceil(row) - 1
+        col = (num + 1) - (row * self.n_cols)
+        col = col - 1
         # Central zone's neighbors
-        if (col != (len(self.long_cols) - 1)) and (col != 1) and (row != (len(self.lat_rows) - 1)) and (row != 1):
+        if (col != self.n_cols) and (col != 1) and (row != self.n_rows) and (row != 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - 1),
@@ -302,7 +300,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # South zone's neighbors (not the ones in the corners)
-        elif (row == 1) and (col != 0) and (col != len(self.long_cols) - 1):
+        elif (row == 1) and (col != 0) and (col != self.n_cols):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
@@ -311,7 +309,7 @@ class ZoneID:
                     'zone' + str(num + self.n_cols - 1)
                     ]
         # North zone's neighbors (not the ones one the corners)
-        elif (row == len(self.lat_rows) - 1) and (col != 1) and (col != len(self.long_cols) - 1):
+        elif (row == self.n_rows) and (col != 1) and (col != self.n_cols):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + 1),
@@ -320,7 +318,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # East zone's neighbors (not the ones one the corners)
-        elif (col == len(self.long_cols) - 1) and (row != 1) and (row != len(self.lat_rows) - 1):
+        elif (col == self.n_cols) and (row != 1) and (row != self.n_rows):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + self.n_cols),
@@ -329,7 +327,7 @@ class ZoneID:
                     'zone' + str(num - self.n_cols - 1)
                     ]
         # West zone's neighbors (not the ones one the corners)
-        elif (col == 1) and (row != 1) and (row != len(self.lat_rows) - 1):
+        elif (col == 1) and (row != 1) and (row != self.n_rows):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num + self.n_cols),
@@ -338,21 +336,21 @@ class ZoneID:
                     'zone' + str(num - self.n_cols + 1)
                     ]
         # South-East zone's neighbors
-        elif (row == 1) and (col == len(self.long_cols) - 1):
+        elif (row == 1) and (col == self.n_cols):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num + self.n_cols),
                     'zone' + str(num + self.n_cols - 1)
                     ]
         # North-West zone's neighbors
-        elif (row == len(self.lat_rows) - 1) and (col == 1):
+        elif (row == self.n_rows) and (col == 1):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num + 1),
                     'zone' + str(num - self.n_cols),
                     'zone' + str(num - self.n_cols + 1)
                     ]
         # North-East zone's neighbors
-        elif (row == len(self.lat_rows) - 1) and (col == len(self.long_cols) - 1):
+        elif (row == self.n_rows) and (col == self.n_cols):
             return ['zone' + str(num),  # The zone itself must be included
                     'zone' + str(num - 1),
                     'zone' + str(num - self.n_cols),
