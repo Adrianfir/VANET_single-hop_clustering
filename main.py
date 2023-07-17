@@ -19,19 +19,19 @@ if __name__ == "__main__":
     area_zones.zones()
     a = DataTable(configs, area_zones)
     start_time = time.time()
-    for i in range(100):
+    for i in range(20):
         a.update(configs, area_zones)
         print(a.time)
-        # a.update_cluster(a.veh_table.ids(), configs, area_zones)
-        # a.stand_alones_cluster(configs, area_zones)
-        a.show_graph()
+        a.update_cluster(a.veh_table.ids(), configs, area_zones)
+        a.stand_alones_cluster(configs, area_zones)
     end_time = time.time()
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))
     print('\n')
     a.print_table()
     print('stand_alones: ', a.stand_alone)
-    print("execution time: ", end_time - start_time)
+    a.show_graph()
+    # print("execution time: ", end_time - start_time)
 
     # Create a networkx graph
 

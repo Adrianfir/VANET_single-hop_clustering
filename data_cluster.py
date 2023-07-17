@@ -139,6 +139,10 @@ class DataTable:
                     self.veh_table.values(m)['counter'] = config.counter
                     self.stand_alone.add(m)
                     self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
+                else:
+                    self.zone_vehicles[self.veh_table.values(m)['zone']].remove(k)
+                    self.veh_table.remove(m)
+                    self.net_graph.remove_vertex(m)
 
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.zone_CH[self.bus_table.values(k)['zone']].remove(k)
@@ -186,9 +190,7 @@ class DataTable:
             self.veh_table.values(veh_id)['other_CHs'] = set()
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_CHs'] = set()
-            self.net_graph.remove_vertex(veh_id)
-            self.net_graph.add_vertex(veh_id, (self.veh_table.values(veh_id)['lat'],
-                                               self.veh_table.values(veh_id)['long']))
+
             # determining the buses and cluster_head in neighbor zones
             bus_candidates, ch_candidates = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                              self.zone_buses, self.zone_vehicles)
