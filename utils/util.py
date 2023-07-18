@@ -11,7 +11,7 @@ import numpy as np
 import random
 import haversine as hs
 from scipy import spatial
-from Graph import Graph
+from graph import Graph
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -99,7 +99,7 @@ def middle_zone(u_row: object, u_col: object,
                 l_row: object, l_col: object,
                 n_cols: object) -> object:
     """
-    This function is used in the Zone.py file
+    This function is used in the zonex.py file
     :param u_row: The upper row id +1
     :param l_row: The lower row id +1
     :param u_col: The upper col id +1

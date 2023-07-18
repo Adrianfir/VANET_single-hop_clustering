@@ -9,7 +9,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 import time
 from data_cluster import DataTable
 from configs.config import Configs
-from Zone import ZoneID
+from zonex import ZoneID
 import utils.util as util
 
 if __name__ == "__main__":

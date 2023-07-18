@@ -13,13 +13,9 @@ from folium.plugins import MarkerCluster
 import googlemaps
 import webbrowser
 
-from Graph import Graph
+from graph import Graph
 import utils.util as util
-import Hash
-
-
-def det_graphnet():
-    return True
+import hash
 
 
 class DataTable:
@@ -33,8 +29,8 @@ class DataTable:
         :param zones: all the zones of the area
         """
 
-        self.bus_table = Hash.HashTable(config.n_cars * 100)
-        self.veh_table = Hash.HashTable(config.n_cars * 100)
+        self.bus_table = hash.HashTable(config.n_cars * 100)
+        self.veh_table = hash.HashTable(config.n_cars * 100)
 
         self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
                                       [set() for j in range(len(zones.zone_hash.ids()))]

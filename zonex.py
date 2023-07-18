@@ -7,7 +7,7 @@ import numpy as np
 import haversine as hs
 
 import utils.util as util
-import Hash
+import hash
 
 
 class ZoneID:
@@ -32,7 +32,7 @@ class ZoneID:
                                      endpoint=True)  # dividing latitude by almost 1km length
         self.n_cols = len(self.long_cols) - 1
         # Here we are going to have a Hash Table for zones
-        self.zone_hash = Hash.HashTable(2000)
+        self.zone_hash = hash.HashTable(2000)
         self.n_zones = int()
         self.centre_col = int()
         self.centre_row = int()
