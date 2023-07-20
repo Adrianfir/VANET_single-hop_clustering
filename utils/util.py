@@ -289,7 +289,7 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
-        bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed'))
+        bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         bus_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
         bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
@@ -337,7 +337,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
-        veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed'))
+        veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         veh_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
         veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
