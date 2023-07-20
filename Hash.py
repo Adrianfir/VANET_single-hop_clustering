@@ -4,7 +4,7 @@ The Hash-Table is an array of 'LinekdList' so called 'chain structure'
 """
 __author__ = "Pouya 'Adrian' Firouzmakan"
 
-import LinkedList
+import linked_list
 
 
 class HashTable:
@@ -35,7 +35,7 @@ class HashTable:
 
         index = self.hash_index(key)
         if self.data_map[index] is None:
-            self.data_map[index] = LinkedList.LinkedList(key, value)
+            self.data_map[index] = linked_list.LinkedList(key, value)
             return True
         self.data_map[index].append(key, value)
         return True

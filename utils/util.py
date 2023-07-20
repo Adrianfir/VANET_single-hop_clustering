@@ -11,7 +11,7 @@ import numpy as np
 import random
 import haversine as hs
 from scipy import spatial
-from Graph import Graph
+from graph import Graph
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -99,7 +99,7 @@ def middle_zone(u_row: object, u_col: object,
                 l_row: object, l_col: object,
                 n_cols: object) -> object:
     """
-    This function is used in the Zone.py file
+    This function is used in the zonex.py file
     :param u_row: The upper row id +1
     :param l_row: The lower row id +1
     :param u_col: The upper col id +1
@@ -227,7 +227,6 @@ def choose_ch(table, veh_table_i,
     # nominee = ''
     min_ef = 1000000
     for j in candidates:
-
         # latitude of the centre of previous zone that ch were in
         prev_ch_lat = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_lat'] +
                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2
@@ -255,6 +254,7 @@ def choose_ch(table, veh_table_i,
 
         # calculate the Eligibility Factor (EF) for chs
         ef = theta_sim + speed_sim + theta_dist
+        print(j, speed_sim, table.values(j)['speed'])
 
         if ef < min_ef:
             nominee = j
@@ -289,7 +289,7 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
-        bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed'))
+        bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         bus_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
         bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
@@ -337,7 +337,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
-        veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed'))
+        veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         veh_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
         veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id

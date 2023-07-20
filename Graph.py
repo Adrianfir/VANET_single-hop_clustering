@@ -8,7 +8,7 @@ __all__ = ['Graph']
 
 import networkx as nx
 
-import Hash
+import hash
 
 
 class Graph:

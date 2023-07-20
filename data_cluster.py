@@ -10,16 +10,11 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
-import googlemaps
 import webbrowser
 
-from Graph import Graph
+from graph import Graph
 import utils.util as util
-import Hash
-
-
-def det_graphnet():
-    return True
+import hash
 
 
 class DataTable:
@@ -33,8 +28,8 @@ class DataTable:
         :param zones: all the zones of the area
         """
 
-        self.bus_table = Hash.HashTable(config.n_cars * 100)
-        self.veh_table = Hash.HashTable(config.n_cars * 100)
+        self.bus_table = hash.HashTable(config.n_cars * 100)
+        self.veh_table = hash.HashTable(config.n_cars * 100)
 
         self.zone_vehicles = dict(zip(zones.zone_hash.ids(),
                                       [set() for j in range(len(zones.zone_hash.ids()))]
@@ -409,10 +404,12 @@ class DataTable:
                     self.net_graph.add_edge(veh_id, veh_id_2)
                     continue
 
-            if len(unique_pot_ch.intersection(near_sa[veh_id])) >= 1:
+            if len(unique_pot_ch.intersection(near_sa[veh_id])) > 0:
                 if len(unique_pot_ch.intersection(near_sa[veh_id])) == 1:
                     ch = list(near_sa[veh_id])[0]
                 else:
+                    # print(veh_id, ",", unique_pot_ch.intersection(near_sa[veh_id]))
+                    # print("CHs: ", self.all_CHs)
                     ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                         unique_pot_ch.intersection(near_sa[veh_id])
                                         )

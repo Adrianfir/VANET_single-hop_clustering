@@ -9,7 +9,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 import time
 from data_cluster import DataTable
 from configs.config import Configs
-from Zone import ZoneID
+from zonex import ZoneID
 import utils.util as util
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     area_zones.zones()
     a = DataTable(configs, area_zones)
     start_time = time.time()
-    for i in range(20):
+    for i in range(2):
         a.update(configs, area_zones)
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
