@@ -4,7 +4,7 @@ Rhis Graoh is based on adjacency-List rather than a matrix as the number of vehi
 Greater Toronto Area (GTA) would affect the space complexity
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['Graph']
+__all__ = ['graph']
 
 import networkx as nx
 
