@@ -116,9 +116,9 @@ class DataTable:
             else:
                 veh_ids.add(veh.getAttribute('id'))
                 self.veh_table, self.zone_vehicles, self.zone_CH, self.stand_alone, \
-                    self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
-                                                                  zones, config, self.zone_vehicles, self.zone_CH,
-                                                                  self.stand_alone, self.zone_stand_alone)
+                self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
+                                                              zones, config, self.zone_vehicles, self.zone_CH,
+                                                              self.stand_alone, self.zone_stand_alone)
                 if self.veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
                     self.all_CHs.add(veh.getAttribute('id'))
             # add the vertex to the graph
@@ -127,11 +127,13 @@ class DataTable:
                                                                           float(veh.getAttribute('x'))
                                                                           )
                 if 'bus' in veh.getAttribute('id'):
-                    self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.bus_table.\
-                        values(veh.getAttribute('id'))['cluster_members'])
+                    self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.bus_table. \
+                                                                                    values(veh.getAttribute('id'))[
+                                                                                        'cluster_members'])
                 else:
                     self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.veh_table. \
-                        values(veh.getAttribute('id'))['cluster_members'])
+                                                                                    values(veh.getAttribute('id'))[
+                                                                                        'cluster_members'])
 
             except KeyError:
 
@@ -353,7 +355,7 @@ class DataTable:
                         update(self.veh_table.values(veh_id)['other_CHs'].union(ch_candidates))
                     self.veh_table.values(veh_ch)['cluster_members'].add(veh_id)
                     self.veh_table.values(veh_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_CHs']
-                    self.veh_table.values(veh_ch)['gate_CHs'].\
+                    self.veh_table.values(veh_ch)['gate_CHs']. \
                         update(self.veh_table.values(veh_ch)['gate_CHs'].
                                union(self.veh_table.values(veh_id)['other_CHs']))
                     self.stand_alone.remove(veh_id)
