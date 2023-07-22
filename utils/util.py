@@ -227,7 +227,6 @@ def choose_ch(table, veh_table_i,
     # nominee = ''
     min_ef = 1000000
     for j in candidates:
-
         # latitude of the centre of previous zone that ch were in
         prev_ch_lat = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_lat'] +
                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2

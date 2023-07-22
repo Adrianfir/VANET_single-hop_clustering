@@ -12,7 +12,9 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('small_data_Richmondhill').joinpath('sumoTrace_geo.xml'))
+                         joinpath('small_data_Richmondhill', 'sumoTrace_geo.xml'))
+        # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+        #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
@@ -21,12 +23,10 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         trans_range = 300
-        start_time = 115
+        start_time = 0
         counter = 3
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('--xml_path', default=trace_path, type=str,
-                            help='this is address to the SUMOTrace_geo.xml files')
         parser.add_argument('--area', type=dict, default=area,
                             help='this argument is the latitudes and longitudes of the understudied area')
         parser.add_argument('--n_cars', type=int, default=8000,

@@ -10,7 +10,6 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
-import googlemaps
 import webbrowser
 
 from graph import Graph
@@ -99,7 +98,6 @@ class DataTable:
         self.time += 1
         bus_ids = set()
         veh_ids = set()
-        # self.stand_alone = set()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
@@ -124,10 +122,23 @@ class DataTable:
                 if self.veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
                     self.all_CHs.add(veh.getAttribute('id'))
             # add the vertex to the graph
-            self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
-                                                               float(veh.getAttribute('x'))
-                                                               )
-                                      )
+            try:
+                self.net_graph.adj_list[veh.getAttribute('id')]['pos'] = (float(veh.getAttribute('y')),
+                                                                          float(veh.getAttribute('x'))
+                                                                          )
+                if 'bus' in veh.getAttribute('id'):
+                    self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.bus_table.\
+                        values(veh.getAttribute('id'))['cluster_members'])
+                else:
+                    self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.veh_table. \
+                        values(veh.getAttribute('id'))['cluster_members'])
+
+            except KeyError:
+
+                self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
+                                                                   float(veh.getAttribute('x'))
+                                                                   )
+                                          )
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
             for m in self.bus_table.values(k)['cluster_members']:
@@ -405,10 +416,12 @@ class DataTable:
                     self.net_graph.add_edge(veh_id, veh_id_2)
                     continue
 
-            if len(unique_pot_ch.intersection(near_sa[veh_id])) >= 1:
+            if len(unique_pot_ch.intersection(near_sa[veh_id])) > 0:
                 if len(unique_pot_ch.intersection(near_sa[veh_id])) == 1:
                     ch = list(near_sa[veh_id])[0]
                 else:
+                    # print(veh_id, ",", unique_pot_ch.intersection(near_sa[veh_id]))
+                    # print("CHs: ", self.all_CHs)
                     ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                         unique_pot_ch.intersection(near_sa[veh_id])
                                         )
@@ -491,7 +504,8 @@ class DataTable:
 
         # Create a folium map centered around the first node
         map_center = list(pos.values())[0]
-        m = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron', attr='Google', name='Google Maps')
+        m = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron',
+                       attr='Google', name='Google Maps', prefer_canvas=True)
 
         # Create a MarkerCluster group for the networkx graph nodes
         marker_cluster = MarkerCluster(name='VANET')
