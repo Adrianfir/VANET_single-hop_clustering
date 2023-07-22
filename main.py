@@ -19,7 +19,7 @@ if __name__ == "__main__":
     area_zones.zones()
     a = DataTable(configs, area_zones)
     start_time = time.time()
-    for i in range(2):
+    for i in range(100):
         a.update(configs, area_zones)
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
@@ -32,6 +32,5 @@ if __name__ == "__main__":
     print('\n')
     print('stand_alones: ', a.stand_alone)
     print("execution time: ", end_time - start_time)
-
     # Create a networkx graph
 
