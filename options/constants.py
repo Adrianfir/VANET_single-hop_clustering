@@ -23,7 +23,7 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         trans_range = 300
-        start_time = 1000
+        start_time = 1010
         counter = 3
 
         parser = argparse.ArgumentParser()

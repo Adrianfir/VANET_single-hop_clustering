@@ -57,7 +57,8 @@ class Graph:
         if vertex in self.adj_list.keys():
             edges = self.adj_list[vertex]['edges']
             for other_vertex in edges:
-                self.adj_list[other_vertex]['edges'].remove(vertex)
+                # self.adj_list[other_vertex]['edges'].remove(vertex)
+                self.remove_edge(vertex, other_vertex)
             del self.adj_list[vertex]
             return True
         return False

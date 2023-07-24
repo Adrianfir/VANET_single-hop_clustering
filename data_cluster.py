@@ -422,8 +422,6 @@ class DataTable:
                 if len(unique_pot_ch.intersection(near_sa[veh_id])) == 1:
                     ch = list(near_sa[veh_id])[0]
                 else:
-                    # print(veh_id, ",", unique_pot_ch.intersection(near_sa[veh_id]))
-                    # print("CHs: ", self.all_CHs)
                     ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                         unique_pot_ch.intersection(near_sa[veh_id])
                                         )
@@ -495,7 +493,6 @@ class DataTable:
         """
         G = nx.Graph()
         # Add nodes and edges with coordinates to the networkx graph
-        node_colors = dict()
         for vertex, data in self.net_graph.adj_list.items():
             G.add_node(vertex, pos=data['pos'])
             for edge in list(set(data['edges'])):
