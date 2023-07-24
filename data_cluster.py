@@ -583,6 +583,9 @@ class DataTable:
                             self.edge_color = 'green'
                         else:
                             self.edge_color = 'gray'
+                    else:
+                        self.edge_color = 'lightblue'
+
             folium.PolyLine(locations=locations, color=self.edge_color).add_to(edge_group)
 
         # Create a feature group for the networkx graph nodes
