@@ -3,7 +3,7 @@ This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
-           'middle_zone', 'presence', 'choose_ch', 'det_buses_other_CH',
+           'middle_zone', 'presence', 'choose_ch', 'det_buses_other_ch',
            'det_near_ch', 'update_bus_table', 'update_veh_table',
            'update_sa_net_graph', 'det_near_sa', 'det_dist', 'det_pot_ch']
 
@@ -38,12 +38,12 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 message_dest={},
                 message_source={},
                 cluster_head=True,
-                other_CHs=set(),  # other CHs in the trans range of veh.getAttribute('id)
+                other_chs=set(),  # other chs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),
-                gate_CHs=set(),
+                gate_chs=set(),
                 gates=dict(),
-                IP=None,
-                MAC=mac_address(),
+                ip=None,
+                mac=mac_address(),
                 counter=config.counter
                 )
 
@@ -71,14 +71,14 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 trans_range=config.trans_range,
                 message_dest={},
                 message_source={},
-                cluster_head=False,  # if the vehicle is a CH, it will be True
-                primary_CH=None,
-                other_CHs=set(),  # other CHs in the trans range of veh.getAttribute('id)
-                cluster_members=set(),  # This will be a Graph if the vehicle is a CH
+                cluster_head=False,  # if the vehicle is a ch, it will be True
+                primary_ch=None,
+                other_chs=set(),  # other chs in the trans range of veh.getAttribute('id)
+                cluster_members=set(),  # This will be a Graph if the vehicle is a ch
                 gates=dict(),
-                gate_CHs=set(),
-                IP=None,
-                MAC=mac_address(),
+                gate_chs=set(),
+                ip=None,
+                mac=mac_address(),
                 counter=config.counter  # a counter_time to search and join a cluster
                 )
 
@@ -86,7 +86,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
 def mac_address():
     """
     This function is used in the Main.py file
-    :return: this function will return a generated random MAC Address for ehicles
+    :return: this function will return a generated random mac Address for ehicles
     """
     mac = [152, 237, 92,
            random.randint(0x00, 0x7f),
@@ -137,13 +137,13 @@ def presence(area_cord, veh_cord):
 def det_near_ch(veh_id, veh_table, bus_table,
                 zone_buses, zone_vehicles):
     """
-    This function will determine the buses and CHs nearby veh_id
+    This function will determine the buses and chs nearby veh_id
     :param veh_table:
     :param bus_table:
     :param zone_buses:
     :param zone_vehicles:
     :param veh_id:
-    :return: it returns bus_candidate which includes buses and vehicles being CH which are in neighbor zones
+    :return: it returns bus_candidate which includes buses and vehicles being ch which are in neighbor zones
     """
     bus_candidates = set()
     ch_candidates = set()
@@ -171,7 +171,7 @@ def det_near_ch(veh_id, veh_table, bus_table,
     return bus_candidates, ch_candidates
 
 
-def det_buses_other_CH(bus_id, veh_table, bus_table,
+def det_buses_other_ch(bus_id, veh_table, bus_table,
                        zone_buses, zone_chs):
     all_near_chs = set()
     all_chs = set()
@@ -198,7 +198,7 @@ def choose_ch(table, veh_table_i,
               area_zones, candidates):
     """
     this function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
-    primary_CH.
+    primary_ch.
     :param table: bus_table or veh_table based on the case that this function will be used
     :param veh_table_i:
     :param area_zones:
@@ -264,10 +264,10 @@ def choose_ch(table, veh_table_i,
 #                area_zones, bus_candidates):
 
 
-def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_CH):
+def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_ch):
     """
     this function updates the bus_tabel and zone_buses from main.py
-    :param zone_CH: the self.zone_CH dictionary
+    :param zone_ch: the self.zone_ch dictionary
     :param veh: it's the veh from .xml file
     :param bus_table: its bus_table
     :param zone_id: the zon_id f the vehicle
@@ -283,7 +283,7 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
                 bus_table.values(veh.getAttribute('id'))['zone']  # update prev_zone
         zone_buses[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
-        zone_CH[bus_table.values(veh.getAttribute('id'))['zone']]. \
+        zone_ch[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
@@ -294,27 +294,27 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
         bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-        bus_table.values(veh.getAttribute('id'))['gate_CHs'] = set()
+        bus_table.values(veh.getAttribute('id'))['gate_chs'] = set()
         bus_table.values(veh.getAttribute('id'))['gates'] = dict()
-        bus_table.values(veh.getAttribute('id'))['other_CHs'] = set()
+        bus_table.values(veh.getAttribute('id'))['other_chs'] = set()
         zone_buses[zone_id].add(veh.getAttribute('id'))
-        zone_CH[zone_id].add(veh.getAttribute('id'))
+        zone_ch[zone_id].add(veh.getAttribute('id'))
 
     else:
         bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
                                                                     config, understudied_area))
         zone_buses[zone_id].add(veh.getAttribute('id'))
-        zone_CH[zone_id].add(veh.getAttribute('id'))
-    return bus_table, zone_buses, zone_CH
+        zone_ch[zone_id].add(veh.getAttribute('id'))
+    return bus_table, zone_buses, zone_ch
 
 
 def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
-                     zone_vehicles, zone_CH, stand_alone, zone_stand_alone):
+                     zone_vehicles, zone_ch, stand_alone, zone_stand_alone):
     """
     this function updates the veh_tabel and zone_vehicles from main.py
     :param zone_stand_alone: its the self.zone_stand_alone
     :param stand_alone: its the self.stand_alone
-    :param zone_CH: the self.zone_CH dictionary
+    :param zone_ch: the self.zone_ch dictionary
     :param veh: it's the veh from .xml file
     :param veh_table: its veh_table
     :param zone_id: the zon_id f the vehicle
@@ -322,7 +322,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
     :param zones: the area_zones.zones() or zones table from the DataTable class in the main.py
     :param config:
     :param zone_vehicles: zone_vehicles from the DataTable class in the main.py
-    :return: updated veh_table, zone_vehicles, zone_CH, stand_alone, zone_stand_alone
+    :return: updated veh_table, zone_vehicles, zone_ch, stand_alone, zone_stand_alone
     """
     if veh.getAttribute('id') in veh_table.ids():
         if veh_table.values(veh.getAttribute('id'))['zone'] != zone_id:
@@ -331,7 +331,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         zone_vehicles[veh_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))  # remove the vehicle from its previous zone_vehicles
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
-            zone_CH[veh_table.values(veh.getAttribute('id'))['zone']]. \
+            zone_ch[veh_table.values(veh.getAttribute('id'))['zone']]. \
                 remove(veh.getAttribute('id'))
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
@@ -342,14 +342,14 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
         veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
-        veh_table.values(veh.getAttribute('id'))['gate_CHs'] = set()
+        veh_table.values(veh.getAttribute('id'))['gate_chs'] = set()
         veh_table.values(veh.getAttribute('id'))['gates'] = dict()
-        veh_table.values(veh.getAttribute('id'))['other_CHs'] = set()
+        veh_table.values(veh.getAttribute('id'))['other_chs'] = set()
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
-            zone_CH[zone_id].add(veh.getAttribute('id'))
+            zone_ch[zone_id].add(veh.getAttribute('id'))
         elif (veh_table.values(veh.getAttribute('id'))['cluster_head'] is False) and \
-                (veh_table.values(veh.getAttribute('id'))['primary_CH'] is None):
+                (veh_table.values(veh.getAttribute('id'))['primary_ch'] is None):
             stand_alone.add(veh.getAttribute('id'))
             if veh.getAttribute('id') in zone_stand_alone[veh_table.values(veh.getAttribute('id'))['prev_zone']]:
                 zone_stand_alone[veh_table.values(veh.getAttribute('id'))['prev_zone']].remove(veh.getAttribute('id'))
@@ -362,7 +362,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
         stand_alone.add(veh.getAttribute('id'))
         zone_stand_alone[veh_table.values(veh.getAttribute('id'))['zone']].add(veh.getAttribute('id'))
-    return veh_table, zone_vehicles, zone_CH, stand_alone, zone_stand_alone
+    return veh_table, zone_vehicles, zone_ch, stand_alone, zone_stand_alone
 
 
 def det_near_sa(veh_id, veh_table,
@@ -378,7 +378,7 @@ def det_near_sa(veh_id, veh_table,
     result = set()
     neigh_stand_alones = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
-        neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the CHs in the neighbor zones to a list
+        neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the chs in the neighbor zones to a list
 
     for j in neigh_stand_alones:
         if j != veh_id:
@@ -408,25 +408,25 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
             if dist < min(veh_table.values(k)['cluster_head'],
                           veh_table.values(j)['cluster_head']):
                 if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] == 2:
-                    veh_table.values(k)['other_CHs'].add(j)
-                    veh_table.values(j)['other_CHs'].add(k)
+                    veh_table.values(k)['other_chs'].add(j)
+                    veh_table.values(j)['other_chs'].add(k)
                     net_graph.add_edge(k, j)
 
                 elif (veh_table.values(k)['cluster_head'] is True) and \
                         (veh_table.values(j)['cluster_head'] is False):
 
-                    if veh_table.values(j)['primary_CH'] != k:
-                        veh_table.values(j)['other_CHs'].add(k)
-                        veh_table.values(veh_table.values(j)['primary_CH'])['gates'][j].add(k)
-                        veh_table.values(veh_table.values(j)['primary_CH'])['gate_CHs'].add(k)
+                    if veh_table.values(j)['primary_ch'] != k:
+                        veh_table.values(j)['other_chs'].add(k)
+                        veh_table.values(veh_table.values(j)['primary_ch'])['gates'][j].add(k)
+                        veh_table.values(veh_table.values(j)['primary_ch'])['gate_chs'].add(k)
 
                 elif (veh_table.values(j)['cluster_head'] is True) and \
                         (veh_table.values(k)['cluster_head'] is False):
 
-                    if veh_table.values(k)['primary_CH'] != j:
-                        veh_table.values(k)['other_CHs'].add(j)
-                        veh_table.values(veh_table.values(k)['primary_CH'])['gates'][k].add(j)
-                        veh_table.values(veh_table.values(k)['primary_CH'])['gate_CHs'].add(j)
+                    if veh_table.values(k)['primary_ch'] != j:
+                        veh_table.values(k)['other_chs'].add(j)
+                        veh_table.values(veh_table.values(k)['primary_ch'])['gates'][k].add(j)
+                        veh_table.values(veh_table.values(k)['primary_ch'])['gate_chs'].add(j)
 
     return veh_table, net_graph
 
