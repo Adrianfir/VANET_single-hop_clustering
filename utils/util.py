@@ -77,6 +77,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 cluster_members=set(),  # This will be a Graph if the vehicle is a ch
                 gates=dict(),
                 gate_chs=set(),
+                other_vehs=set(),
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter  # a counter_time to search and join a cluster
@@ -147,6 +148,7 @@ def det_near_ch(veh_id, veh_table, bus_table,
     """
     bus_candidates = set()
     ch_candidates = set()
+    other_vehs = set()
     neigh_bus = []
     neigh_veh = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
@@ -161,14 +163,16 @@ def det_near_ch(veh_id, veh_table, bus_table,
             bus_candidates.add(j)
 
     for j in neigh_veh:
-        if veh_table.values(j)['cluster_head'] is True:
-            euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
+        euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
 
-            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
-                                     veh_table.values(j)['trans_range']):
+        if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                 veh_table.values(j)['trans_range']):
+            if veh_table.values(j)['cluster_head'] is True:
                 ch_candidates.add(j)
+            else:
+                other_vehs.add(j)
 
-    return bus_candidates, ch_candidates
+    return bus_candidates, ch_candidates, other_vehs
 
 
 def det_buses_other_ch(bus_id, veh_table, bus_table,
