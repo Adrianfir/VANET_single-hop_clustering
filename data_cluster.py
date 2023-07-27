@@ -189,6 +189,7 @@ class DataTable:
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
+            s = 2
 
     def update_cluster(self, veh_ids, config, zones):
 
@@ -297,6 +298,7 @@ class DataTable:
                             update(self.veh_table.values(self.veh_table.values(veh_id)['primary_ch'])['gate_chs'].
                                    union(self.veh_table.values(veh_id)['other_chs']))
                         self.veh_table.values(veh_id)['other_vehs'] = other_vehs
+                    self.net_graph.add_edge(self.veh_table.values(veh_id)['primary_ch'], veh_id)
                     for other_ch in self.veh_table.values(veh_id)['other_chs']:
                         self.net_graph.add_edge(veh_id, other_ch)
                     continue
@@ -508,6 +510,7 @@ class DataTable:
         this function will illustrate the self.net_graph
         :return: Graph
         """
+        print('ids: ', self.veh_table.ids())
         G = nx.Graph()
         # Add nodes and edges with coordinates to the networkx graph
         for vertex, data in self.net_graph.adj_list.items():
@@ -548,6 +551,7 @@ class DataTable:
 
         # Add edges to the feature group
         for edge in G.edges():
+            print(edge)
             start_pos = pos[edge[0]]
             end_pos = pos[edge[1]]
             locations = [start_pos, end_pos]
