@@ -289,20 +289,16 @@ class DataTable:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_ch'])['gate_chs']. \
                             update(self.bus_table.values(self.veh_table.values(veh_id)['primary_ch'])['gate_chs'].
                                    union(self.veh_table.values(veh_id)['other_chs']))
-                        self.veh_table.values(veh_id)['other_vehs'] = other_vehs - self.bus_table.values\
-                        (self.veh_table.values(veh_id)['primary_ch'])['cluster_members']
+                        self.veh_table.values(veh_id)['other_vehs'] = other_vehs
                     else:
                         self.veh_table.values(self.veh_table.values(veh_id)['primary_ch'])['gates'][veh_id] = \
                             self.veh_table.values(veh_id)['other_chs']
                         self.veh_table.values(self.veh_table.values(veh_id)['primary_ch'])['gate_chs']. \
                             update(self.veh_table.values(self.veh_table.values(veh_id)['primary_ch'])['gate_chs'].
                                    union(self.veh_table.values(veh_id)['other_chs']))
-                        self.veh_table.values(veh_id)['other_vehs'] = other_vehs - self.veh_table.values\
-                        (self.veh_table.values(veh_id)['primary_ch'])['cluster_members']
+                        self.veh_table.values(veh_id)['other_vehs'] = other_vehs
                     for other_ch in self.veh_table.values(veh_id)['other_chs']:
                         self.net_graph.add_edge(veh_id, other_ch)
-                    for other_veh in self.veh_table.values(veh_id)['other_vehs']:
-                        self.net_graph.add_edge(veh_id, other_veh)
                     continue
                 # here the 'primary_ch' will be changed to None and recursion is applied
                 else:
@@ -343,13 +339,10 @@ class DataTable:
                                union(self.veh_table.values(veh_id)['other_chs']))
                     self.stand_alone.remove(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                    self.veh_table.values(veh_id)['other_vehs'] = other_vehs - \
-                                                                  self.bus_table.values(bus_ch)['cluster_members']
+                    self.veh_table.values(veh_id)['other_vehs'] = other_vehs
                     self.net_graph.add_edge(bus_ch, veh_id)
                     for other_ch in self.veh_table.values(veh_id)['other_chs']:
                         self.net_graph.add_edge(other_ch, veh_id)
-                    for other_veh in self.veh_table.values(veh_id)['other_vehs']:
-                        self.net_graph.add_edge(other_veh, veh_id)
 
                     continue
                 elif (len(bus_candidates) == 0) and (len(ch_candidates) > 0):
@@ -372,14 +365,10 @@ class DataTable:
                                union(self.veh_table.values(veh_id)['other_chs']))
                     self.stand_alone.remove(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                    self.veh_table.values(veh_id)['other_vehs'] = other_vehs - \
-                                                                  self.veh_table.values(veh_ch)['cluster_members'] - \
-                                                                  self.veh_table.values(veh_id)['other_chs']
+                    self.veh_table.values(veh_id)['other_vehs'] = other_vehs
                     self.net_graph.add_edge(veh_ch, veh_id)
                     for other_ch in self.veh_table.values(veh_id)['other_chs']:
                         self.net_graph.add_edge(other_ch, veh_id)
-                    for other_veh in self.veh_table.values(veh_id)['other_vehs']:
-                        self.net_graph.add_edge(other_veh, veh_id)
                     continue
         # finding buses' other_chs
         for bus in self.bus_table.ids():
@@ -389,6 +378,19 @@ class DataTable:
             self.bus_table.values(bus)['other_chs'].update(self.bus_table.values(bus)['other_chs'].union(nearby_chs))
             for node in self.bus_table.values(bus)['other_chs']:
                 self.net_graph.add_edge(bus, node)
+
+        # Here the other_vehs must be updated again. Otherwise, the graph would face with some conflicts
+        for veh_id in veh_ids:
+            if self.veh_table.values(veh_id)['primary_ch'] is not None:
+                ch = self.veh_table.values(veh_id)['primary_ch']
+                if 'bus' in ch:
+                    table = self.bus_table
+                else:
+                    table = self.veh_table
+                self.veh_table.values(veh_id)['other_vehs'] = self.veh_table.values(veh_id)['other_vehs'] - \
+                                                             table.values(ch)['cluster_members']
+                for other_veh in self.veh_table.values(veh_id)['other_vehs']:
+                    self.net_graph.add_edge(other_veh, veh_id)
 
     def stand_alones_cluster(self, configs, zones):
         near_sa = dict()
