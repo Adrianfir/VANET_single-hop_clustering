@@ -2,16 +2,25 @@
 This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address',
-           'middle_zone', 'presence', 'choose_ch', 'det_buses_other_ch',
-           'det_near_ch', 'update_bus_table', 'update_veh_table',
-           'update_sa_net_graph', 'det_near_sa', 'det_dist', 'det_pot_ch']
+__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
+           'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
+           'update_bus_table', 'update_veh_table', 'save_img', 'update_sa_net_graph',
+           'det_near_sa', 'det_dist', 'det_pot_ch']
 
 import numpy as np
 import random
 import haversine as hs
 from scipy import spatial
-from graph import Graph
+import time
+import base64
+from PIL import Image
+from io import BytesIO
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+import os
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -456,3 +465,43 @@ def det_pot_ch(veh_id, near_sa, n_near_sa):
         else:
             continue
     return pot_ch
+
+
+def save_img(m, zoom_out_value):
+    """
+    :param zoom_out_value: zoom amount
+    :param m: the map
+    :return: an image will be saved to the directory path
+    """
+    # Save the map as an HTML file
+    map_file = "map.html"
+    m.save(map_file)
+
+    # Set up the options for the webdriver
+    options = Options()
+    options.headless = True  # Run the browser in headless mode (without opening a visible window)
+
+    # Initialize the Firefox webdriver
+    driver = webdriver.Firefox(options=options)
+
+    # Open the map HTML file
+    driver.get('file:/Users/pouyafirouzmakan/Desktop/VANET/graph_map.html')
+
+    # change the zoom
+    script = f"document.getElementsByClassName('leaflet-control')[0].style.transform = 'scale({1 / zoom_out_value})';"
+    driver.execute_script(script)
+    # Wait for the map to load (you can adjust the waiting time if needed)
+    time.sleep(1)
+
+    # Take a screenshot of the entire webpage (including the map)
+    screenshot = driver.get_screenshot_as_png()
+
+    # Save the screenshot as an image file with good resolution
+    img = Image.open(BytesIO(screenshot))
+    img.save('GRAPH.png', 'PNG', quality=100)
+
+    # Close the Firefox window and quit the webdriver instance
+    driver.quit()
+
+    # Delete the temporary HTML file
+    os.remove(map_file)

@@ -616,6 +616,9 @@ class DataTable:
         # Open the HTML file in a web browser
         webbrowser.open("graph_map.html")
 
+        # save the map as image
+        util.save_img(m, zoom_out_value=-5)
+
     def print_table(self):
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
