@@ -149,10 +149,10 @@ class DataTable:
                     self.veh_table.values(m)['counter'] = config.counter
                     self.stand_alone.add(m)
                     self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
-                else:
-                    self.zone_vehicles[self.veh_table.values(m)['zone']].remove(k)
-                    self.veh_table.remove(m)
-                    self.net_graph.remove_vertex(m)
+                # else:
+                #     self.zone_vehicles[self.veh_table.values(m)['zone']].remove(k)
+                #     self.veh_table.remove(m)
+                #     self.net_graph.remove_vertex(m)
 
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
@@ -329,11 +329,12 @@ class DataTable:
 
                     self.veh_table.values(veh_id)['primary_ch'] = bus_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
-                    bus_candidates.remove(bus_ch)
+                    # bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_chs']. \
                         update(self.veh_table.values(veh_id)['other_chs'].union(bus_candidates))
                     self.veh_table.values(veh_id)['other_chs']. \
                         update(self.veh_table.values(veh_id)['other_chs'].union(ch_candidates))
+                    self.veh_table.values(veh_id)['other_chs'].remove(bus_ch)
                     self.bus_table.values(bus_ch)['cluster_members'].add(veh_id)
                     self.bus_table.values(bus_ch)['gates'][veh_id] = self.veh_table.values(veh_id)['other_chs']
                     self.bus_table.values(bus_ch)['gate_chs']. \
@@ -510,7 +511,6 @@ class DataTable:
         this function will illustrate the self.net_graph
         :return: Graph
         """
-        print('ids: ', self.veh_table.ids())
         G = nx.Graph()
         # Add nodes and edges with coordinates to the networkx graph
         for vertex, data in self.net_graph.adj_list.items():
@@ -551,7 +551,6 @@ class DataTable:
 
         # Add edges to the feature group
         for edge in G.edges():
-            print(edge)
             start_pos = pos[edge[0]]
             end_pos = pos[edge[1]]
             locations = [start_pos, end_pos]
