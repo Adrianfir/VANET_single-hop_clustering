@@ -257,7 +257,7 @@ def choose_ch(table, veh_table_i,
                                   np.abs(table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for chs
-        ef = theta_sim + speed_sim + theta_dist
+        ef = (2*theta_sim) + (1*speed_sim) + (2*theta_dist)
 
         if ef < min_ef:
             nominee = j

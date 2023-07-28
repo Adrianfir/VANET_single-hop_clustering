@@ -22,7 +22,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        trans_range = 700
+        trans_range = 300
         start_time = 0
         counter = 3
 
