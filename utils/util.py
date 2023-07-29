@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
            'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
            'update_bus_table', 'update_veh_table', 'save_img', 'update_sa_net_graph',
-           'det_near_sa', 'det_dist', 'det_pot_ch']
+           'det_near_sa', 'det_dist', 'det_pot_ch', 'make_slideshow']
 
 import numpy as np
 import random
@@ -505,6 +505,13 @@ def save_img(m, zoom_out_value, name):
 
 
 def make_slideshow(image_folder, output_path, fps):
+    """
+
+    :param image_folder: the images directory
+    :param output_path: the output directory
+    :param fps: play-back speed
+    :return: it will create a mp4 video of the map_saved_imgs
+    """
     image_files = [f for f in os.listdir(image_folder) if f.endswith('.jpg') or f.endswith('.png')]
     image_files.sort()
 
