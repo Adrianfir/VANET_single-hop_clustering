@@ -19,13 +19,16 @@ if __name__ == "__main__":
     area_zones.zones()
     a = DataTable(configs, area_zones)
     start_time = time.time()
-    for i in range(1):
+    for i in range(200):
         a.update(configs, area_zones)
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
+        a.show_graph()
+        a.save_map_img(5, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
     end_time = time.time()
-    a.show_graph()
+    util.make_slideshow("/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs",
+                        "/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/slide_show.mp4", 10)
     a.print_table()
     print('n_bus: ', len(a.bus_table.ids()))
     print('n_veh: ', len(a.veh_table.ids()))

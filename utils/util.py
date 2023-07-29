@@ -12,15 +12,12 @@ import random
 import haversine as hs
 from scipy import spatial
 import time
-import base64
 from PIL import Image
 from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 import os
+import cv2
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -467,7 +464,7 @@ def det_pot_ch(veh_id, near_sa, n_near_sa):
     return pot_ch
 
 
-def save_img(m, zoom_out_value):
+def save_img(m, zoom_out_value, name):
     """
     :param zoom_out_value: zoom amount
     :param m: the map
@@ -498,10 +495,40 @@ def save_img(m, zoom_out_value):
 
     # Save the screenshot as an image file with good resolution
     img = Image.open(BytesIO(screenshot))
-    img.save('GRAPH.png', 'PNG', quality=100)
+    img.save(name + '.png', 'PNG', quality=100)
 
     # Close the Firefox window and quit the webdriver instance
     driver.quit()
 
     # Delete the temporary HTML file
     os.remove(map_file)
+
+
+def make_slideshow(image_folder, output_path, fps):
+    image_files = [f for f in os.listdir(image_folder) if f.endswith('.jpg') or f.endswith('.png')]
+    image_files.sort()
+
+    if not image_files:
+        print("No images found in the specified folder.")
+        return
+
+    # Determine the width and height of the images from the first image in the folder
+    image_path = os.path.join(image_folder, image_files[0])
+    first_image = cv2.imread(image_path)
+    height, width, _ = first_image.shape
+
+    # Create a VideoWriter object to save the video
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'XVID' on Windows
+    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    for image_file in image_files:
+        image_path = os.path.join(image_folder, image_file)
+        frame = cv2.imread(image_path)
+
+        # Add the frame to the video
+        out.write(frame)
+
+    # Release the VideoWriter and close the video file
+    out.release()
+
+    print("Video creation complete.")

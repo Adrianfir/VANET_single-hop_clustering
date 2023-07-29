@@ -28,6 +28,7 @@ class DataTable:
         :param zones: all the zones of the area
         """
 
+        self.map = None
         self.bus_table = hash.HashTable(config.n_cars * 100)
         self.veh_table = hash.HashTable(config.n_cars * 100)
 
@@ -523,7 +524,7 @@ class DataTable:
 
         # Create a folium map centered around the first node
         map_center = list(pos.values())[0]
-        m = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron',
+        self.map = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron',
                        attr='Google', name='Google Maps', prefer_canvas=True)
 
         # Create a MarkerCluster group for the networkx graph nodes
@@ -544,7 +545,7 @@ class DataTable:
             marker.add_to(marker_cluster)
 
         # Add the MarkerCluster group to the map
-        marker_cluster.add_to(m)
+        marker_cluster.add_to(self.map)
 
         # Create a feature group for the networkx graph edges
         edge_group = folium.FeatureGroup(name='Graph Edges')
@@ -603,21 +604,22 @@ class DataTable:
                 node_group)
 
         # Add the feature group to the map
-        node_group.add_to(m)
+        node_group.add_to(self.map)
         # Add the edge group to the map
-        edge_group.add_to(m)
+        edge_group.add_to(self.map)
 
         # Add the map layer control
-        folium.LayerControl().add_to(m)
+        folium.LayerControl().add_to(self.map)
 
         # Save the map as an HTML file
-        m.save("graph_map.html")
+        self.map.save("graph_map.html")
 
         # Open the HTML file in a web browser
         webbrowser.open("graph_map.html")
 
         # save the map as image
-        util.save_img(m, zoom_out_value=-5)
+    def save_map_img(self, zoom, name):
+        util.save_img(self.map, zoom, name)
 
     def print_table(self):
         self.bus_table.print_hash_table()
