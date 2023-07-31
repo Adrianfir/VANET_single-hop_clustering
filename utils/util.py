@@ -466,6 +466,7 @@ def det_pot_ch(veh_id, near_sa, n_near_sa):
 
 def save_img(m, zoom_out_value, name):
     """
+    :param name: name of the image
     :param zoom_out_value: zoom amount
     :param m: the map
     :return: an image will be saved to the directory path
@@ -495,7 +496,7 @@ def save_img(m, zoom_out_value, name):
 
     # Save the screenshot as an image file with good resolution
     img = Image.open(BytesIO(screenshot))
-    img.save(name + '.png', 'PNG', quality=100)
+    img.save(name + '.png', 'PNG', quality=800)
 
     # Close the Firefox window and quit the webdriver instance
     driver.quit()

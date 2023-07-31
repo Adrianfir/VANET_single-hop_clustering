@@ -23,8 +23,10 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         trans_range = 300
-        start_time = 1000
-        counter = 3
+        start_time = 0
+        counter = 5
+        map_zoom = 15
+        center_loc = [43.868283, -79.441418]
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -44,6 +46,10 @@ class Inputs:
         parser.add_argument('--counter', type=int, default=counter,
                             help='This is the a counter for vehicle to make themselves as CH if they can not'
                                  ' find any Ch or nearby stand-alone vehicles to create a cluster')
+        parser.add_argument('--map_zoom', type=float, default=map_zoom,
+                            help='This is the amount to have a specific zoom on the map')
+        parser.add_argument('--center_loc', type=float, default=center_loc,
+                            help='The specific center location of the map')
         self.parser = parser
 
     def get_parser(self):

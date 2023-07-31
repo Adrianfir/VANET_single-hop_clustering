@@ -507,7 +507,7 @@ class DataTable:
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
 
-    def show_graph(self):
+    def show_graph(self, configs):
         """
         this function will illustrate the self.net_graph
         :return: Graph
@@ -523,9 +523,8 @@ class DataTable:
         pos = nx.get_node_attributes(G, 'pos')
 
         # Create a folium map centered around the first node
-        map_center = list(pos.values())[0]
-        self.map = folium.Map(location=map_center, zoom_start=15.5, tiles='cartodbpositron',
-                       attr='Google', name='Google Maps', prefer_canvas=True)
+        self.map = folium.Map(location=configs.center_loc, zoom_start=configs.map_zoom, tiles='cartodbpositron',
+                              attr='Google', name='Google Maps', prefer_canvas=True)
 
         # Create a MarkerCluster group for the networkx graph nodes
         marker_cluster = MarkerCluster(name='VANET')
