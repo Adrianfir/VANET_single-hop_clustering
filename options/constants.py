@@ -22,11 +22,12 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        trans_range = 300
-        start_time = 0
+        trans_range = 400
+        start_time = 1010
         counter = 5
         map_zoom = 15
         center_loc = [43.868283, -79.441418]
+        fps = 10
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -50,6 +51,7 @@ class Inputs:
                             help='This is the amount to have a specific zoom on the map')
         parser.add_argument('--center_loc', type=float, default=center_loc,
                             help='The specific center location of the map')
+        parser.add_argument('--fps', type=float, default=fps, help='frame per second')
         self.parser = parser
 
     def get_parser(self):
