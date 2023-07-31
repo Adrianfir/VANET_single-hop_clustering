@@ -505,20 +505,26 @@ def save_img(m, zoom_out_value, name):
     os.remove(map_file)
 
 
+def extract_number_from_filename(filename):
+    # Extract the numeric part of the filename (assuming "Graph<number>.jpg" format)
+    return int(''.join(filter(str.isdigit, filename)))
+
+
 def make_slideshow(image_folder, output_path, fps):
     """
-
     :param image_folder: the images directory
     :param output_path: the output directory
     :param fps: play-back speed
     :return: it will create a mp4 video of the map_saved_imgs
     """
     image_files = [f for f in os.listdir(image_folder) if f.endswith('.jpg') or f.endswith('.png')]
-    image_files.sort()
 
     if not image_files:
         print("No images found in the specified folder.")
         return
+
+    # Sort the image files based on the numeric part of the filename
+    image_files.sort(key=extract_number_from_filename)
 
     # Determine the width and height of the images from the first image in the folder
     image_path = os.path.join(image_folder, image_files[0])
@@ -540,3 +546,4 @@ def make_slideshow(image_folder, output_path, fps):
     out.release()
 
     print("Video creation complete.")
+
