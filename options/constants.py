@@ -22,12 +22,12 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        trans_range = 400
+        trans_range = 300
         start_time = 0
         counter = 5
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
-        fps = 5
+        fps = 10
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,

@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
            'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
            'update_bus_table', 'update_veh_table', 'save_img', 'update_sa_net_graph',
-           'det_near_sa', 'det_dist', 'det_pot_ch', 'make_slideshow']
+           'det_near_sa', 'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow']
 
 import numpy as np
 import random
@@ -505,7 +505,12 @@ def save_img(m, zoom_out_value, name):
     os.remove(map_file)
 
 
-def extract_number_from_filename(filename):
+def image_num(filename):
+    """
+
+    :param filename: name of the image
+    :return: returns the number of image in the input folder to crearte the slideshow
+    """
     # Extract the numeric part of the filename (assuming "Graph<number>.jpg" format)
     return int(''.join(filter(str.isdigit, filename)))
 
@@ -524,7 +529,7 @@ def make_slideshow(image_folder, output_path, fps):
         return
 
     # Sort the image files based on the numeric part of the filename
-    image_files.sort(key=extract_number_from_filename)
+    image_files.sort(key=image_num)
 
     # Determine the width and height of the images from the first image in the folder
     image_path = os.path.join(image_folder, image_files[0])
