@@ -10,6 +10,7 @@ __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
 import numpy as np
 import random
 import haversine as hs
+from linked_list import LinkedList
 from scipy import spatial
 import time
 from PIL import Image
@@ -86,7 +87,11 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 other_vehs=set(),
                 ip=None,
                 mac=mac_address(),
-                counter=config.counter  # a counter_time to search and join a cluster
+                counter=config.counter,  # a counter_time to search and join a cluster
+                cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None})  # the linked_list
+                # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
+                # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
+                # vehicle would remain in that cluster
                 )
 
 

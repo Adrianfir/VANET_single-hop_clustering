@@ -148,6 +148,8 @@ class DataTable:
                 if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
                     self.veh_table.values(m)['primary_ch'] = None
                     self.veh_table.values(m)['counter'] = config.counter
+                    self.veh_table.values(m)['cluster_record'].append(None, {'start_time': None, 'ef': None,
+                                                                             'timer': None})
                     self.stand_alone.add(m)
                     self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
                 # else:
@@ -169,6 +171,8 @@ class DataTable:
                     if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
                         self.veh_table.values(m)['primary_ch'] = None
                         self.veh_table.values(m)['counter'] = config.counter
+                        self.veh_table.values(m)['cluster_record'].append(None, {'start_time': None, 'ef': None,
+                                                                                 'timer': None})
                         self.stand_alone.add(m)
                         self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
                 self.zone_ch[self.veh_table.values(k)['zone']].remove(k)
@@ -392,7 +396,7 @@ class DataTable:
                 else:
                     table = self.veh_table
                 self.veh_table.values(veh_id)['other_vehs'] = self.veh_table.values(veh_id)['other_vehs'] - \
-                                                             table.values(ch)['cluster_members']
+                                                              table.values(ch)['cluster_members']
                 for other_veh in self.veh_table.values(veh_id)['other_vehs']:
                     self.net_graph.add_edge(other_veh, veh_id)
 
@@ -617,6 +621,7 @@ class DataTable:
         webbrowser.open("graph_map.html")
 
         # save the map as image
+
     def save_map_img(self, zoom, name):
         util.save_img(self.map, zoom, name)
 
