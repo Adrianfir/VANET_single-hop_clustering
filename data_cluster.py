@@ -242,6 +242,8 @@ class DataTable:
                                   self.veh_table.values(m)['trans_range']):
                         self.veh_table.values(veh_id)['cluster_members'].remove(m)
                         self.veh_table.values(m)['primary_ch'] = None
+                        self.veh_table.values(m)['cluster_record'].append(None, {'start_time': None, 'ef': None,
+                                                                                 'timer': None})
                         self.stand_alone.add(m)
                         self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
                         self.net_graph.remove_edge(veh_id, m)
@@ -288,6 +290,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['other_chs'].update(self.veh_table.values(veh_id)['other_chs'].
                                                                       union(ch_candidates))
                     self.veh_table.values(veh_id)['other_chs'].remove(self.veh_table.values(veh_id)['primary_ch'])
+                    self.veh_table.values(veh_id)['cluster_record'].values['timer'] += 1
                     # updating 'gates' and 'gate_chs' considering if the primary_ch is bus or vehicle-ch
                     if 'bus' in self.veh_table.values(veh_id)['primary_ch']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_ch'])['gates'][veh_id] = \
@@ -316,6 +319,8 @@ class DataTable:
                         self.veh_table.values(ch_id)['cluster_members'].remove(veh_id)
                     self.net_graph.remove_edge(ch_id, veh_id)
                     self.veh_table.values(veh_id)['primary_ch'] = None
+                    self.veh_table.values(veh_id)['cluster_record'].append(None, {'start_time': None, 'ef': None,
+                                                                                  'timer': None})
                     self.stand_alone.add(veh_id)
                     self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.update_cluster([veh_id, ], config, zones)
@@ -328,11 +333,19 @@ class DataTable:
                 if len(bus_candidates) > 0:
                     if len(bus_candidates) == 1:
                         bus_ch = list(bus_candidates)[0]
+                        ef = 0
                     else:
-                        bus_ch = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
-                                                bus_candidates)  # determine the most suitable from bus_candidates
+                        bus_ch, ef = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
+                                                    bus_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_ch'] = bus_ch
+                    self.veh_table.values(veh_id)['cluster_record'].tail.key = bus_ch
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
+                    self.veh_table.values(veh_id)['cluster_record'].tail.key
+                    (None, {'start_time': None, 'ef': None,
+                            'timer': None})
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     # bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_chs']. \

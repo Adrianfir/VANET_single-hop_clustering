@@ -271,8 +271,9 @@ def choose_ch(table, veh_table_i,
         ef = (2*theta_sim) + (1*speed_sim) + (2*theta_dist)
 
         if ef < min_ef:
+            min_ef = ef
             nominee = j
-    return nominee
+    return nominee, min_ef
 
 
 # def det_veh_ch(veh_table, veh_table_i,
