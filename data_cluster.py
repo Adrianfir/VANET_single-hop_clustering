@@ -339,13 +339,12 @@ class DataTable:
                                                     bus_candidates)  # determine the most suitable from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_ch'] = bus_ch
+
                     self.veh_table.values(veh_id)['cluster_record'].tail.key = bus_ch
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
-                    self.veh_table.values(veh_id)['cluster_record'].tail.key
-                    (None, {'start_time': None, 'ef': None,
-                            'timer': None})
+                    
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     # bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_chs']. \
