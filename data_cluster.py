@@ -290,7 +290,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['other_chs'].update(self.veh_table.values(veh_id)['other_chs'].
                                                                       union(ch_candidates))
                     self.veh_table.values(veh_id)['other_chs'].remove(self.veh_table.values(veh_id)['primary_ch'])
-                    self.veh_table.values(veh_id)['cluster_record'].values['timer'] += 1
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] += 1
                     # updating 'gates' and 'gate_chs' considering if the primary_ch is bus or vehicle-ch
                     if 'bus' in self.veh_table.values(veh_id)['primary_ch']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_ch'])['gates'][veh_id] = \
