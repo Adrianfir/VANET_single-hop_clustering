@@ -465,10 +465,11 @@ class DataTable:
             if len(unique_pot_ch.intersection(near_sa[veh_id])) > 0:
                 if len(unique_pot_ch.intersection(near_sa[veh_id])) == 1:
                     ch = list(near_sa[veh_id])[0]
+                    ef = 0
                 else:
-                    ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
-                                        unique_pot_ch.intersection(near_sa[veh_id])
-                                        )
+                    ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
+                                            unique_pot_ch.intersection(near_sa[veh_id])
+                                            )
                 selected_chs.add(ch)
                 if ch == veh_id:
                     if n_near_sa[veh_id] == 0:
@@ -489,6 +490,14 @@ class DataTable:
                         self.veh_table.values(near_sa[veh_id][0])['counter'] = configs.counter
                         self.veh_table.values(veh_id)['cluster_members'].add(near_sa[veh_id][0])
                         self.veh_table.values(near_sa[veh_id][0])['primary_ch'] = veh_id
+
+                        self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.key = veh_id
+                        self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['start_time'] = self.time
+                        self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['ef'] = ef
+                        # the ...tail.value['timer'] must be set to 0 hear because at the end of this method,
+                        # update_cluster method would be called again
+                        self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['timer'] = 0
+
                         self.all_chs.add(veh_id)
                         self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
                         self.net_graph.add_edge(veh_id, near_sa[veh_id][0])
@@ -504,6 +513,14 @@ class DataTable:
                     self.veh_table.values(veh_id)['primary_ch'] = ch
                     self.veh_table.values(veh_id)['counter'] = configs.counter
                     self.veh_table.values(ch)['counter'] = configs.counter
+
+                    self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                    # the ...tail.value['timer'] must be set to 0 hear because at the end of this method,
+                    # update_cluster method would be called again
+                    self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['timer'] = 0
+
                     self.net_graph.add_edge(ch, veh_id)
                     self.all_chs.add(ch)
                     self.zone_ch[self.veh_table.values(ch)['zone']].add(ch)
