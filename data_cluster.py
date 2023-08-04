@@ -344,7 +344,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
-                    
+
                     self.veh_table.values(veh_id)['counter'] = config.counter
                     # bus_candidates.remove(bus_ch)
                     self.veh_table.values(veh_id)['other_chs']. \
@@ -368,13 +368,20 @@ class DataTable:
                 elif (len(bus_candidates) == 0) and (len(ch_candidates) > 0):
                     if len(ch_candidates) == 1:
                         veh_ch = list(ch_candidates)[0]
+                        ef = 0
                     else:
-                        veh_ch = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
-                                                zones,
-                                                ch_candidates)  # determine the most suitable from bus_candidates
+                        veh_ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
+                                                    zones, ch_candidates)  # determine the most suitable from
+                                                                           # bus_candidates
 
                     self.veh_table.values(veh_id)['primary_ch'] = veh_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
+
+                    self.veh_table.values(veh_id)['cluster_record'].tail.key = veh_ch
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
+
                     ch_candidates.remove(veh_ch)
                     self.veh_table.values(veh_id)['other_chs']. \
                         update(self.veh_table.values(veh_id)['other_chs'].union(ch_candidates))
@@ -480,7 +487,6 @@ class DataTable:
                         self.veh_table.values(veh_id)['cluster_head'] = True
                         self.veh_table.values(veh_id)['counter'] = configs.counter
                         self.veh_table.values(near_sa[veh_id][0])['counter'] = configs.counter
-                        self.veh_table.values(veh_id)['cluster_members'].add(near_sa[veh_id][0])
                         self.veh_table.values(veh_id)['cluster_members'].add(near_sa[veh_id][0])
                         self.veh_table.values(near_sa[veh_id][0])['primary_ch'] = veh_id
                         self.all_chs.add(veh_id)
