@@ -19,7 +19,7 @@ if __name__ == "__main__":
     area_zones.zones()
     a = DataTable(configs, area_zones)
     start_time = time.time()
-    for i in range(20):
+    for i in range(1500):
         a.update(configs, area_zones)
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
