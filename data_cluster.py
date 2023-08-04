@@ -519,7 +519,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                     # the ...tail.value['timer'] must be set to 0 hear because at the end of this method,
                     # update_cluster method would be called again
-                    self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['timer'] = 0
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 0
 
                     self.net_graph.add_edge(ch, veh_id)
                     self.all_chs.add(ch)
