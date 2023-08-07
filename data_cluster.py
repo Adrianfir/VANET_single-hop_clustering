@@ -7,6 +7,7 @@ understudied area and creating and updating the clusters using recursion.
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
+import numpy as np
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
@@ -336,7 +337,7 @@ class DataTable:
                         ef = 0
                     else:
                         bus_ch, ef = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
-                                                    bus_candidates)  # determine the most suitable from bus_candidates
+                                                    bus_candidates, config)  # determine the best from bus_candidates
 
                     self.veh_table.values(veh_id)['primary_ch'] = bus_ch
 
@@ -371,8 +372,7 @@ class DataTable:
                         ef = 0
                     else:
                         veh_ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
-                                                    zones, ch_candidates)  # determine the most suitable from
-                                                                           # bus_candidates
+                                                    zones, ch_candidates, config)  # determine the best from vehicles
 
                     self.veh_table.values(veh_id)['primary_ch'] = veh_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
@@ -468,7 +468,7 @@ class DataTable:
                     ef = 0
                 else:
                     ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
-                                            unique_pot_ch.intersection(near_sa[veh_id])
+                                            unique_pot_ch.intersection(near_sa[veh_id], configs)
                                             )
                 selected_chs.add(ch)
                 if ch == veh_id:
@@ -545,6 +545,21 @@ class DataTable:
             self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
+
+    def eval_cluster(self, configs):
+        total_clusters = 0
+        for i in self.veh_table.ids():
+            length = self.veh_table.values(i)['cluster_record'].length
+            one_veh = 0
+            temp = self.veh_table.values(i)['cluster_record'].head
+            print(temp)
+            while temp:
+                if temp.value['timer'] is not None:
+                    summing = np.divide(temp.value['timer'], length)  # temp.length is acting like a penalty factor
+                    one_veh += np.divide(summing, configs.inter)
+                temp = temp.next
+            total_clusters += one_veh
+        return np.divide(total_clusters, len(self.veh_table.ids()))
 
     def show_graph(self, configs):
         """

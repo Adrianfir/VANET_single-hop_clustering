@@ -210,7 +210,7 @@ def det_buses_other_ch(bus_id, veh_table, bus_table,
 
 
 def choose_ch(table, veh_table_i,
-              area_zones, candidates):
+              area_zones, candidates, config):
     """
     this function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
     primary_ch.
@@ -268,7 +268,8 @@ def choose_ch(table, veh_table_i,
                                   np.abs(table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for chs
-        ef = (2*theta_sim) + (1*speed_sim) + (2.5*theta_dist)
+        ef = np.matmul(np.transpose(config.weights),
+                       np.array([theta_sim, speed_sim, theta_dist]))
 
         if ef < min_ef:
             min_ef = ef

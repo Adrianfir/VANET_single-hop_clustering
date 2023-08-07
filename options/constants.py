@@ -3,6 +3,8 @@ This .py file is for adding arguments to argparse
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
+import numpy
+import numpy as np
 import argparse
 import pathlib
 import xml.dom.minidom
@@ -23,11 +25,13 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         trans_range = 400
-        start_time = 0
+        start_time = 1000
         counter = 5
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
         fps = 10
+        inter = 100
+        weights = np.array([2, 1, 2])       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -52,6 +56,8 @@ class Inputs:
         parser.add_argument('--center_loc', type=float, default=center_loc,
                             help='The specific center location of the map')
         parser.add_argument('--fps', type=float, default=fps, help='frame per second')
+        parser.add_argument('--inter', type=int, default=inter, help='number of intervals to run')
+        parser.add_argument('--weights', type=numpy.ndarray, default=weights, help='weights used for clustering')
         self.parser = parser
 
     def get_parser(self):
