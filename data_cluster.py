@@ -560,14 +560,17 @@ class DataTable:
     def eval_cluster(self, configs):
         total_clusters = 0
         for i in self.veh_table.ids():
+            # if the vehicle stays in area to the end of the iteration, the depart_time should get fixed
+            if self.veh_table.values(i)['depart_time'] is None:
+                self.veh_table.values(i)['depart_time'] = self.veh_table.values(i)['arrive_time'] + configs.iter
             length = self.veh_table.values(i)['cluster_record'].length
             one_veh = 0
             temp = self.veh_table.values(i)['cluster_record'].head
-            print(temp)
             while temp:
                 if temp.value['timer'] is not None:
                     summing = np.divide(temp.value['timer'], length)  # temp.length is acting like a penalty factor
-                    one_veh += np.divide(summing, configs.inter)
+                    one_veh += np.divide(summing, self.veh_table.values(i)['depart_time'] -
+                                         self.veh_table.values(i)['arrive_time'])
                 temp = temp.next
             total_clusters += one_veh
 
@@ -575,11 +578,11 @@ class DataTable:
             length = self.left_veh[i]['cluster_record'].length
             one_veh = 0
             temp = self.left_veh[i]['cluster_record'].head
-            print(temp)
             while temp:
                 if temp.value['timer'] is not None:
                     summing = np.divide(temp.value['timer'], length)  # temp.length is acting like a penalty factor
-                    one_veh += np.divide(summing, configs.inter)
+                    one_veh += np.divide(summing, self.veh_table.values(i)['depart_time'] -
+                                         self.veh_table.values(i)['arrive_time'])
                 temp = temp.next
             total_clusters += one_veh
         return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)))

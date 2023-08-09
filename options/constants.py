@@ -30,8 +30,8 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
         fps = 10
-        inter = 100
-        weights = np.array([0.4, 0.6, 0])       # direction's angle, speed, distance
+        iter = 100
+        weights = np.array([0.33, 0.33, 0.33])       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -56,7 +56,7 @@ class Inputs:
         parser.add_argument('--center_loc', type=float, default=center_loc,
                             help='The specific center location of the map')
         parser.add_argument('--fps', type=float, default=fps, help='frame per second')
-        parser.add_argument('--inter', type=int, default=inter, help='number of intervals to run')
+        parser.add_argument('--iter', type=int, default=iter, help='number of intervals to run')
         parser.add_argument('--weights', type=numpy.ndarray, default=weights, help='weights used for clustering')
         self.parser = parser
 
