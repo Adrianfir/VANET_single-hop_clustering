@@ -167,7 +167,7 @@ class DataTable:
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
             self.all_chs.remove(k)
-            self.bus_table.values(k)['depart_time'] = self.time
+            self.bus_table.values(k)['depart_time'] = self.time - 1
             self.left_bus[k] = self.bus_table.values(k)
 
             self.bus_table.remove(k)
@@ -201,12 +201,11 @@ class DataTable:
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
 
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
-            self.veh_table.values(k)['depart_time'] = self.time
+            self.veh_table.values(k)['depart_time'] = self.time - 1
             self.left_veh[k] = self.veh_table.values(k)
 
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
-            s = 2
 
     def update_cluster(self, veh_ids, config, zones):
 
@@ -560,9 +559,8 @@ class DataTable:
     def eval_cluster(self, configs):
         total_clusters = 0
         for i in self.veh_table.ids():
-            # if the vehicle stays in area to the end of the iteration, the depart_time should get fixed
-            if self.veh_table.values(i)['depart_time'] is None:
-                self.veh_table.values(i)['depart_time'] = self.veh_table.values(i)['arrive_time'] + configs.iter
+            # The vehicle stays in area to the end of the iteration, the depart_time should get fixed
+            self.veh_table.values(i)['depart_time'] = self.veh_table.values(i)['arrive_time'] + configs.iter
             length = self.veh_table.values(i)['cluster_record'].length
             one_veh = 0
             temp = self.veh_table.values(i)['cluster_record'].head
@@ -581,8 +579,7 @@ class DataTable:
             while temp:
                 if temp.value['timer'] is not None:
                     summing = np.divide(temp.value['timer'], length)  # temp.length is acting like a penalty factor
-                    one_veh += np.divide(summing, self.veh_table.values(i)['depart_time'] -
-                                         self.veh_table.values(i)['arrive_time'])
+                    one_veh += np.divide(summing, self.left_veh(i)['depart_time'] - self.left_veh(i)['arrive_time'])
                 temp = temp.next
             total_clusters += one_veh
         return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)))
