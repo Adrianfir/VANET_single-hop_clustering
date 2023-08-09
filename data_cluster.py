@@ -478,8 +478,7 @@ class DataTable:
                     ef = 0
                 else:
                     ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
-                                            unique_pot_ch.intersection(near_sa[veh_id], configs)
-                                            )
+                                            unique_pot_ch.intersection(near_sa[veh_id]), configs)
                 selected_chs.add(ch)
                 if ch == veh_id:
                     if n_near_sa[veh_id] == 0:
