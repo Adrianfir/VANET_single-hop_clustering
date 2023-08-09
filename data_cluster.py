@@ -8,6 +8,8 @@ understudied area and creating and updating the clusters using recursion.
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
 import numpy as np
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
@@ -51,6 +53,8 @@ class DataTable:
                                      )
         self.stand_alone = set()
         self.all_chs = set()
+        self.left_veh = dict()
+        self.left_bus = dict()
         self.time = config.start_time
         self.understudied_area = zones.understudied_area()
         self.init_count = 0  # this counter is just for defining the self.net_graph for the very first time
@@ -65,6 +69,7 @@ class DataTable:
             if 'bus' in veh.getAttribute('id'):
                 self.bus_table.set_item(veh.getAttribute('id'), util.initiate_new_bus(veh, zones, zone_id, config,
                                                                                       self.understudied_area))
+                self.bus_table.values(veh.getAttribute('id'))['arrive_time'] = self.time
                 # Here the buses will be added to zone_buses
                 self.zone_buses[zone_id].add(veh.getAttribute('id'))
                 self.zone_ch[zone_id].add(veh.getAttribute('id'))
@@ -74,6 +79,7 @@ class DataTable:
             else:
                 self.veh_table.set_item(veh.getAttribute('id'), util.initiate_new_veh(veh, zones, zone_id, config,
                                                                                       self.understudied_area))
+                self.veh_table.values(veh.getAttribute('id'))['arrive_time'] = self.time
                 # Here the vehicles will be added to zone_vehicles
                 self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
                 self.stand_alone.add(veh.getAttribute('id'))
@@ -112,7 +118,7 @@ class DataTable:
                 self.bus_table, self.zone_buses, self.zone_ch = util.update_bus_table(veh, self.bus_table, zone_id,
                                                                                       self.understudied_area, zones,
                                                                                       config, self.zone_buses,
-                                                                                      self.zone_ch)
+                                                                                      self.zone_ch, self.time)
                 self.all_chs.add(veh.getAttribute('id'))
 
             else:
@@ -120,7 +126,7 @@ class DataTable:
                 self.veh_table, self.zone_vehicles, self.zone_ch, self.stand_alone, \
                 self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
                                                               zones, config, self.zone_vehicles, self.zone_ch,
-                                                              self.stand_alone, self.zone_stand_alone)
+                                                              self.stand_alone, self.zone_stand_alone, self.time)
                 if self.veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
                     self.all_chs.add(veh.getAttribute('id'))
             # add the vertex to the graph
@@ -161,6 +167,8 @@ class DataTable:
             self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
             self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
             self.all_chs.remove(k)
+            self.bus_table.values(k)['depart_time'] = self.time
+            self.left_bus['k'] = self.bus_table.values('k')
 
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
@@ -193,6 +201,9 @@ class DataTable:
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
 
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
+            self.veh_table.values(k)['depart_time'] = self.time
+            self.left_veh['k'] = self.veh_table.values('k')
+
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
             s = 2

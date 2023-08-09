@@ -41,6 +41,8 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
                 in_area=presence(understudied_area, veh),
+                arrive_time=None,
+                depart_time=None,
                 trans_range=config.trans_range,
                 message_dest={},
                 message_source={},
@@ -75,6 +77,8 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
                 in_area=presence(understudied_area, veh),
+                arrive_time=None,
+                depart_time=None,
                 trans_range=config.trans_range,
                 message_dest={},
                 message_source={},
@@ -214,6 +218,7 @@ def choose_ch(table, veh_table_i,
     """
     this function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
     primary_ch.
+    :param config: config
     :param table: bus_table or veh_table based on the case that this function will be used
     :param veh_table_i:
     :param area_zones:
@@ -268,7 +273,8 @@ def choose_ch(table, veh_table_i,
                                   np.abs(table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for chs
-        ef = np.matmul(np.transpose(config.weights),
+        weights = np.divide(config.weights, sum(config.weights))    # normalizing the weights
+        ef = np.matmul(np.transpose(weights),
                        np.array([theta_sim, speed_sim, theta_dist]))
 
         if ef < min_ef:
@@ -281,9 +287,10 @@ def choose_ch(table, veh_table_i,
 #                area_zones, bus_candidates):
 
 
-def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_ch):
+def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_ch, current_time):
     """
     this function updates the bus_tabel and zone_buses from main.py
+    :param current_time: self.time in the data_cluster.py
     :param zone_ch: the self.zone_ch dictionary
     :param veh: it's the veh from .xml file
     :param bus_table: its bus_table
@@ -320,15 +327,17 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
     else:
         bus_table.set_item(veh.getAttribute('id'), initiate_new_bus(veh, zones, zone_id,
                                                                     config, understudied_area))
+        bus_table.values(veh.getAttribute('id'))['arrive_time'] = current_time
         zone_buses[zone_id].add(veh.getAttribute('id'))
         zone_ch[zone_id].add(veh.getAttribute('id'))
     return bus_table, zone_buses, zone_ch
 
 
 def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
-                     zone_vehicles, zone_ch, stand_alone, zone_stand_alone):
+                     zone_vehicles, zone_ch, stand_alone, zone_stand_alone, current_time):
     """
     this function updates the veh_tabel and zone_vehicles from main.py
+    :param current_time: self.time in data_cluster.py
     :param zone_stand_alone: its the self.zone_stand_alone
     :param stand_alone: its the self.stand_alone
     :param zone_ch: the self.zone_ch dictionary
@@ -376,6 +385,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
     else:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
                                                                     config, understudied_area))
+        veh_table.values(veh.getAttribute('id'))['arrive_time'] = current_time
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
         stand_alone.add(veh.getAttribute('id'))
         zone_stand_alone[veh_table.values(veh.getAttribute('id'))['zone']].add(veh.getAttribute('id'))
