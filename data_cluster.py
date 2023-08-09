@@ -579,7 +579,7 @@ class DataTable:
             while temp:
                 if temp.value['timer'] is not None:
                     summing = np.divide(temp.value['timer'], length)  # temp.length is acting like a penalty factor
-                    one_veh += np.divide(summing, self.left_veh(i)['depart_time'] - self.left_veh(i)['arrive_time'])
+                    one_veh += np.divide(summing, self.left_veh[i]['depart_time'] - self.left_veh[i]['arrive_time'])
                 temp = temp.next
             total_clusters += one_veh
         return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)))
