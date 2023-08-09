@@ -168,7 +168,7 @@ class DataTable:
             self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
             self.all_chs.remove(k)
             self.bus_table.values(k)['depart_time'] = self.time
-            self.left_bus['k'] = self.bus_table.values('k')
+            self.left_bus[k] = self.bus_table.values(k)
 
             self.bus_table.remove(k)
             self.net_graph.remove_vertex(k)
@@ -202,7 +202,7 @@ class DataTable:
 
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.values(k)['depart_time'] = self.time
-            self.left_veh['k'] = self.veh_table.values('k')
+            self.left_veh[k] = self.veh_table.values(k)
 
             self.veh_table.remove(k)
             self.net_graph.remove_vertex(k)
@@ -528,7 +528,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
-                    # the ...tail.value['timer'] must be set to 0 hear because at the end of this method,
+                    # the ...tail.value['timer'] must be set to 0 here because at the end of this method,
                     # update_cluster method would be called again
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 0
 
@@ -570,7 +570,19 @@ class DataTable:
                     one_veh += np.divide(summing, configs.inter)
                 temp = temp.next
             total_clusters += one_veh
-        return np.divide(total_clusters, len(self.veh_table.ids()))
+
+        for i in self.left_veh.keys():
+            length = self.left_veh[i]['cluster_record'].length
+            one_veh = 0
+            temp = self.left_veh[i]['cluster_record'].head
+            print(temp)
+            while temp:
+                if temp.value['timer'] is not None:
+                    summing = np.divide(temp.value['timer'], length)  # temp.length is acting like a penalty factor
+                    one_veh += np.divide(summing, configs.inter)
+                temp = temp.next
+            total_clusters += one_veh
+        return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)))
 
     def show_graph(self, configs):
         """
