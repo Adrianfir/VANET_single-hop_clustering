@@ -24,6 +24,7 @@ if __name__ == "__main__":
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
+        print(a.bus_table.ids())
         # a.show_graph(configs)
         # a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
     end_time = time.time()

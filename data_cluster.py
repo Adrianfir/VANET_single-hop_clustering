@@ -8,8 +8,6 @@ understudied area and creating and updating the clusters using recursion.
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
 import numpy as np
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
 import networkx as nx
 import folium
 from folium.plugins import MarkerCluster
@@ -608,8 +606,12 @@ class DataTable:
         # Add nodes to the MarkerCluster group
         for node, node_pos in pos.items():
             if 'bus' in node:
-                marker = folium.CircleMarker(location=node_pos, radius=10, color='red', fill=True,
-                                             fill_color='red')
+                if 'rsu' in node:
+                    marker = folium.CircleMarker(location=node_pos, radius=10, color='darkpurple', fill=True,
+                                                 fill_color='red')
+                else:
+                    marker = folium.CircleMarker(location=node_pos, radius=10, color='red', fill=True,
+                                                 fill_color='red')
             else:
                 if self.veh_table.values(node)['cluster_head'] is True:
                     marker = folium.CircleMarker(location=node_pos, radius=10, color='red', fill=True,

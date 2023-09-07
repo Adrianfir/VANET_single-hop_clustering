@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('small_data_Richmondhill', 'sumoTrace_geo.xml'))
+                         joinpath('small_data_Richmondhill', 'sumoTrace_rsu_geo.xml'))
         # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
         #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
@@ -25,12 +25,12 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         trans_range = 700
-        start_time = 1500
+        start_time = 0
         counter = 5
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
         fps = 10
-        iter = 500
+        iter = 150
         weights = np.array([10, 0, 0])       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
