@@ -31,7 +31,7 @@ class Inputs:
         center_loc = [43.868283, -79.441418]
         fps = 10
         iter = 500
-        weights = np.array([6, 4, 0])       # direction's angle, speed, distance
+        weights = np.array([10, 0, 0])       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
