@@ -299,7 +299,11 @@ class DataTable:
                     self.veh_table.values(veh_id)['other_chs'].update(self.veh_table.values(veh_id)['other_chs'].
                                                                       union(ch_candidates))
                     self.veh_table.values(veh_id)['other_chs'].remove(self.veh_table.values(veh_id)['primary_ch'])
-                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] += 1
+                    # the following conditional is for making sure that self.update_cluster called inside
+                    # self.stand_alones_cluster would not add 1 to timer of cluster_record
+                    if self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] + \
+                            self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] - 1 != self.time:
+                        self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] += 1
                     # updating 'gates' and 'gate_chs' considering if the primary_ch is bus or vehicle-ch
                     if 'bus' in self.veh_table.values(veh_id)['primary_ch']:
                         self.bus_table.values(self.veh_table.values(veh_id)['primary_ch'])['gates'][veh_id] = \
@@ -503,7 +507,7 @@ class DataTable:
                         self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['ef'] = ef
                         # the ...tail.value['timer'] must be set to 0 hear because at the end of this method,
                         # update_cluster method would be called again
-                        self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['timer'] = 0
+                        self.veh_table.values(near_sa[veh_id][0])['cluster_record'].tail.value['timer'] = 1
 
                         self.all_chs.add(veh_id)
                         self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
@@ -526,7 +530,7 @@ class DataTable:
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                     # the ...tail.value['timer'] must be set to 0 here because at the end of this method,
                     # update_cluster method would be called again
-                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 0
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
 
                     self.net_graph.add_edge(ch, veh_id)
                     self.all_chs.add(ch)
