@@ -24,13 +24,13 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        trans_range = 400
+        trans_range = 700
         start_time = 1500
+        iter = 150
         counter = 5
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
         fps = 10
-        iter = 10
         weights = np.array([5, 5, 0])       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
