@@ -52,7 +52,7 @@ if __name__ == "__main__":
             for configs.weights in all_weight_lists:
                 configs.weights = np.array(configs.weights)
                 a = DataTable(configs, area_zones)
-                for i in range(1):
+                for i in range(configs.iter):
                     a.update(configs, area_zones)
                     print(a.time)
                     a.update_cluster(a.veh_table.ids(), configs, area_zones)
