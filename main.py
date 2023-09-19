@@ -62,6 +62,8 @@ if __name__ == "__main__":
                 eval_cluster = a.eval_cluster(configs)
                 if 'rsu' in configs.trace_path:
                     out_put = out_put.append(['yes', configs.trans_range, configs.weights, eval_cluster])
+                else:
+                    out_put = out_put.append(['no', configs.trans_range, configs.weights, eval_cluster])
     end_time = time.time()
     out_put.to_csv('/Users/pouyafirouzmakan/Desktop/VANET/output_result.csv')
     # util.make_slideshow(-------)
