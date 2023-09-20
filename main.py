@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     cols = ['rsu', 'TR', 'weights', 'eval']
     out_put = pd.DataFrame(columns=cols)
-    dif_tr = [200, 400, 600, 700]
+    dif_tr = [200, ]
     dif_data = [str(pathlib.Path(__file__).parent.parent.absolute().
                     joinpath('small_data_Richmondhill', 'sumoTrace_rsu_geo.xml')),
                 str(pathlib.Path(__file__).parent.parent.absolute().
