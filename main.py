@@ -46,6 +46,7 @@ if __name__ == "__main__":
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
+    num_times = 1
     start_time = time.time()
     for configs.trace_path in dif_data:
         for configs.trans_range in dif_tr:
@@ -54,12 +55,14 @@ if __name__ == "__main__":
                 a = DataTable(configs, area_zones)
                 for i in range(configs.iter):
                     a.update(configs, area_zones)
-                    print(a.time)
+                    # print(a.time)
                     a.update_cluster(a.veh_table.ids(), configs, area_zones)
                     a.stand_alones_cluster(configs, area_zones)
                     # a.show_graph(configs)
                     # a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
                 eval_cluster = a.eval_cluster(configs)
+                print(num_times)
+                num_times += 1
                 if 'rsu' in configs.trace_path:
                     out_put = out_put.append(['yes', configs.trans_range, configs.weights, eval_cluster])
                 else:
