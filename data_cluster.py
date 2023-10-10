@@ -559,10 +559,14 @@ class DataTable:
 
     def eval_cluster(self, configs):
         total_clusters = 0
+        n_sav_ch = 0  # number of vehicles that are allways ch or stand-alone (never experiences being a cm)
         for i in self.veh_table.ids():
             # The vehicle stays in area to the end of the iteration, the depart_time should get fixed
             self.veh_table.values(i)['depart_time'] = self.veh_table.values(i)['arrive_time'] + configs.iter
             length = self.veh_table.values(i)['cluster_record'].length
+            if (length == 1) and (self.veh_table.values(i)['cluster_record'].head.key is None):
+                n_sav_ch += 1
+                continue
             one_veh = 0
             temp = self.veh_table.values(i)['cluster_record'].head
             while temp:
@@ -575,6 +579,9 @@ class DataTable:
 
         for i in self.left_veh.keys():
             length = self.left_veh[i]['cluster_record'].length
+            if (length == 1) and (self.left_veh[i]['cluster_record'].head.key is None):
+                n_sav_ch += 1
+                continue
             one_veh = 0
             temp = self.left_veh[i]['cluster_record'].head
             while temp:
@@ -583,7 +590,7 @@ class DataTable:
                     one_veh += np.divide(summing, self.left_veh[i]['depart_time'] - self.left_veh[i]['arrive_time'])
                 temp = temp.next
             total_clusters += one_veh
-        return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)))
+        return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)) - n_sav_ch)
 
     def show_graph(self, configs):
         """
