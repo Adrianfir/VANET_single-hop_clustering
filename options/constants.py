@@ -26,7 +26,7 @@ class Inputs:
                     max_long=-79.238069)
         trans_range = 200
         start_time = 1500
-        iter = 150
+        iter = 60
         counter = 5
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
