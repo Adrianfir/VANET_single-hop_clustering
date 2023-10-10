@@ -18,8 +18,6 @@ import utils.util as util
 if __name__ == "__main__":
     configs = Configs().config
 
-    cols = ['rsu', 'TR', 'weights', 'eval']
-    out_put = pd.DataFrame(columns=cols)
     dif_tr = [200, ]
     dif_data = [str(pathlib.Path(__file__).parent.parent.absolute().
                     joinpath('small_data_Richmondhill', 'sumoTrace_rsu_geo.xml')),
@@ -50,7 +48,9 @@ if __name__ == "__main__":
     start_time = time.time()
     for configs.trace_path in dif_data:
         for configs.trans_range in dif_tr:
-            for configs.weights in all_weight_lists:
+            cols = ['rsu', 'TR', 'weights', 'eval']
+            out_put = pd.DataFrame(columns=cols)
+            for configs.weights in all_weight_lists[0]:
                 configs.weights = np.array(configs.weights)
                 a = DataTable(configs, area_zones)
                 for i in range(configs.iter):
@@ -67,8 +67,11 @@ if __name__ == "__main__":
                     out_put = out_put.append(['yes', configs.trans_range, configs.weights, eval_cluster])
                 else:
                     out_put = out_put.append(['no', configs.trans_range, configs.weights, eval_cluster])
+            if 'rsu' in configs.trace_path:
+                out_put.to_csv('/Users/pouyafirouzmakan/Desktop/VANET/' + str(configs.trans_range) + '_rsu.csv')
+            else:
+                out_put.to_csv('/Users/pouyafirouzmakan/Desktop/VANET/' + str(configs.trans_range) + '.csv')
     end_time = time.time()
-    out_put.to_csv('/Users/pouyafirouzmakan/Desktop/VANET/output_result.csv')
     # util.make_slideshow(-------)
     # a.show_graph(configs)
     # a.print_table()
