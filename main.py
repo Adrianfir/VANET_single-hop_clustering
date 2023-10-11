@@ -18,7 +18,7 @@ import utils.util as util
 if __name__ == "__main__":
     configs = Configs().config
 
-    dif_tr = [200, ]
+    dif_tr = [200, 300, 400, 500, 600, 700]
     dif_data = [str(pathlib.Path(__file__).parent.parent.absolute().
                     joinpath('small_data_Richmondhill', 'sumoTrace_rsu_geo.xml')),
                 str(pathlib.Path(__file__).parent.parent.absolute().
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         for configs.trans_range in dif_tr:
             cols = ['rsu', 'TR', 'weights', 'eval']
             out_put = pd.DataFrame(columns=cols)
-            for configs.weights in all_weight_lists[0]:
+            for configs.weights in all_weight_lists:
                 configs.weights = np.array(configs.weights)
                 a = DataTable(configs, area_zones)
                 for i in range(configs.iter):
@@ -64,13 +64,15 @@ if __name__ == "__main__":
                 print(num_times)
                 num_times += 1
                 if 'rsu' in configs.trace_path:
-                    out_put = out_put.append(['yes', configs.trans_range, configs.weights, eval_cluster])
+                    new_row = pd.Series(['yes', configs.trans_range, configs.weights, eval_cluster], index=cols)
+                    out_put = out_put.append(new_row, ignore_index=True)
                 else:
-                    out_put = out_put.append(['no', configs.trans_range, configs.weights, eval_cluster])
+                    new_row = pd.Series(['no', configs.trans_range, configs.weights, eval_cluster], index=cols)
+                    out_put = out_put.append(new_row, ignore_index=True)
             if 'rsu' in configs.trace_path:
-                out_put.to_csv('/Users/pouyafirouzmakan/Desktop/VANET/' + str(configs.trans_range) + '_rsu.csv')
+                out_put.to_csv('results/' + str(configs.trans_range) + '_rsu.csv')
             else:
-                out_put.to_csv('/Users/pouyafirouzmakan/Desktop/VANET/' + str(configs.trans_range) + '.csv')
+                out_put.to_csv('results/' + str(configs.trans_range) + '.csv')
     end_time = time.time()
     # util.make_slideshow(-------)
     # a.show_graph(configs)
