@@ -24,7 +24,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        trans_range = 200
+        trans_range = int()
         start_time = 1500
         iter = 120
         counter = 5

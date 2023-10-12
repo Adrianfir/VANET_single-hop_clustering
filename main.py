@@ -48,7 +48,7 @@ if __name__ == "__main__":
     start_time = time.time()
     for configs.trace_path in dif_data:
         for configs.trans_range in dif_tr:
-            cols = ['rsu', 'TR', 'weights', 'eval']
+            cols = ['rsu', 'TR', 'weights', 'n_veh', 'n_buses', 'n_sav', 'n_chs', 'eval']
             out_put = pd.DataFrame(columns=cols)
             for configs.weights in all_weight_lists:
                 configs.weights = np.array(configs.weights)
@@ -64,10 +64,14 @@ if __name__ == "__main__":
                 print(num_times)
                 num_times += 1
                 if 'rsu' in configs.trace_path:
-                    new_row = pd.Series(['yes', configs.trans_range, configs.weights, eval_cluster], index=cols)
+                    new_row = pd.Series(['yes', configs.trans_range, configs.weights,
+                                         len(a.veh_table.ids()), len(a.bus_table.ids()),
+                                         len(a.stand_alone), len(a.all_chs), eval_cluster], index=cols)
                     out_put = out_put.append(new_row, ignore_index=True)
                 else:
-                    new_row = pd.Series(['no', configs.trans_range, configs.weights, eval_cluster], index=cols)
+                    new_row = pd.Series(['no', configs.trans_range, configs.weights,
+                                         len(a.veh_table.ids()), len(a.bus_table.ids()),
+                                         len(a.stand_alone), len(a.all_chs), eval_cluster], index=cols)
                     out_put = out_put.append(new_row, ignore_index=True)
             if 'rsu' in configs.trace_path:
                 out_put.to_csv('results/' + str(configs.trans_range) + '_rsu.csv')
