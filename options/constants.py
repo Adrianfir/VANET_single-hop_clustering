@@ -14,9 +14,8 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('small_data_Richmondhill', 'sumoTrace_geo.xml'))
-        # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-        #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
+                    joinpath('sparse_data_Richmondhill', 'sumoTrace.xml'))
+
         sumo_trace = xml.dom.minidom.parse(trace_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
@@ -26,7 +25,7 @@ class Inputs:
                     max_long=-79.238069)
         trans_range = int()
         start_time = 1500
-        iter = 2
+        iter = 60
         counter = 5
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
