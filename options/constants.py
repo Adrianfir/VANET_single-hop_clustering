@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('sparse_data_Richmondhill', 'sumoTrace.xml'))
+                         joinpath('small_data_Richmondhill', 'sumoTrace.xml'))
         # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
         #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
@@ -24,7 +24,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        alpha = 1
+        alpha = 1.0
         trans_range = 700
         start_time = 1500
         iter = 60
@@ -45,7 +45,7 @@ class Inputs:
                             help='Floating Car Data (FCD) from sumoTrace.xml file')
         parser.add_argument('--times', type=xml.dom.minidom.NodeList, default=times,
                             help='includes data for all seconds')
-        parser.add_argument('--alpha', type=int, default=alpha,
+        parser.add_argument('--alpha', type=float, default=alpha,
                             help='this is the regularization coefficient to change the sie of the zones based on TR')
         parser.add_argument('--trans_range', type=int, default=trans_range,
                             help='this is the transmission range considered in this project and it can be up to 2000')
