@@ -23,6 +23,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
+        alpha = 0.333
         trans_range = int()
         start_time = 1500
         iter = 60
@@ -43,6 +44,8 @@ class Inputs:
                             help='Floating Car Data (FCD) from sumoTrace.xml file')
         parser.add_argument('--times', type=xml.dom.minidom.NodeList, default=times,
                             help='includes data for all seconds')
+        parser.add_argument('--alpha', type=float, default=alpha,
+                            help='this is the regularization coefficient to change the sie of the zones based on TR')
         parser.add_argument('--trans_range', type=int, default=trans_range,
                             help='this is the transmission range considered in this project and it can be up to 2000')
         parser.add_argument('--start_time', type=int, default=start_time,
