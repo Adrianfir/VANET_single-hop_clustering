@@ -24,7 +24,7 @@ class ZoneID:
         self.y_area = hs.haversine((self.area["min_lat"], 0), (self.area["max_lat"], 0), unit=hs.Unit.KILOMETERS)
         self.area_surface = self.x_area * self.y_area
         self.lat_rows = np.linspace(self.area["min_lat"], self.area["max_lat"],
-                                    num=int(2*np.floor(self.y_area/config.alpha)), endpoint=True)  # dividing longitude by almost 1km
+                                    num=int(np.floor(self.y_area/config.alpha)), endpoint=True)  # dividing longitude by almost 1km
         self.n_rows = len(self.lat_rows) - 1
         # length
         self.long_cols = np.linspace(self.area["min_long"], self.area["max_long"],
