@@ -23,7 +23,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        alpha = 0.333
+        alpha = 1
         trans_range = int()
         start_time = 1600
         iter = 60
