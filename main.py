@@ -18,7 +18,7 @@ import utils.util as util
 if __name__ == "__main__":
     configs = Configs().config
 
-    dif_tr = [300, ]
+    dif_tr = [200, 300]
 ########################### Define different weights
     # Define the size of each list and the step increment
     list_size = 3
@@ -56,7 +56,7 @@ if __name__ == "__main__":
                 # a.show_graph(configs)
                 # a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
             eval_cluster = a.eval_cluster(configs)
-            print(num_times)
+            print(num_times, configs.weights, eval_cluster)
             num_times += 1
 
             new_row = pd.Series(['no', configs.trans_range, configs.weights,

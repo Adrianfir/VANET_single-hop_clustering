@@ -14,24 +14,24 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                    joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
+                    joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
 
         sumo_trace = xml.dom.minidom.parse(trace_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
-        area = dict(min_lat=43.826559,
-                    min_long=-79.464010,
-                    max_lat=43.983138,
-                    max_long=-79.388136)
+        area = dict(min_lat=43.586568,
+                    min_long=-79.540771,
+                    max_lat=44.012923,
+                    max_long=-79.238069)
         alpha = 0.5
         trans_range = int()
         start_time = 1600
         iter = 60
         counter = 5
         map_zoom = 15.3
-        center_loc = [43.868283, -79.441418]
+        center_loc = [(area['min_lat']+area['max_lat'])/2, (area['min_long']+area['max_long'])/2]
         fps = 10
-        weights = np.array()       # direction's angle, speed, distance
+        weights = None       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
