@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
         # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
         #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)

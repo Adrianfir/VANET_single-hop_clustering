@@ -397,7 +397,7 @@ def det_near_sa(veh_id, veh_table,
     """
     This function would determine the nearby stand_alone vehicles to veh_id
     :param veh_id: the stand-alone vehicle that we want to find the other stand-alones to it
-    :param veh_table: self.vehicle_table in the data_cluster.py
+    :param veh_table: vehicle_table in the data_cluster.py
     :param stand_alone: self.stand_alone in the data_cluster.py
     :param zone_stand_alone: self.zone_stand_alone in the data_cluster.py
     :return: nearby stand-alone vehicles to veh_id

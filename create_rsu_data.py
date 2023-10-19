@@ -24,14 +24,15 @@ def add_vehicle_to_xml(input_file, output_file, vehicle_element):
 
 
 # Define the vehicle element to add
-new_vehicle_element = [ET.fromstring('''
-    <vehicle id="busrsu1" x="-79.437512" y="43.871043" angle="71.93" type="veh_passenger" 
-    speed="0.00" pos="5.10" lane="35349093_0" slope="0.00"/>'''),
+new_vehicle_element = [
+    # ET.fromstring('''
+    # <vehicle id="busrsu1" x="-79.437512" y="43.871043" angle="71.93" type="veh_passenger"
+    # speed="0.00" pos="5.10" lane="35349093_0" slope="0.00"/>''')
                        ET.fromstring('''
-                           <vehicle id="busrsu2" x="-79.448788" y="43.868880" angle="71.93" type="veh_passenger" 
+                           <vehicle id="busrsu2" x="-79.448788" y="43.868880" angle="71.93" type="veh_passenger"
                            speed="0.00" pos="5.10" lane="35349093_0" slope="0.00"/>'''),
                        ET.fromstring('''
-                           <vehicle id="busrsu3" x="-79.435327" y="43.863937" angle="71.93" type="veh_passenger" 
+                           <vehicle id="busrsu3" x="-79.435327" y="43.863937" angle="71.93" type="veh_passenger"
                            speed="0.00" pos="5.10" lane="35349093_0" slope="0.00"/>''')
                        ]
 

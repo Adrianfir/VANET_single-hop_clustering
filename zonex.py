@@ -371,4 +371,4 @@ class ZoneID:
 # a = ZoneID(configs)
 # a.zones()
 # b = a.neighbor_zones('zone1408')
-# print(a.det_zone(44, -79.30198263788123))
+# print(a.det_zone(configs.center_loc[0], configs.center_loc[1]))
