@@ -19,11 +19,11 @@ class Inputs:
         sumo_trace = xml.dom.minidom.parse(trace_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
-        area = dict(min_lat=43.586568,
-                    min_long=-79.540771,
-                    max_lat=44.012923,
-                    max_long=-79.238069)
-        alpha = 1
+        area = dict(min_lat=43.826559,
+                    min_long=-79.464010,
+                    max_lat=43.983138,
+                    max_long=-79.388136)
+        alpha = 0.5
         trans_range = int()
         start_time = 1600
         iter = 60
