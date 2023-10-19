@@ -31,7 +31,7 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.868283, -79.441418]
         fps = 10
-        weights = np.array([1, 1, 1])       # direction's angle, speed, distance
+        weights = np.array()       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
