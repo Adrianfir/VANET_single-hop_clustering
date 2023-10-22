@@ -56,7 +56,9 @@ if __name__ == "__main__":
                 # a.show_graph(configs)
                 # a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
             eval_cluster = a.eval_cluster(configs)
-            print(num_times, configs.weights, eval_cluster)
+            print(num_times, configs.trans_range, configs.weights,
+                  len(a.veh_table.ids()), len(a.bus_table.ids()),
+                  len(a.stand_alone), len(a.all_chs), eval_cluster)
             num_times += 1
 
             new_row = pd.Series(['no', configs.trans_range, configs.weights,
