@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
         # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
         #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
@@ -24,8 +24,8 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        alpha = 0.5
-        trans_range = 300
+        alpha = 0.8
+        trans_range = 500
         start_time = 1600
         iter = 60
         counter = 5
