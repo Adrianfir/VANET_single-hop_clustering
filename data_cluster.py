@@ -243,19 +243,20 @@ class DataTable:
                     (self.veh_table.values(veh_id)['primary_ch'] is None) and \
                     (self.veh_table.values(veh_id)['cluster_head'] is True):
 
-                temp_mem = self.veh_table.values(veh_id)['cluster_members'].copy()
-                for m in temp_mem:
-                    dist = util.det_dist(veh_id, self.veh_table, m, self.veh_table)
+                if len(self.veh_table.values(veh_id)['cluster_members']) != 0:
+                    temp_mem = self.veh_table.values(veh_id)['cluster_members'].copy()
+                    for m in temp_mem:
+                        dist = util.det_dist(veh_id, self.veh_table, m, self.veh_table)
 
-                    if dist > min(self.veh_table.values(veh_id)['trans_range'],
-                                  self.veh_table.values(m)['trans_range']):
-                        self.veh_table.values(veh_id)['cluster_members'].remove(m)
-                        self.veh_table.values(m)['primary_ch'] = None
-                        self.veh_table.values(m)['cluster_record'].append(None, {'start_time': None, 'ef': None,
-                                                                                 'timer': None})
-                        self.stand_alone.add(m)
-                        self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
-                        self.net_graph.remove_edge(veh_id, m)
+                        if dist > min(self.veh_table.values(veh_id)['trans_range'],
+                                      self.veh_table.values(m)['trans_range']):
+                            self.veh_table.values(veh_id)['cluster_members'].remove(m)
+                            self.veh_table.values(m)['primary_ch'] = None
+                            self.veh_table.values(m)['cluster_record'].append(None, {'start_time': None, 'ef': None,
+                                                                                     'timer': None})
+                            self.stand_alone.add(m)
+                            self.zone_stand_alone[self.veh_table.values(m)['zone']].add(m)
+                            self.net_graph.remove_edge(veh_id, m)
 
                 # if the veh_id is a ch and does not have any member, after changing its zone, it won't remain as a ch
                 # unless get selected by another vehicles or can't find a cluster head after the counter
