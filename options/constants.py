@@ -14,15 +14,15 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                    joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
+                    joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
 
         sumo_trace = xml.dom.minidom.parse(trace_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
-        area = dict(min_lat=43.586568,
-                    min_long=-79.540771,
-                    max_lat=44.012923,
-                    max_long=-79.238069)
+        area = dict(min_lat=43.826323,
+                    min_long=-79.506566,
+                    max_lat=43.928499,
+                    max_long=-79.352383)
         alpha = 0.8
         trans_range = int()
         start_time = 1600
