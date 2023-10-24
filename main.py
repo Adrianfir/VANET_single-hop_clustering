@@ -24,11 +24,11 @@ if __name__ == "__main__":
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
         a.stand_alones_cluster(configs, area_zones)
-        a.show_graph(configs)
-        a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
+        # a.show_graph(configs)
+        # a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
     end_time = time.time()
-    util.make_slideshow('/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/',
-                        '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/', configs.fps)
+    # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/',
+    #                     '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/', configs.fps)
     # a.show_graph(configs)
     a.print_table()
     eval_cluster = a.eval_cluster(configs)
