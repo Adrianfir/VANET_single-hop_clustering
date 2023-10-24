@@ -232,6 +232,7 @@ class DataTable:
                     continue
                 else:
                     self.veh_table.values(veh_id)['cluster_head'] = True
+                    self.veh_table.values(veh_id)['start_ch_zone'] = self.veh_table.values(veh_id)['zone']
                     self.all_chs.add(veh_id)
                     self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
                     self.veh_table.values(veh_id)['counter'] = config.counter
@@ -261,9 +262,11 @@ class DataTable:
                 # if the veh_id is a ch and does not have any member, after changing its zone, it won't remain as a ch
                 # unless get selected by another vehicles or can't find a cluster head after the counter
                 if (len(self.veh_table.values(veh_id)['cluster_members']) == 0) and \
-                        (self.veh_table.values(veh_id)['zone'] != self.veh_table.values(veh_id)['prev_zone']):
+                        ((self.veh_table.values(veh_id)['start_ch_zone'] != self.veh_table.values(veh_id)['zone']) and
+                         (self.veh_table.values(veh_id)['prev_zone'] != self.veh_table.values(veh_id)['zone'])):
                     self.veh_table.values(veh_id)['cluster_members'] = set()
                     self.veh_table.values(veh_id)['cluster_head'] = False
+                    self.veh_table.values(veh_id)['start_ch_zone'] = None
                     self.zone_ch[self.veh_table.values(veh_id)['zone']].remove(veh_id)
                     self.all_chs.remove(veh_id)
                     self.stand_alone.add(veh_id)
@@ -469,6 +472,8 @@ class DataTable:
                     self.veh_table.values(veh_id_2)['cluster_head'] = True
                     self.veh_table.values(veh_id)['counter'] = configs.counter
                     self.veh_table.values(veh_id_2)['counter'] = configs.counter
+                    self.veh_table.values(veh_id)['start_ch_zone'] = self.veh_table.values(veh_id)['zone']
+                    self.veh_table.values(veh_id_2)['start_ch_zone'] = self.veh_table.values(veh_id_2)['zone']
                     self.veh_table.values(veh_id)['other_chs'].add(veh_id_2)
                     self.veh_table.values(veh_id_2)['other_chs'].add(veh_id)
                     self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
@@ -499,6 +504,10 @@ class DataTable:
                 self.veh_table.values(veh_id)['primary_ch'] = ch
                 self.veh_table.values(veh_id)['counter'] = configs.counter
                 self.veh_table.values(ch)['counter'] = configs.counter
+<<<<<<< HEAD
+=======
+                self.veh_table.values(ch)['start_ch_zone'] = self.veh_table.values(ch)['zone']
+>>>>>>> feat/veh_cluster
 
                 self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
                 self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time

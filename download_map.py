@@ -30,7 +30,6 @@ def save_img(sw_lat, sw_long,
     m = folium.Map(location=[(sw_lat + ne_lat) / 2, (sw_long + ne_long) / 2], zoom_start=zoom_out_value)
     folium.Polygon([(sw_lat, sw_long), (se_lat, se_long), (ne_lat, ne_long), (nw_lat, nw_long),
                     (sw_lat, sw_long)]).add_to(m)
-    m.rotate_to(-15)
 
     # Save the map as an HTML file
     map_file = "map.html"
@@ -56,8 +55,9 @@ def save_img(sw_lat, sw_long,
     # Take a screenshot of the entire webpage (including the map)
     screenshot = driver.get_screenshot_as_png()
 
-    # Save the screenshot as an image file with good resolution
+    # Save the screenshot as an image file with good resolution and in grayscale
     img = Image.open(BytesIO(screenshot))
+    img = img.convert('L')  # Convert to grayscale
     img.save(name + '.png', 'PNG', quality=5000)
 
     # Close the Firefox window and quit the webdriver instance
@@ -83,5 +83,3 @@ zoom = 12
 
 image_name = "exported_map"
 save_img(sw_lat, sw_long, ne_lat, ne_long, se_lat, se_long, nw_lat, nw_long, zoom, image_name)
-
-

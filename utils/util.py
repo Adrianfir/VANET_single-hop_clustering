@@ -92,6 +92,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,  # a counter_time to search and join a cluster
+                start_ch_zone=None,     # This is the zone that vehicle starts becoming a ch
                 cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None})  # the linked_list
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
@@ -397,7 +398,7 @@ def det_near_sa(veh_id, veh_table,
     """
     This function would determine the nearby stand_alone vehicles to veh_id
     :param veh_id: the stand-alone vehicle that we want to find the other stand-alones to it
-    :param veh_table: self.vehicle_table in the data_cluster.py
+    :param veh_table: vehicle_table in the data_cluster.py
     :param stand_alone: self.stand_alone in the data_cluster.py
     :param zone_stand_alone: self.zone_stand_alone in the data_cluster.py
     :return: nearby stand-alone vehicles to veh_id
@@ -406,10 +407,13 @@ def det_near_sa(veh_id, veh_table,
     neigh_stand_alones = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
         neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the SAVs in the neighbor zones to a list
+<<<<<<< HEAD
     if len(neigh_stand_alones) != 0:
         for j in neigh_stand_alones:
             if j != veh_id:
                 euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
+=======
+>>>>>>> feat/veh_cluster
 
                 if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
                                          veh_table.values(j)['trans_range']):

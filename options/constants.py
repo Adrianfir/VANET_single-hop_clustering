@@ -14,6 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
+<<<<<<< HEAD
                     joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
 
         sumo_trace = xml.dom.minidom.parse(trace_path)
@@ -25,13 +26,33 @@ class Inputs:
                     max_long=-79.352383)
         alpha = 0.8
         trans_range = int()
+=======
+                         joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
+        # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+        #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
+        sumo_trace = xml.dom.minidom.parse(trace_path)
+        fcd = sumo_trace.documentElement
+        times = fcd.getElementsByTagName('timestep')
+        area = dict(min_lat=43.586568,
+                    min_long=-79.540771,
+                    max_lat=44.012923,
+                    max_long=-79.238069)
+        alpha = 0.8
+        trans_range = 500
+>>>>>>> feat/veh_cluster
         start_time = 1600
         iter = 60
         counter = 5
         map_zoom = 15.3
+<<<<<<< HEAD
         center_loc = [(area['min_lat']+area['max_lat'])/2, (area['min_long']+area['max_long'])/2]
         fps = 10
         weights = None       # direction's angle, speed, distance
+=======
+        center_loc = [43.869846, -79.443523]
+        fps = 10
+        weights = np.array([0.9, 0, 0.1])       # direction's angle, speed, distance
+>>>>>>> feat/veh_cluster
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -56,7 +77,7 @@ class Inputs:
         parser.add_argument('--map_zoom', type=float, default=map_zoom,
                             help='This is the amount to have a specific zoom on the map')
         parser.add_argument('--center_loc', type=float, default=center_loc,
-                            help='The specific center location of the map')
+                            help='The specific center location of the map for saving images and make slide-show')
         parser.add_argument('--fps', type=float, default=fps, help='frame per second')
         parser.add_argument('--iter', type=int, default=iter, help='number of intervals to run')
         parser.add_argument('--weights', type=numpy.ndarray, default=weights, help='weights used for clustering')
