@@ -30,7 +30,7 @@ class Inputs:
         iter = 60
         counter = 5
         map_zoom = 15.3
-        center_loc = [(area['min_lat']+area['max_lat'])/2, (area['min_long']+area['max_long'])/2]
+        center_loc = [43.869846, -79.443523]
         fps = 10
         weights = np.array([0.9, 0, 0.1])       # direction's angle, speed, distance
 
@@ -57,7 +57,7 @@ class Inputs:
         parser.add_argument('--map_zoom', type=float, default=map_zoom,
                             help='This is the amount to have a specific zoom on the map')
         parser.add_argument('--center_loc', type=float, default=center_loc,
-                            help='The specific center location of the map')
+                            help='The specific center location of the map for saving images and make slide-show')
         parser.add_argument('--fps', type=float, default=fps, help='frame per second')
         parser.add_argument('--iter', type=int, default=iter, help='number of intervals to run')
         parser.add_argument('--weights', type=numpy.ndarray, default=weights, help='weights used for clustering')
