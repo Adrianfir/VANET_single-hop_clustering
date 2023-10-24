@@ -68,23 +68,9 @@ if __name__ == "__main__":
 
         out_put.to_csv('results/' + str(configs.trans_range) + '.csv')
     end_time = time.time()
-<<<<<<< HEAD
     # util.make_slideshow(-------)
     # a.show_graph(configs)
     # a.print_table()
-=======
-    # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/',
-    #                     '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/', configs.fps)
-    # a.show_graph(configs)
-    a.print_table()
-    eval_cluster = a.eval_cluster(configs)
-    print('evaluation: ', eval_cluster)
-    print('n_bus: ', len(a.bus_table.ids()))
-    print('n_veh: ', len(a.veh_table.ids()))
-    print('\n')
-    print('chs: ', a.all_chs)
-    print('stand_alones: ', a.stand_alone)
-    print("execution time: ", end_time - start_time)
 
     # print('evaluation: ', eval_cluster)
     # print('n_bus: ', len(a.bus_table.ids()))

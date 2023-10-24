@@ -504,10 +504,7 @@ class DataTable:
                 self.veh_table.values(veh_id)['primary_ch'] = ch
                 self.veh_table.values(veh_id)['counter'] = configs.counter
                 self.veh_table.values(ch)['counter'] = configs.counter
-<<<<<<< HEAD
-=======
                 self.veh_table.values(ch)['start_ch_zone'] = self.veh_table.values(ch)['zone']
->>>>>>> feat/veh_cluster
 
                 self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
                 self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time

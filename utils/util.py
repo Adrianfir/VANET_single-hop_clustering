@@ -407,17 +407,14 @@ def det_near_sa(veh_id, veh_table,
     neigh_stand_alones = []
     for neigh_z in veh_table.values(veh_id)['neighbor_zones']:
         neigh_stand_alones += zone_stand_alone[neigh_z]  # adding all the SAVs in the neighbor zones to a list
-<<<<<<< HEAD
-    if len(neigh_stand_alones) != 0:
-        for j in neigh_stand_alones:
-            if j != veh_id:
-                euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
-=======
->>>>>>> feat/veh_cluster
 
-                if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
-                                         veh_table.values(j)['trans_range']):
-                    result.add(j)
+    for j in neigh_stand_alones:
+        if j != veh_id:
+            euclidian_dist = det_dist(veh_id, veh_table, j, veh_table)
+
+            if euclidian_dist <= min(veh_table.values(veh_id)['trans_range'],
+                                     veh_table.values(j)['trans_range']):
+                result.add(j)
 
     return result
 
@@ -465,8 +462,8 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
 def det_dist(id1, table1, id2, table2):
     dist = hs.haversine((table1.values(id1)["lat"],
                          table1.values(id1)["long"]),
-                        (table2.values(id2)["lat"],
-                         table2.values(id2)["long"]),
+                        (table2.values(id2)['lat'],
+                         table2.values(id2)['long']),
                         unit=hs.Unit.METERS)
 
     return dist
@@ -572,4 +569,3 @@ def make_slideshow(image_folder, output_path, fps):
     out.release()
 
     print("Video creation complete.")
-
