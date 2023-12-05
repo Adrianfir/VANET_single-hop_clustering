@@ -92,7 +92,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,  # a counter_time to search and join a cluster
-                start_ch_zone=None,     # This is the zone that vehicle starts becoming a ch
+                start_ch_zone=None,  # This is the zone that vehicle starts becoming a ch
                 cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None})  # the linked_list
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
@@ -128,8 +128,8 @@ def middle_zone(u_row: object, u_col: object,
     middle_row = int(np.floor((u_row + l_row) / 2))
     middle_col = int(np.floor((u_col + l_col) / 2))
     middle_zone_id = ((middle_row - 1) * n_cols) + middle_col - 1
-    middle_row -= 1             # because the formal numbering has been considered form 0 not 1
-    middle_col -= 1             # because the formal numbering has been considered form 0 not 1
+    middle_row -= 1  # because the formal numbering has been considered form 0 not 1
+    middle_col -= 1  # because the formal numbering has been considered form 0 not 1
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
@@ -218,7 +218,8 @@ def choose_ch(table, veh_table_i,
               area_zones, candidates, config):
     """
     this function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
-    primary_ch.
+    primary_ch. The Factors are [proposed similarity factor, speed similarity, distance,
+    benefit factor, connectivity factor]. The last two factors are provided to make comparison with other studies
     :param config: config
     :param table: bus_table or veh_table based on the case that this function will be used
     :param veh_table_i:
@@ -245,7 +246,6 @@ def choose_ch(table, veh_table_i,
     veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
     veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
 
-    # nominee = ''
     min_ef = 1000000
     for j in candidates:
         # latitude of the centre of previous zone that ch were in
@@ -268,13 +268,14 @@ def choose_ch(table, veh_table_i,
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [ch_vector_x, ch_vector_y])
         theta_sim = np.arccos(cos_sim) / 2 * np.pi
         theta_dist = euclidian_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
+
         # since it might return RuntimeWarning regarding the division, the warning will be ignored
         with np.errstate(divide='ignore', invalid='ignore'):
             speed_sim = np.divide(np.abs(table.values(j)['speed'] - veh_table_i['speed']),
                                   np.abs(table.values(j)['speed']))
 
         # calculate the Eligibility Factor (EF) for chs
-        weights = np.divide(config.weights, sum(config.weights))    # normalizing the weights
+        weights = np.divide(config.weights, sum(config.weights))  # normalizing the weights
         ef = np.matmul(np.transpose(weights),
                        np.array([theta_sim, speed_sim, theta_dist]))
 
@@ -569,4 +570,3 @@ def make_slideshow(image_folder, output_path, fps):
     out.release()
 
     print("Video creation complete.")
-
