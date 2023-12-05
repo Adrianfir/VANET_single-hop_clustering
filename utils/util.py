@@ -218,9 +218,7 @@ def choose_ch(table, veh_table_i,
               area_zones, candidates, config):
     """
     this function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
-    primary_ch. The Factors are [proposed similarity factor, speed similarity, distance,
-    benefit factor, connectivity factor]. The last two factors are provided to make comparison with other studies
-    :param config: config
+    primary_ch. The Factors are [proposed similarity factor, speed similarity, distance]
     :param table: bus_table or veh_table based on the case that this function will be used
     :param veh_table_i:
     :param area_zones:
