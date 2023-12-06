@@ -310,11 +310,11 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
             remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
         zone_ch[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))
-        if bus_table.values(veh.getAttribute('id'))['lane']['id'] != veh.getAttribute('lane'):
+        if bus_table.values(veh.getAttribute('id'))['lane']['id'] == veh.getAttribute('lane'):
+            bus_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
+        else:
             bus_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
             bus_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
-        else:
-            bus_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
@@ -364,17 +364,16 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_ch[veh_table.values(veh.getAttribute('id'))['zone']]. \
                 remove(veh.getAttribute('id'))
-        if veh_table.values(veh.getAttribute('id'))['lane']['id'] != veh.getAttribute('lane'):
+        if veh_table.values(veh.getAttribute('id'))['lane']['id'] == veh.getAttribute('lane'):
+            veh_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
+        else:
             veh_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
             veh_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
-        else:
-            veh_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
         veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         veh_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
-        veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
         veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
