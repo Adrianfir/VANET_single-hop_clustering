@@ -4,7 +4,7 @@ This is the utils file including the small functions
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
            'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
-           'update_bus_table', 'update_veh_table', 'save_img', 'update_sa_net_graph',
+           'update_bus_table', 'update_veh_table', 'det_befit', 'save_img', 'update_sa_net_graph',
            'det_near_sa', 'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow']
 
 import numpy as np
@@ -19,6 +19,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import os
 import cv2
+import re
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -36,7 +37,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 angle=float(veh.getAttribute('angle')),
                 speed=float(veh.getAttribute('speed')) + 0.01,
                 pos=float(veh.getAttribute('pos')),
-                lane=veh.getAttribute('lane'),
+                lane={'id': veh.getAttribute('lane'), 'timer': 0},
                 zone=zone_id,
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
@@ -72,7 +73,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 angle=float(veh.getAttribute('angle')),
                 speed=float(veh.getAttribute('speed')) + 0.01,
                 pos=float(veh.getAttribute('pos')),
-                lane=veh.getAttribute('lane'),
+                lane={'id': veh.getAttribute('lane'), 'timer': 0},
                 zone=zone_id,
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
@@ -309,12 +310,16 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
             remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
         zone_ch[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))
+        if bus_table.values(veh.getAttribute('id'))['lane']['id'] != veh.getAttribute('lane'):
+            bus_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
+            bus_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
+        else:
+            bus_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
         bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         bus_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
-        bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
         bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
@@ -359,6 +364,11 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_ch[veh_table.values(veh.getAttribute('id'))['zone']]. \
                 remove(veh.getAttribute('id'))
+        if veh_table.values(veh.getAttribute('id'))['lane']['id'] != veh.getAttribute('lane'):
+            veh_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
+            veh_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
+        else:
+            veh_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
@@ -416,6 +426,19 @@ def det_near_sa(veh_id, veh_table,
                 result.add(j)
 
     return result
+
+
+def det_befit(veh_id, veh_table, stand_alone,
+              zone_stand_alone, config):
+    """
+
+    :param veh_id:
+    :param veh_table:
+    :param stand_alone:
+    :param zone_stand_alone:
+    :param config:
+    :return:
+    """
 
 
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):

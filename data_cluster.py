@@ -532,6 +532,101 @@ class DataTable:
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
 
+    def dsca_clustering(self, configs, zones):
+        near_sa = dict()
+        n_near_sa = dict()
+        pot_ch = dict()
+        befit = dict()              # BeFit factor for making comparison
+        con_fac = dict()            # Connectivity Factor for making comparison
+        for veh_id in self.stand_alone:
+            if self.veh_table.values(veh_id)['cluster_head'] is True:
+                print('2: ', veh_id)
+            near_sa[veh_id] = util.det_near_sa(veh_id, self.veh_table,
+                                               self.stand_alone, self.zone_stand_alone
+                                               )
+            n_near_sa[veh_id] = len(near_sa[veh_id])
+
+        for veh_id in self.stand_alone:
+            befit[veh_id] = util.det_befit(veh_id, self.veh_table, self.stand_alone,
+                                           self.zone_stand_alone, configs)
+
+        unique_pot_ch = set(pot_ch.values())
+        selected_chs = set()
+        mem_control = set()   # after a vehicle become a member, add it to this and at the beginning of the
+        # for-loop, check if veh_id is in it to not do anything new and ruin it
+        temp = self.stand_alone.copy()
+        for veh_id in temp:
+            if (self.veh_table.values(veh_id)['cluster_head'] is True) or \
+                    (self.veh_table.values(veh_id)['primary_ch'] is not None) or \
+                    (veh_id in mem_control) or (veh_id in selected_chs):
+                continue
+            if (n_near_sa[veh_id] == 1) and (list(near_sa[veh_id])[0] in near_sa.keys()):
+                if (n_near_sa[list(near_sa[veh_id])[0]]) == 1:
+                    veh_id_2 = list(near_sa[veh_id])[0]
+                    self.veh_table.values(veh_id)['cluster_head'] = True
+                    self.veh_table.values(veh_id_2)['cluster_head'] = True
+                    self.veh_table.values(veh_id)['counter'] = configs.counter
+                    self.veh_table.values(veh_id_2)['counter'] = configs.counter
+                    self.veh_table.values(veh_id)['start_ch_zone'] = self.veh_table.values(veh_id)['zone']
+                    self.veh_table.values(veh_id_2)['start_ch_zone'] = self.veh_table.values(veh_id_2)['zone']
+                    self.veh_table.values(veh_id)['other_chs'].add(veh_id_2)
+                    self.veh_table.values(veh_id_2)['other_chs'].add(veh_id)
+                    self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                    self.zone_ch[self.veh_table.values(veh_id_2)['zone']].add(veh_id_2)
+                    self.all_chs.add(veh_id)
+                    self.all_chs.add(veh_id_2)
+                    self.stand_alone.remove(veh_id)
+                    self.stand_alone.remove(veh_id_2)
+                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                    self.zone_stand_alone[self.veh_table.values(veh_id_2)['zone']].remove(veh_id_2)
+                    self.net_graph.add_edge(veh_id, veh_id_2)
+                    selected_chs.add(veh_id)
+                    selected_chs.add(veh_id_2)
+                    continue
+
+            if len(unique_pot_ch.intersection(near_sa[veh_id])- mem_control) > 0:
+                if ((len(unique_pot_ch.intersection(near_sa[veh_id])) == 1) and
+                        (self.veh_table.values(list(near_sa[veh_id])[0])['primary_ch'] is None)):
+                    ch = list(near_sa[veh_id])[0]
+                    ef = 0
+                else:
+                    ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
+                                            unique_pot_ch.intersection(near_sa[veh_id]) - mem_control, configs)
+                selected_chs.add(ch)
+
+                self.veh_table.values(ch)['cluster_head'] = True
+                self.veh_table.values(ch)['cluster_members'].add(veh_id)
+                self.veh_table.values(veh_id)['primary_ch'] = ch
+                self.veh_table.values(veh_id)['counter'] = configs.counter
+                self.veh_table.values(ch)['counter'] = configs.counter
+                self.veh_table.values(ch)['start_ch_zone'] = self.veh_table.values(ch)['zone']
+
+                self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
+                self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
+                self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                # the ...tail.value['timer'] must be set to 0 here because at the end of this method,
+                # update_cluster method would be called again
+                self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
+
+                self.net_graph.add_edge(ch, veh_id)
+                self.all_chs.add(ch)
+                self.zone_ch[self.veh_table.values(ch)['zone']].add(ch)
+                self.stand_alone.remove(veh_id)
+                self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                mem_control.add(veh_id)
+                try:
+                    self.stand_alone.remove(ch)
+                    self.zone_stand_alone[self.veh_table.values(ch)['zone']].remove(ch)
+                except KeyError:
+                    pass
+                continue
+
+        # Determining the updating self.veh_tale and self.net_graph
+        for k in near_sa.keys():
+            self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
+
+        self.update_cluster(self.veh_table.ids(), configs, zones)
+
     def eval_cluster(self, configs):
         total_clusters = 0
         n_sav_ch = 0  # number of vehicles that are allways ch or stand-alone (never experiences being a cm)
