@@ -106,7 +106,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
 def mac_address():
     """
     This function is used in the Main.py file
-    :return: this function will return a generated random mac Address for ehicles
+    :return: this function will return a generated random mac Address for vehicles
     """
     mac = [152, 237, 92,
            random.randint(0x00, 0x7f),
@@ -196,6 +196,15 @@ def det_near_ch(veh_id, veh_table, bus_table,
 
 def det_buses_other_ch(bus_id, veh_table, bus_table,
                        zone_buses, zone_chs):
+    """
+
+    :param bus_id:
+    :param veh_table:
+    :param bus_table:
+    :param zone_buses:
+    :param zone_chs:
+    :return: the CHs in transmission range of bus_id
+    """
     all_near_chs = set()
     all_chs = set()
     for zone in bus_table.values(bus_id)['neighbor_zones']:
@@ -284,10 +293,6 @@ def choose_ch(table, veh_table_i,
             min_ef = ef
             nominee = j
     return nominee, min_ef
-
-
-# def det_veh_ch(veh_table, veh_table_i,
-#                area_zones, bus_candidates):
 
 
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_ch, current_time):
@@ -518,6 +523,14 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
 
 
 def det_dist(id1, table1, id2, table2):
+    """
+
+    :param id1: vehicle 1
+    :param table1: self.veh_table or self.bus_table
+    :param id2: vehicle 2
+    :param table2: self.veh_table or self.bus_table
+    :return: distance between two vehicles or buses
+    """
     dist = hs.haversine((table1.values(id1)["lat"],
                          table1.values(id1)["long"]),
                         (table2.values(id2)['lat'],
@@ -528,6 +541,13 @@ def det_dist(id1, table1, id2, table2):
 
 
 def det_pot_ch(veh_id, near_sa, n_near_sa):
+    """
+
+    :param veh_id:
+    :param near_sa: dictionary shows the SAVs and their nearby SAVs
+    :param n_near_sa: number of stand_alone vehicles to veh_id
+    :return: potential SAVs nearby veh_id that can be CH
+    """
     pot_ch = veh_id
     for mem in near_sa[veh_id]:
         if mem in near_sa.keys():
