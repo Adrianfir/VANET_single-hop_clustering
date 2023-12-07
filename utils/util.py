@@ -458,7 +458,10 @@ def det_befit(veh_table, sumo_edges,
     return t_leave + sai_v + degree_n
 
 
-def det_connect_factor():
+def det_con_factor(veh_table, sumo_edges,
+                   sumo_nodes, veh_id, config):
+
+
 
 
 
@@ -649,10 +652,10 @@ def update_sai(veh_table, veh_id):
     if len(veh_table.values(veh_id)['other_vehs']) == 0:
         return veh_table.values(veh_id)['sai']
     for i in veh_table.values(veh_id)['other_vehs']:
-        neighbors_speed.append(veh_table.values(i))
-        dif_speed.append(veh_table.values(veh_id) - veh_table.values(i))
+        neighbors_speed.append(veh_table.values(i)['speed'])
+        dif_speed.append(abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']))
     delta_s = np.std(dif_speed)
-    if abs(veh_table.values(veh_id) - np.average(neighbors_speed)) <= delta_s:
+    if abs(veh_table.values(veh_id)['speed'] - np.average(neighbors_speed)['speed']) <= delta_s:
         return veh_table.values(veh_id)['sai'] + 0.01
     elif abs(veh_table.values(veh_id) - np.average(neighbors_speed)) > delta_s:
         return veh_table.values(veh_id)['sai'] - 0.01
@@ -671,10 +674,29 @@ def update_degree_n(veh_table, veh_id):
     if len(veh_table.values(veh_id)['other_vehs']) == 0:
         return 0
     for i in veh_table.values(veh_id)['other_vehs']:
-        neighbors_speed.append(veh_table.values(i))
-        dif_speed.append(veh_table.values(veh_id) - veh_table.values(i))
+        neighbors_speed.append(veh_table.values(i)['speed'])
+        dif_speed.append(abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']))
     delta_s = np.std(dif_speed)
     for k in neighbors_speed:
         if abs(k - np.average(neighbors_speed)) <= delta_s:
             degree_n += 1
     return degree_n
+
+
+def border_speed_count(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: This function returns BS_count for each vehicle to make comparison
+    """
+    if len(veh_table.values(veh_id)['other_vehs']) == 0:
+        return 0
+    bs_count = 0
+    for i in veh_table.values(veh_id)['other_vehs']:
+        if veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed'] <= 5:
+            bs_count += 1
+    return bs_count
+
+
+

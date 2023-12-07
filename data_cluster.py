@@ -536,7 +536,7 @@ class DataTable:
         n_near_sa = dict()
         pot_ch = dict()
         befit = dict()              # BeFit factor for making comparison
-        con_fac = dict()            # Connectivity Factor for making comparison
+        con_factor = dict()            # Connectivity Factor for making comparison
         for veh_id in self.stand_alone:
             if self.veh_table.values(veh_id)['cluster_head'] is True:
                 print('2: ', veh_id)
@@ -548,7 +548,8 @@ class DataTable:
         for veh_id in self.stand_alone:
             befit[veh_id] = util.det_befit(veh_id, self.veh_table, self.stand_alone,
                                            self.zone_stand_alone, configs)
-
+            con_factor[veh_id] = util.det_con_factor(veh_id, self.veh_table, self.stand_alone,
+                                                     self.zone_stand_alone, configs)
         unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
         mem_control = set()   # after a vehicle become a member, add it to this and at the beginning of the
