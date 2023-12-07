@@ -535,8 +535,9 @@ class DataTable:
         near_sa = dict()
         n_near_sa = dict()
         pot_ch = dict()
-        befit = dict()              # BeFit factor for making comparison
+        befit_factor = dict()              # BeFit factor for making comparison
         con_factor = dict()            # Connectivity Factor for making comparison
+        sf_factor = dict()             # Stability Factor for making comparison
         for veh_id in self.stand_alone:
             if self.veh_table.values(veh_id)['cluster_head'] is True:
                 print('2: ', veh_id)
@@ -546,9 +547,10 @@ class DataTable:
             n_near_sa[veh_id] = len(near_sa[veh_id])
 
         for veh_id in self.stand_alone:
-            befit[veh_id] = util.det_befit(veh_id, self.veh_table, self.stand_alone,
-                                           self.zone_stand_alone, configs)
+            befit_factor[veh_id] = util.det_befit(veh_id, self.veh_table, self.stand_alone,
+                                                  self.zone_stand_alone, configs)
             con_factor[veh_id] = util.det_con_factor(veh_id, self.veh_table)
+            sf_factor[veh_id] = (0.5 * befit_factor[veh_id]) + (0.5 * con_factor[veh_id])
 
         unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
