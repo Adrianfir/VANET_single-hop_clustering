@@ -3,9 +3,9 @@ This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
-           'update_bus_table', 'update_veh_table', 'det_befit', 'save_img', 'update_sa_net_graph',
-           'det_near_sa', 'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow', 'sumo_net_info']
+           'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch', 'update_bus_table',
+           'update_veh_table', 'det_befit', 'save_img', 'update_sa_net_graph', 'det_near_sa',
+           'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow', 'sumo_net_info', 'update_sai']
 
 import numpy as np
 import random
@@ -72,6 +72,8 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 lat=float(veh.getAttribute('y')),
                 angle=float(veh.getAttribute('angle')),
                 speed=float(veh.getAttribute('speed')) + 0.01,
+                sai=1,  # this feature is added for BeFit factor to make comparison
+                degree_n=0,  # this is the neighborhood degree for Befit factor to make comparison
                 pos=float(veh.getAttribute('pos')),
                 lane={'id': veh.getAttribute('lane'), 'timer': 0},
                 zone=zone_id,
@@ -369,6 +371,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         else:
             veh_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
             veh_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
+        veh_table.values(veh.getAttribute('id'))['sai'] = update_sai(veh_table, veh.getAttribute('id'))
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
@@ -427,22 +430,22 @@ def det_near_sa(veh_id, veh_table,
     return result
 
 
-def det_befit(veh_id, veh_table, stand_alone,
-              zone_stand_alone, config):
-    """
-
-    :param veh_id:
-    :param veh_table:
-    :param stand_alone:
-    :param zone_stand_alone:
-    :param config:
-    :return:
-    """
+def det_befit(veh_table, sumo_edges,
+              sumo_nodes, veh_id):
     # T_leave
-    # if ":" in
-    l = None  # Length of the road segment
-    d = None  # Distance covered by a vehicle on that segment
-    t = None  # Time of the vehicle cover d
+    road = veh_table.values(veh_id)['lane']['id']
+    if ":" in road:
+        return 0.0001
+
+    t = veh_table.values(veh_id)['lane']['timer']  # amount of time to cover distance "d"
+    l = sumo_edges[road]['length']  # Length of the road segment
+    d = hs.haversine((veh_table.values(veh_id)['lat'], veh_table.values(veh_id)['long']),
+                     (sumo_nodes[sumo_edges[road]['from']]['lat'], sumo_nodes[sumo_edges[road]['from']]['long']),
+                     unit=hs.Unit.METERS)  # Distance covered by a vehicle on that segment
+    t_leave = ((l - d) / d) * t
+
+    # Sai_v
+    sai_v = veh_table.values(veh_id)['sai']
 
 
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):
@@ -613,6 +616,23 @@ def sumo_net_info(sumo_edge, sumo_node):
 
     for node in sumo_node.documentElement.getElementsByTagName('node'):
         # Note that in the osm_bbox.osm.xml file, the attributes are "lat" and "lon" and is not "long"
-        node_info[node.getAttribute('id')] = {'lat': node.getAttribute('lat'), 'long': node.getAttribute('lon')}
+        node_info[node.getAttribute('id')] = {'lat': float(node.getAttribute('lat')),
+                                              'long': float(node.getAttribute('lon'))
+                                              }
 
     return edge_info, node_info
+
+
+def update_sai(veh_table, veh_id):
+    neighbors_speed = []
+    dif_speed = []
+    if len(veh_table.values(veh_id)['other_vehs']) == 0:
+        return veh_table.values(veh_id)['sai']
+    for i in veh_table.values(veh_id)['other_vehs']:
+        neighbors_speed.append(veh_table.values(i))
+        dif_speed.append(veh_table.values(veh_id) - veh_table.values(i))
+    delta_s = np.std(dif_speed)
+    if abs(veh_table.values(veh_id) - np.average(neighbors_speed)) <= delta_s:
+        return veh_table.values(veh_id)['sai'] + 0.01
+    elif abs(veh_table.values(veh_id) - np.average(neighbors_speed)) > delta_s:
+        return veh_table.values(veh_id)['sai'] - 0.01

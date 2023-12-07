@@ -425,16 +425,14 @@ class DataTable:
 
         # Here the other_vehs must be updated again. Otherwise, the graph would face with some conflicts
         for veh_id in veh_ids:
-            if (self.veh_table.values(veh_id)['cluster_head'] is True) and (veh_id in self.stand_alone):
-                print("1: ", veh_id)
             if self.veh_table.values(veh_id)['primary_ch'] is not None:
                 ch = self.veh_table.values(veh_id)['primary_ch']
                 if 'bus' in ch:
                     table = self.bus_table
                 else:
                     table = self.veh_table
-                self.veh_table.values(veh_id)['other_vehs'] = self.veh_table.values(veh_id)['other_vehs'] - \
-                                                              table.values(ch)['cluster_members']
+                self.veh_table.values(veh_id)['other_vehs'] = (self.veh_table.values(veh_id)['other_vehs'] -
+                                                               table.values(ch)['cluster_members'])
                 for other_veh in self.veh_table.values(veh_id)['other_vehs']:
                     self.net_graph.add_edge(other_veh, veh_id)
 
