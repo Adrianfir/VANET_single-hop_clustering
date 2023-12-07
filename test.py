@@ -1,10 +1,9 @@
 import xml.dom.minidom
-path = '/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill/osm.net.xml'
+path = '/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill/osm_bbox.osm.xml'
+node_info = dict()
 file = xml.dom.minidom.parse(path)
-target_dict = dict()
-for edge in file.documentElement.getElementsByTagName('edge'):
-    target_dict[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
-    target_dict[edge.getAttribute('id')]['length'] = edge.getElementsByTagName('lane')[0].getAttribute('length')
+for node in file.documentElement.getElementsByTagName('node'):
+    node_info[node.getAttribute('id')] = {'lat': node.getAttribute('lat'), 'long': node.getAttribute('lon')}
 
 
-print(target_dict)
+print(node_info)

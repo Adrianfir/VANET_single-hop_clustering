@@ -440,9 +440,11 @@ def det_befit(veh_id, veh_table, stand_alone,
     """
     # T_leave
     # if ":" in
-    l = None            # Length of the road segment
-    d = None            # Distance covered by a vehicle on that segment
-    t = None            # Time of the vehicle cover d
+    l = None  # Length of the road segment
+    d = None  # Distance covered by a vehicle on that segment
+    t = None  # Time of the vehicle cover d
+
+
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     """
     this function is used to determine chs among the stand-alones to k which is ch too
@@ -595,13 +597,22 @@ def make_slideshow(image_folder, output_path, fps):
 
 
 def sumo_net_info(sumo_edge, sumo_node):
+    """
+    In this function, the information related to the sumo and its net are going to be put inside two dictionaries to
+    clarify and use them for creating the papers we are going to make comparison with them
+    :param sumo_edge: xml.dom.minidom.parse(sumo_edge_path) which is related to roads segments info
+    :param sumo_node: xml.dom.minidom.parse(sumo_node_path) which is related to nodes info
+    :return: edge_info and node_info
+    """
     edge_info = dict()
     node_info = dict()
     for edge in sumo_edge.documentElement.getElementsByTagName('edge'):
+        # just "from" is enough to define the T_leave
         edge_info[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
         edge_info[edge.getAttribute('id')]['length'] = edge.getElementsByTagName('lane')[0].getAttribute('length')
 
     for node in sumo_node.documentElement.getElementsByTagName('node'):
-        node_info[node.getAttribute('id')] = {'lat': node.getAttribute('lat'), 'long':node.getAttribute('long')}
+        # Note that in the osm_bbox.osm.xml file, the attributes are "lat" and "lon" and is not "long"
+        node_info[node.getAttribute('id')] = {'lat': node.getAttribute('lat'), 'long': node.getAttribute('lon')}
 
     return edge_info, node_info
