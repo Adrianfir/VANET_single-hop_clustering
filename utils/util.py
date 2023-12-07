@@ -596,8 +596,12 @@ def make_slideshow(image_folder, output_path, fps):
 
 def sumo_net_info(sumo_edge, sumo_node):
     edge_info = dict()
+    node_info = dict()
     for edge in sumo_edge.documentElement.getElementsByTagName('edge'):
         edge_info[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
         edge_info[edge.getAttribute('id')]['length'] = edge.getElementsByTagName('lane')[0].getAttribute('length')
 
+    for node in sumo_node.documentElement.getElementsByTagName('node'):
+        node_info[node.getAttribute('id')] = {'lat': node.getAttribute('lat'), 'long':node.getAttribute('long')}
 
+    return edge_info, node_info
