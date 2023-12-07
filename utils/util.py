@@ -2,10 +2,10 @@
 This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch', 'update_bus_table',
-           'update_veh_table', 'det_befit', 'save_img', 'update_sa_net_graph', 'det_near_sa',
-           'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow', 'sumo_net_info', 'update_sai']
+__all__ = ['choose_ch', 'det_befit', 'det_buses_other_ch', 'det_connect_factor', 'det_dist', 'det_near_ch', 'det_near_sa', 'det_pot_ch',
+           'image_num', 'initiate_new_bus', 'initiate_new_veh', 'mac_address', 'make_slideshow', 'middle_zone',
+           'presence', 'save_img', 'sumo_net_info', 'update_bus_table', 'update_degree_n', 'update_sa_net_graph',
+           'update_sai', 'update_veh_table']
 
 import numpy as np
 import random
@@ -431,21 +431,35 @@ def det_near_sa(veh_id, veh_table,
 
 
 def det_befit(veh_table, sumo_edges,
-              sumo_nodes, veh_id):
+              sumo_nodes, veh_id, config):
     # T_leave
     road = veh_table.values(veh_id)['lane']['id']
     if ":" in road:
-        return 0.0001
+        return 0.0001           # because according to data, such edges are too short to be considered
 
     t = veh_table.values(veh_id)['lane']['timer']  # amount of time to cover distance "d"
     l = sumo_edges[road]['length']  # Length of the road segment
     d = hs.haversine((veh_table.values(veh_id)['lat'], veh_table.values(veh_id)['long']),
                      (sumo_nodes[sumo_edges[road]['from']]['lat'], sumo_nodes[sumo_edges[road]['from']]['long']),
                      unit=hs.Unit.METERS)  # Distance covered by a vehicle on that segment
-    t_leave = ((l - d) / d) * t
+    t_leave = (((l - d) / d) * t) / (
+            l / veh_table.values('veh_id)')['speed'])  # l/veh_table.values('veh_id)')['speed'] is for normalization
 
     # Sai_v
-    sai_v = veh_table.values(veh_id)['sai']
+    sai_v = veh_table.values(veh_id)['sai'] / (
+                1 + (config.iter * 0.01))              # (1 + (config.iter*0.01)) is for normalization
+
+    # Degree_n
+    if len(veh_table.values('veh_id')['other_vehs']) > 0:
+        degree_n = update_degree_n(veh_table, veh_id)/len(veh_table.values)
+    else:
+        degree_n = 0
+
+    return t_leave + sai_v + degree_n
+
+
+def det_connect_factor():
+
 
 
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):
@@ -624,6 +638,12 @@ def sumo_net_info(sumo_edge, sumo_node):
 
 
 def update_sai(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: This function returns updated sai_v for each vehicle
+    """
     neighbors_speed = []
     dif_speed = []
     if len(veh_table.values(veh_id)['other_vehs']) == 0:
@@ -636,3 +656,25 @@ def update_sai(veh_table, veh_id):
         return veh_table.values(veh_id)['sai'] + 0.01
     elif abs(veh_table.values(veh_id) - np.average(neighbors_speed)) > delta_s:
         return veh_table.values(veh_id)['sai'] - 0.01
+
+
+def update_degree_n(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: This function returns updated sai_v for each vehicle
+    """
+    neighbors_speed = []
+    dif_speed = []
+    degree_n = 0
+    if len(veh_table.values(veh_id)['other_vehs']) == 0:
+        return 0
+    for i in veh_table.values(veh_id)['other_vehs']:
+        neighbors_speed.append(veh_table.values(i))
+        dif_speed.append(veh_table.values(veh_id) - veh_table.values(i))
+    delta_s = np.std(dif_speed)
+    for k in neighbors_speed:
+        if abs(k - np.average(neighbors_speed)) <= delta_s:
+            degree_n += 1
+    return degree_n
