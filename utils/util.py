@@ -2,10 +2,10 @@
 This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['choose_ch', 'det_befit', 'det_buses_other_ch', 'det_connect_factor', 'det_dist', 'det_near_ch', 'det_near_sa', 'det_pot_ch',
-           'image_num', 'initiate_new_bus', 'initiate_new_veh', 'mac_address', 'make_slideshow', 'middle_zone',
-           'presence', 'save_img', 'sumo_net_info', 'update_bus_table', 'update_degree_n', 'update_sa_net_graph',
-           'update_sai', 'update_veh_table']
+__all__ = ['choose_ch', 'det_befit', 'det_border_speed_count', 'det_buses_other_ch', 'det_con_factor', 'det_dist',
+           'det_linkage_fac', 'det_near_ch', 'det_near_sa', 'det_pot_ch', 'image_num', 'initiate_new_bus',
+           'initiate_new_veh', 'mac_address', 'make_slideshow', 'middle_zone', 'presence', 'save_img', 'sumo_net_info',
+           'update_bus_table', 'update_degree_n', 'update_sa_net_graph', 'update_sai', 'update_veh_table']
 
 import numpy as np
 import random
@@ -432,6 +432,15 @@ def det_near_sa(veh_id, veh_table,
 
 def det_befit(veh_table, sumo_edges,
               sumo_nodes, veh_id, config):
+    """
+
+    :param veh_table: self.veh_table
+    :param sumo_edges: info related to roads in sumo
+    :param sumo_nodes: info related to nodes in sumo
+    :param veh_id: vehicle id
+    :param config: config
+    :return: the BF_v for making comparison
+    """
     # T_leave
     road = veh_table.values(veh_id)['lane']['id']
     if ":" in road:
@@ -458,11 +467,15 @@ def det_befit(veh_table, sumo_edges,
     return t_leave + sai_v + degree_n
 
 
-def det_con_factor(veh_table, sumo_edges,
-                   sumo_nodes, veh_id, config):
+def det_con_factor(veh_table, veh_id):
+    """
 
-
-
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: returns te connectivity factor for making comparison
+    """
+    cf_v = det_border_speed_count(veh_table, veh_id) + det_linkage_fac(veh_table, veh_id)
+    return cf_v
 
 
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):
@@ -683,7 +696,7 @@ def update_degree_n(veh_table, veh_id):
     return degree_n
 
 
-def border_speed_count(veh_table, veh_id):
+def det_border_speed_count(veh_table, veh_id):
     """
 
     :param veh_table: self.veh_table
@@ -694,9 +707,19 @@ def border_speed_count(veh_table, veh_id):
         return 0
     bs_count = 0
     for i in veh_table.values(veh_id)['other_vehs']:
-        if veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed'] <= 5:
+        if abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']) <= 5:
             bs_count += 1
     return bs_count
+
+
+def det_linkage_fac(veh_table, veh_id):
+    d_i = 0
+    d = len(veh_table.values(veh_id)['other_vehs'])
+    for i in veh_table.values(veh_id)['other_vehs']:
+        d_i += len(veh_table.values(i)['other_vehs'])
+    return (0.5 * d) + (0.5 * d_i)
+
+
 
 
 

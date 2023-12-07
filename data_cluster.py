@@ -548,8 +548,8 @@ class DataTable:
         for veh_id in self.stand_alone:
             befit[veh_id] = util.det_befit(veh_id, self.veh_table, self.stand_alone,
                                            self.zone_stand_alone, configs)
-            con_factor[veh_id] = util.det_con_factor(veh_id, self.veh_table, self.stand_alone,
-                                                     self.zone_stand_alone, configs)
+            con_factor[veh_id] = util.det_con_factor(veh_id, self.veh_table)
+
         unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
         mem_control = set()   # after a vehicle become a member, add it to this and at the beginning of the
