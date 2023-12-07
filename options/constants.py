@@ -15,13 +15,13 @@ class Inputs:
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
                          joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
-        net = str(pathlib.Path(__file__).parent.parent.absolute().
-                  joinpath('final_data_Richmondhill', 'osm.net.xml'))
-        bbox = str(pathlib.Path(__file__).parent.parent.absolute().
-                   joinpath('final_data_Richmondhill', 'osm_bbox.osm.xml'))
+        sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
+                             joinpath('final_data_Richmondhill', 'osm.net.xml'))
+        sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
+                             joinpath('final_data_Richmondhill', 'osm_bbox.osm.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
-        sumo_edge = xml.dom.minidom.parse(net)
-        sumo_node = xml.dom.minidom.parse(bbox)
+        sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
+        sumo_node = xml.dom.minidom.parse(sumo_node_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
         area = dict(min_lat=43.586568,

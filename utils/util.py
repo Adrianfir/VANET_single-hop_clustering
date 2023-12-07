@@ -5,7 +5,7 @@ __author__: str = "Pouya 'Adrian' Firouzmakan"
 __all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
            'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
            'update_bus_table', 'update_veh_table', 'det_befit', 'save_img', 'update_sa_net_graph',
-           'det_near_sa', 'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow']
+           'det_near_sa', 'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow', 'sumo_net_info']
 
 import numpy as np
 import random
@@ -19,7 +19,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import os
 import cv2
-import re
+import xml.etree.ElementTree as ET
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -438,8 +438,11 @@ def det_befit(veh_id, veh_table, stand_alone,
     :param config:
     :return:
     """
-
-
+    # T_leave
+    # if ":" in
+    l = None            # Length of the road segment
+    d = None            # Distance covered by a vehicle on that segment
+    t = None            # Time of the vehicle cover d
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     """
     this function is used to determine chs among the stand-alones to k which is ch too
@@ -449,7 +452,6 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     :param net_graph:
     :return: chs among the stand-alones to k which is ch too
     """
-    result = set()
     for j in near_sa[k]:
         if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] > 0:
             dist = det_dist(k, veh_table, j, veh_table)
@@ -590,3 +592,12 @@ def make_slideshow(image_folder, output_path, fps):
     out.release()
 
     print("Video creation complete.")
+
+
+def sumo_net_info(sumo_edge, sumo_node):
+    edge_info = dict()
+    for edge in sumo_edge.documentElement.getElementsByTagName('edge'):
+        edge_info[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
+        edge_info[edge.getAttribute('id')]['length'] = edge.getElementsByTagName('lane')[0].getAttribute('length')
+
+

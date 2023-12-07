@@ -57,6 +57,7 @@ class DataTable:
         self.understudied_area = zones.understudied_area()
         self.init_count = 0  # this counter is just for defining the self.net_graph for the very first time
         self.edge_color = ''
+        self.sumo_edge = util.edge_to_dict(config.sumo_edge)
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             self.init_count += 1
