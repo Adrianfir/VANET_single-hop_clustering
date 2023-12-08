@@ -466,11 +466,11 @@ def det_befit(veh_table, sumo_edges,
     road = veh_table.values(veh_id)['lane']['id']
     if ":" in road:
         return 0.0001           # because according to data, such edges are too short to be considered
-    from_node = ''
     t = veh_table.values(veh_id)['lane']['timer']  # amount of time to cover distance "d"
     l = sumo_edges[road]['length']  # Length of the road segment
-    if 'cluster' in sumo_edges[road]['from']:  # some nodes are like "cluster_709104099_9493129504" -> 709104099 is good
-        match = re.search(r'\d+', sumo_edges[road]['from'])
+    from_node = sumo_edges[road]['from']
+    if 'cluster' in from_node:  # some nodes are like "cluster_709104099_9493129504" -> 709104099 is good
+        match = re.search(r'\d+', from_node)
 
         if match:
             from_node = match.group()
@@ -485,8 +485,8 @@ def det_befit(veh_table, sumo_edges,
                 1 + (config.iter * 0.01))              # (1 + (config.iter*0.01)) is for normalization
 
     # Degree_n
-    if len(veh_table.values('veh_id')['other_vehs']) > 0:
-        degree_n = update_degree_n(veh_table, veh_id)/len(veh_table.values)
+    if len(veh_table.values(veh_id)['other_vehs']) > 0:
+        degree_n = update_degree_n(veh_table, veh_id)/len(veh_table.values[veh_id]['other_vehs'])
     else:
         degree_n = 0
 
