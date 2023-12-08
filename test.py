@@ -1,9 +1,7 @@
-import xml.dom.minidom
-path = '/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill/osm_bbox.osm.xml'
-node_info = dict()
-file = xml.dom.minidom.parse(path)
-for node in file.documentElement.getElementsByTagName('node'):
-    node_info[node.getAttribute('id')] = {'lat': node.getAttribute('lat'), 'long': node.getAttribute('lon')}
+import re
+if ":" not in '26320726#2_0':
+    match = re.search(r'-?\d+#\d', '26320726#2_0')
 
-
-print(node_info)
+    if match:
+        lane_id = match.group()
+print(lane_id)

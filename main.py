@@ -11,6 +11,7 @@ from data_cluster import DataTable
 from configs.config import Configs
 from zonex import ZoneID
 import utils.util as util
+import re
 
 if __name__ == "__main__":
     configs = Configs().config
@@ -23,7 +24,7 @@ if __name__ == "__main__":
         a.update(configs, area_zones)
         print(a.time)
         a.update_cluster(a.veh_table.ids(), configs, area_zones)
-        a.stand_alones_cluster(configs, area_zones)
+        a.dsca_clustering(configs, area_zones)
         # a.show_graph(configs)
         # a.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/VANET/saved_imgs/Graph' + str(i))
     end_time = time.time()

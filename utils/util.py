@@ -2,10 +2,13 @@
 This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['choose_ch', 'det_befit', 'det_border_speed_count', 'det_buses_other_ch', 'det_con_factor', 'det_dist',
-           'det_linkage_fac', 'det_near_ch', 'det_near_sa', 'det_pot_ch', 'image_num', 'initiate_new_bus',
-           'initiate_new_veh', 'mac_address', 'make_slideshow', 'middle_zone', 'presence', 'save_img', 'sumo_net_info',
-           'update_bus_table', 'update_degree_n', 'update_sa_net_graph', 'update_sai', 'update_veh_table']
+__all__ = [
+           'choose_ch', 'det_befit', 'det_border_speed_count', 'det_buses_other_ch', 'det_con_factor', 'det_dist',
+           'det_linkage_fac', 'det_near_ch', 'det_near_sa', 'det_pot_ch', 'det_pot_ch_dsca', 'image_num',
+           'initiate_new_bus', 'initiate_new_veh', 'mac_address', 'make_slideshow', 'middle_zone', 'presence',
+           'save_img', 'sumo_net_info', 'update_bus_table', 'update_degree_n', 'update_sa_net_graph', 'update_sai',
+           'update_veh_table'
+           ]
 
 import numpy as np
 import random
@@ -19,7 +22,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import os
 import cv2
-import xml.etree.ElementTree as ET
+import re
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -68,6 +71,13 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
     :param understudied_area:the un_padded area
     :return:a dictionary for initiating the new vehicle coming to the area
     """
+    lane_id = ''
+    if ":" not in veh.getAttribute('lane'):
+        match = re.search(r'-?\d+#\d', veh.getAttribute('lane'))
+
+        if match:
+            lane_id = match.group()
+
     return dict(long=float(veh.getAttribute('x')),
                 lat=float(veh.getAttribute('y')),
                 angle=float(veh.getAttribute('angle')),
@@ -75,7 +85,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 sai=1,  # this feature is added for BeFit factor to make comparison
                 degree_n=0,  # this is the neighborhood degree for Befit factor to make comparison
                 pos=float(veh.getAttribute('pos')),
-                lane={'id': veh.getAttribute('lane'), 'timer': 0},
+                lane={'id': lane_id, 'timer': 0},
                 zone=zone_id,
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
@@ -374,7 +384,13 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         if veh_table.values(veh.getAttribute('id'))['lane']['id'] == veh.getAttribute('lane'):
             veh_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
         else:
-            veh_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
+            lane_id = ''
+            if ":" not in veh.getAttribute('lane'):
+                match = re.search(r'-?\d+#\d', veh.getAttribute('lane'))
+
+                if match:
+                    lane_id = match.group()
+            veh_table.values(veh.getAttribute('id'))['lane']['id'] = lane_id
             veh_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
         veh_table.values(veh.getAttribute('id'))['sai'] = update_sai(veh_table, veh.getAttribute('id'))
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
@@ -448,6 +464,7 @@ def det_befit(veh_table, sumo_edges,
     """
     # T_leave
     road = veh_table.values(veh_id)['lane']['id']
+    print(road)
     if ":" in road:
         return 0.0001           # because according to data, such edges are too short to be considered
 
@@ -560,6 +577,26 @@ def det_pot_ch(veh_id, near_sa, n_near_sa):
     return pot_ch
 
 
+def det_pot_ch_dsca(veh_id, near_sa, n_near_sa, sf_factor):
+    """
+
+    :param veh_id:
+    :param near_sa: dictionary shows the SAVs and their nearby SAVs
+    :param n_near_sa: number of stand_alone vehicles to veh_id
+    :return: potential SAVs nearby veh_id that can be CH
+    """
+    pot_ch = veh_id
+    for mem in near_sa[veh_id]:
+        if mem in near_sa.keys():
+            if sf_factor[mem] > sf_factor[pot_ch]:
+                pot_ch = mem
+            else:
+                continue
+        else:
+            continue
+    return pot_ch
+
+
 def save_img(m, zoom_out_value, name):
     """
     :param name: name of the image
@@ -661,15 +698,18 @@ def sumo_net_info(sumo_edge, sumo_node):
     node_info = dict()
     for edge in sumo_edge.documentElement.getElementsByTagName('edge'):
         # just "from" is enough to define the T_leave
-        edge_info[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
-        edge_info[edge.getAttribute('id')]['length'] = edge.getElementsByTagName('lane')[0].getAttribute('length')
+        if ':' in edge.getAttribute('id'):
+            edge_info[edge.getAttribute('id')] = {'from': None}
+        else:
+            edge_info[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
+            edge_info[edge.getAttribute('id')]['length'] = float(edge.getElementsByTagName('lane')[0].
+                                                                 getAttribute('length'))
 
     for node in sumo_node.documentElement.getElementsByTagName('node'):
         # Note that in the osm_bbox.osm.xml file, the attributes are "lat" and "lon" and is not "long"
         node_info[node.getAttribute('id')] = {'lat': float(node.getAttribute('lat')),
                                               'long': float(node.getAttribute('lon'))
                                               }
-
     return edge_info, node_info
 
 

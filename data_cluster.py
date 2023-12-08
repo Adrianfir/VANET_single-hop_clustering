@@ -539,18 +539,21 @@ class DataTable:
         con_factor = dict()            # Connectivity Factor for making comparison
         sf_factor = dict()             # Stability Factor for making comparison
         for veh_id in self.stand_alone:
-            if self.veh_table.values(veh_id)['cluster_head'] is True:
-                print('2: ', veh_id)
             near_sa[veh_id] = util.det_near_sa(veh_id, self.veh_table,
                                                self.stand_alone, self.zone_stand_alone
                                                )
             n_near_sa[veh_id] = len(near_sa[veh_id])
 
         for veh_id in self.stand_alone:
-            befit_factor[veh_id] = util.det_befit(veh_id, self.veh_table, self.stand_alone,
-                                                  self.zone_stand_alone, configs)
+            befit_factor[veh_id] = util.det_befit(self.veh_table, self.sumo_edges,
+                                                  self.sumo_nodes, veh_id, configs)
             con_factor[veh_id] = util.det_con_factor(veh_id, self.veh_table)
             sf_factor[veh_id] = (0.5 * befit_factor[veh_id]) + (0.5 * con_factor[veh_id])
+        for veh_id in near_sa.keys():
+            if n_near_sa[veh_id] > 0:
+                pot_ch[veh_id] = util.det_pot_ch_dsca(veh_id, near_sa, n_near_sa, sf_factor)
+            else:
+                continue
 
         unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
@@ -586,7 +589,7 @@ class DataTable:
                     selected_chs.add(veh_id_2)
                     continue
 
-            if len(unique_pot_ch.intersection(near_sa[veh_id])- mem_control) > 0:
+            if len(unique_pot_ch.intersection(near_sa[veh_id]) - mem_control) > 0:
                 if ((len(unique_pot_ch.intersection(near_sa[veh_id])) == 1) and
                         (self.veh_table.values(list(near_sa[veh_id])[0])['primary_ch'] is None)):
                     ch = list(near_sa[veh_id])[0]
