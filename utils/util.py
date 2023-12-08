@@ -464,17 +464,21 @@ def det_befit(veh_table, sumo_edges,
     """
     # T_leave
     road = veh_table.values(veh_id)['lane']['id']
-    print(road)
     if ":" in road:
         return 0.0001           # because according to data, such edges are too short to be considered
-
+    from_node = ''
     t = veh_table.values(veh_id)['lane']['timer']  # amount of time to cover distance "d"
     l = sumo_edges[road]['length']  # Length of the road segment
+    if 'cluster' in sumo_edges[road]['from']:  # some nodes are like "cluster_709104099_9493129504" -> 709104099 is good
+        match = re.search(r'\d+', sumo_edges[road]['from'])
+
+        if match:
+            from_node = match.group()
     d = hs.haversine((veh_table.values(veh_id)['lat'], veh_table.values(veh_id)['long']),
-                     (sumo_nodes[sumo_edges[road]['from']]['lat'], sumo_nodes[sumo_edges[road]['from']]['long']),
+                     (sumo_nodes[from_node]['lat'], sumo_nodes[from_node]['long']),
                      unit=hs.Unit.METERS)  # Distance covered by a vehicle on that segment
     t_leave = (((l - d) / d) * t) / (
-            l / veh_table.values('veh_id)')['speed'])  # l/veh_table.values('veh_id)')['speed'] is for normalization
+            l / veh_table.values(veh_id)['speed'])  # l/veh_table.values('veh_id)')['speed'] is for normalization
 
     # Sai_v
     sai_v = veh_table.values(veh_id)['sai'] / (
