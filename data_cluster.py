@@ -545,9 +545,9 @@ class DataTable:
             n_near_sa[veh_id] = len(near_sa[veh_id])
 
         for veh_id in self.stand_alone:
-            befit_factor[veh_id] = util.det_befit(self.veh_table, self.sumo_edges,
-                                                  self.sumo_nodes, veh_id, configs)
-            con_factor[veh_id] = util.det_con_factor(veh_id, self.veh_table)
+            befit_factor[veh_id] = util.det_befit(self.veh_table, veh_id,
+                                                  self.sumo_edges, self.sumo_nodes, configs)
+            con_factor[veh_id] = util.det_con_factor(self.veh_table, veh_id)
             sf_factor[veh_id] = (0.5 * befit_factor[veh_id]) + (0.5 * con_factor[veh_id])
         for veh_id in near_sa.keys():
             if n_near_sa[veh_id] > 0:

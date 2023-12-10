@@ -71,12 +71,12 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
     :param understudied_area:the un_padded area
     :return:a dictionary for initiating the new vehicle coming to the area
     """
-    lane_id = ''
-    if ":" not in veh.getAttribute('lane'):
-        match = re.search(r'-?\d+#\d', veh.getAttribute('lane'))
-
+    lane_id = veh.getAttribute('lane')
+    if ":" not in lane_id:
+        pattern = re.compile(f"^(.*?){re.escape('_')}")
+        match = pattern.search(lane_id)
         if match:
-            lane_id = match.group()
+            lane_id = match.group(1)
 
     return dict(long=float(veh.getAttribute('x')),
                 lat=float(veh.getAttribute('y')),
@@ -384,12 +384,12 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         if veh_table.values(veh.getAttribute('id'))['lane']['id'] == veh.getAttribute('lane'):
             veh_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
         else:
-            lane_id = ''
-            if ":" not in veh.getAttribute('lane'):
-                match = re.search(r'-?\d+#\d', veh.getAttribute('lane'))
-
+            lane_id = veh.getAttribute('lane')
+            if ":" not in lane_id:
+                pattern = re.compile(f"^(.*?){re.escape('_')}")
+                match = pattern.search(lane_id)
                 if match:
-                    lane_id = match.group()
+                    lane_id = match.group(1)
             veh_table.values(veh.getAttribute('id'))['lane']['id'] = lane_id
             veh_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
         veh_table.values(veh.getAttribute('id'))['sai'] = update_sai(veh_table, veh.getAttribute('id'))
@@ -451,8 +451,8 @@ def det_near_sa(veh_id, veh_table,
     return result
 
 
-def det_befit(veh_table, sumo_edges,
-              sumo_nodes, veh_id, config):
+def det_befit(veh_table, veh_id,
+              sumo_edges, sumo_nodes, config):
     """
 
     :param veh_table: self.veh_table
@@ -464,7 +464,7 @@ def det_befit(veh_table, sumo_edges,
     """
     # T_leave
     road = veh_table.values(veh_id)['lane']['id']
-    if ":" in road:
+    if (":" in road) or ('cluster' in road):
         return 0.0001           # because according to data, such edges are too short to be considered
     t = veh_table.values(veh_id)['lane']['timer']  # amount of time to cover distance "d"
     l = sumo_edges[road]['length']  # Length of the road segment
@@ -486,7 +486,7 @@ def det_befit(veh_table, sumo_edges,
 
     # Degree_n
     if len(veh_table.values(veh_id)['other_vehs']) > 0:
-        degree_n = update_degree_n(veh_table, veh_id)/len(veh_table.values[veh_id]['other_vehs'])
+        degree_n = update_degree_n(veh_table, veh_id)/len(veh_table.values(veh_id)['other_vehs'])
     else:
         degree_n = 0
 
