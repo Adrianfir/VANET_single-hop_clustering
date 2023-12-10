@@ -595,8 +595,10 @@ class DataTable:
                     ch = list(near_sa[veh_id])[0]
                     ef = 0
                 else:
-                    ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
-                                            unique_pot_ch.intersection(near_sa[veh_id]) - mem_control, configs)
+                    ch = list(unique_pot_ch.intersection(near_sa[veh_id]))[0]
+                    for ch_i in unique_pot_ch.intersection(near_sa[veh_id]):
+                        if sf_factor[ch_i] > sf_factor[ch]:
+                            ch = ch_i
                 selected_chs.add(ch)
 
                 self.veh_table.values(ch)['cluster_head'] = True

@@ -732,9 +732,9 @@ def update_sai(veh_table, veh_id):
         neighbors_speed.append(veh_table.values(i)['speed'])
         dif_speed.append(abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']))
     delta_s = np.std(dif_speed)
-    if abs(veh_table.values(veh_id)['speed'] - np.average(neighbors_speed)['speed']) <= delta_s:
+    if abs(veh_table.values(veh_id)['speed'] - np.average(neighbors_speed)) <= delta_s:
         return veh_table.values(veh_id)['sai'] + 0.01
-    elif abs(veh_table.values(veh_id) - np.average(neighbors_speed)) > delta_s:
+    elif abs(veh_table.values(veh_id)['speed'] - np.average(neighbors_speed)) > delta_s:
         return veh_table.values(veh_id)['sai'] - 0.01
 
 
