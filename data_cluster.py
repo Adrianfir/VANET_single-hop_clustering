@@ -123,9 +123,9 @@ class DataTable:
             else:
                 veh_ids.add(veh.getAttribute('id'))
                 self.veh_table, self.zone_vehicles, self.zone_ch, self.stand_alone, \
-                self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
-                                                              zones, config, self.zone_vehicles, self.zone_ch,
-                                                              self.stand_alone, self.zone_stand_alone, self.time)
+                    self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
+                                                                  zones, config, self.zone_vehicles, self.zone_ch,
+                                                                  self.stand_alone, self.zone_stand_alone, self.time)
                 if self.veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
                     self.all_chs.add(veh.getAttribute('id'))
             # add the vertex to the graph
@@ -212,15 +212,26 @@ class DataTable:
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the gate_chs
         """
-        for veh_id in veh_ids:
+        #################################### calculating BeFit factor
+        befit_factor = dict()
+        con_factor = dict()
+        sf_factor = dict()
+        for veh_id in self.veh_table.ids():
+
+            befit_factor[veh_id] = util.det_befit(self.veh_table, veh_id,
+                                                  self.sumo_edges, self.sumo_nodes, config)
+            con_factor[veh_id] = util.det_con_factor(self.veh_table, veh_id)
+            sf_factor[veh_id] = (0.5 * befit_factor[veh_id]) + (0.5 * con_factor[veh_id])
+        ###################################
+        for veh_id in self.veh_table.ids():
             self.veh_table.values(veh_id)['other_chs'] = set()
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_chs'] = set()
             self.veh_table.values(veh_id)['other_vehs'] = set()
-
             # determining the buses and cluster_head in neighbor zones
             bus_candidates, ch_candidates, other_vehs = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                                          self.zone_buses, self.zone_vehicles)
+
             if (len(bus_candidates) == 0) and (len(ch_candidates) == 0) and \
                     (self.veh_table.values(veh_id)['in_area'] is True) and \
                     (self.veh_table.values(veh_id)['primary_ch'] is None) and \
@@ -360,7 +371,7 @@ class DataTable:
 
                     self.veh_table.values(veh_id)['cluster_record'].tail.key = bus_ch
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
-                    self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                    # self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
 
                     self.veh_table.values(veh_id)['counter'] = config.counter
@@ -388,15 +399,17 @@ class DataTable:
                         veh_ch = list(ch_candidates)[0]
                         ef = 0
                     else:
-                        veh_ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
-                                                    zones, ch_candidates, config)  # determine the best from vehicles
+                        veh_ch = list(ch_candidates)[0]
+                        for ch_i in ch_candidates:
+                            if sf_factor[ch_i] > sf_factor[veh_ch]:
+                                veh_ch = ch_i
 
                     self.veh_table.values(veh_id)['primary_ch'] = veh_ch
                     self.veh_table.values(veh_id)['counter'] = config.counter
 
                     self.veh_table.values(veh_id)['cluster_record'].tail.key = veh_ch
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
-                    self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                    # self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                     self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
 
                     ch_candidates.remove(veh_ch)
@@ -456,7 +469,7 @@ class DataTable:
 
         unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
-        mem_control = set()   # after a vehicle become a member, add it to this and at the beginning of the
+        mem_control = set()  # after a vehicle become a member, add it to this and at the beginning of the
         # for-loop, check if veh_id is in it to not do anything new and ruin it
         temp = self.stand_alone.copy()
         for veh_id in temp:
@@ -488,7 +501,7 @@ class DataTable:
                     selected_chs.add(veh_id_2)
                     continue
 
-            if len(unique_pot_ch.intersection(near_sa[veh_id])- mem_control) > 0:
+            if len(unique_pot_ch.intersection(near_sa[veh_id]) - mem_control) > 0:
                 if ((len(unique_pot_ch.intersection(near_sa[veh_id])) == 1) and
                         (self.veh_table.values(list(near_sa[veh_id])[0])['primary_ch'] is None)):
                     ch = list(near_sa[veh_id])[0]
@@ -507,7 +520,7 @@ class DataTable:
 
                 self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
                 self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
-                self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                # self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                 # the ...tail.value['timer'] must be set to 0 here because at the end of this method,
                 # update_cluster method would be called again
                 self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
@@ -535,9 +548,9 @@ class DataTable:
         near_sa = dict()
         n_near_sa = dict()
         pot_ch = dict()
-        befit_factor = dict()              # BeFit factor for making comparison
-        con_factor = dict()            # Connectivity Factor for making comparison
-        sf_factor = dict()             # Stability Factor for making comparison
+        befit_factor = dict()  # BeFit factor for making comparison
+        con_factor = dict()  # Connectivity Factor for making comparison
+        sf_factor = dict()  # Stability Factor for making comparison
         for veh_id in self.stand_alone:
             near_sa[veh_id] = util.det_near_sa(veh_id, self.veh_table,
                                                self.stand_alone, self.zone_stand_alone
@@ -557,7 +570,7 @@ class DataTable:
 
         unique_pot_ch = set(pot_ch.values())
         selected_chs = set()
-        mem_control = set()   # after a vehicle become a member, add it to this and at the beginning of the
+        mem_control = set()  # after a vehicle become a member, add it to this and at the beginning of the
         # for-loop, check if veh_id is in it to not do anything new and ruin it
         temp = self.stand_alone.copy()
         for veh_id in temp:
@@ -610,7 +623,7 @@ class DataTable:
 
                 self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
                 self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
-                self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+                # self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
                 # the ...tail.value['timer'] must be set to 0 here because at the end of this method,
                 # update_cluster method would be called again
                 self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
