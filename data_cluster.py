@@ -212,18 +212,7 @@ class DataTable:
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the gate_chs
         """
-        #################################### calculating BeFit factor
-        befit_factor = dict()
-        con_factor = dict()
-        sf_factor = dict()
-        for veh_id in self.veh_table.ids():
-
-            befit_factor[veh_id] = util.det_befit(self.veh_table, veh_id,
-                                                  self.sumo_edges, self.sumo_nodes, config)
-            con_factor[veh_id] = util.det_con_factor(self.veh_table, veh_id)
-            sf_factor[veh_id] = (0.5 * befit_factor[veh_id]) + (0.5 * con_factor[veh_id])
-        ###################################
-        for veh_id in self.veh_table.ids():
+        for veh_id in veh_ids:
             self.veh_table.values(veh_id)['other_chs'] = set()
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_chs'] = set()
@@ -399,6 +388,16 @@ class DataTable:
                         veh_ch = list(ch_candidates)[0]
                         ef = 0
                     else:
+                        #################################### calculating BeFit factor
+                        befit_factor = dict()
+                        con_factor = dict()
+                        sf_factor = dict()
+                        for jj in ch_candidates:
+                            befit_factor[jj] = util.det_befit(self.veh_table, jj,
+                                                                  self.sumo_edges, self.sumo_nodes, config)
+                            con_factor[jj] = util.det_con_factor(self.veh_table, jj)
+                            sf_factor[jj] = (0.5 * befit_factor[jj]) + (0.5 * con_factor[jj])
+                        ###################################
                         veh_ch = list(ch_candidates)[0]
                         for ch_i in ch_candidates:
                             if sf_factor[ch_i] > sf_factor[veh_ch]:
@@ -505,7 +504,6 @@ class DataTable:
                 if ((len(unique_pot_ch.intersection(near_sa[veh_id])) == 1) and
                         (self.veh_table.values(list(near_sa[veh_id])[0])['primary_ch'] is None)):
                     ch = list(near_sa[veh_id])[0]
-                    ef = 0
                 else:
                     ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id), zones,
                                             unique_pot_ch.intersection(near_sa[veh_id]) - mem_control, configs)
