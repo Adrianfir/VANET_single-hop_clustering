@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
                              joinpath('final_data_Richmondhill', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
@@ -29,14 +29,14 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         alpha = 1
-        trans_range = 600
-        start_time = 1580
+        trans_range = 800
+        start_time = 1570
         iter = 60
         counter = 4
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 10
-        weights = np.array([0.9, 0.1, 0.0])       # direction's angle, speed, distance
+        weights = np.array([0.9, 0, 0.1])       # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
