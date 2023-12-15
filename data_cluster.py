@@ -559,7 +559,7 @@ class DataTable:
             befit_factor[veh_id] = util.det_befit(self.veh_table, veh_id,
                                                   self.sumo_edges, self.sumo_nodes, configs)
             con_factor[veh_id] = util.det_con_factor(self.veh_table, veh_id)
-            sf_factor[veh_id] = (0.5 * befit_factor[veh_id]) + (0.5 * con_factor[veh_id])
+            sf_factor[veh_id] = (1 * befit_factor[veh_id]) + (0 * con_factor[veh_id])
         for veh_id in near_sa.keys():
             if n_near_sa[veh_id] > 0:
                 pot_ch[veh_id] = util.det_pot_ch_dsca(veh_id, near_sa, n_near_sa, sf_factor)
