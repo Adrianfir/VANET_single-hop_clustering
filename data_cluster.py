@@ -488,7 +488,7 @@ class DataTable:
                     selected_chs.add(veh_id_2)
                     continue
 
-            if len(unique_pot_ch.intersection(near_sa[veh_id])- mem_control) > 0:
+            if len(unique_pot_ch.intersection(near_sa[veh_id]) - mem_control) > 0:
                 if ((len(unique_pot_ch.intersection(near_sa[veh_id])) == 1) and
                         (self.veh_table.values(list(near_sa[veh_id])[0])['primary_ch'] is None)):
                     ch = list(near_sa[veh_id])[0]
