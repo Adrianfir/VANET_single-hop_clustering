@@ -303,6 +303,7 @@ class DataTable:
                                                                       union(bus_candidates))
                     self.veh_table.values(veh_id)['other_chs'].update(self.veh_table.values(veh_id)['other_chs'].
                                                                       union(ch_candidates))
+                    assert self.veh_table.values(veh_id)['primary_ch'] in self.veh_table.values(veh_id)['other_chs']
                     self.veh_table.values(veh_id)['other_chs'].remove(self.veh_table.values(veh_id)['primary_ch'])
                     # the following conditional is for making sure that self.update_cluster called inside
                     # self.stand_alones_cluster would not add 1 to timer of cluster_record
