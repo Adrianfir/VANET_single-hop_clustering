@@ -30,7 +30,7 @@ class Inputs:
                     max_long=-79.238069)
         alpha = 1
         trans_range = 800
-        start_time = 1580
+        start_time = 1600
         iter = 60
         counter = 4
         map_zoom = 15.3
