@@ -2,10 +2,13 @@
 This is the utils file including the small functions
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['initiate_new_bus', 'initiate_new_veh', 'mac_address', 'middle_zone',
-           'presence', 'choose_ch', 'det_buses_other_ch', 'det_near_ch',
-           'update_bus_table', 'update_veh_table', 'save_img', 'update_sa_net_graph',
-           'det_near_sa', 'det_dist', 'det_pot_ch', 'image_num', 'make_slideshow']
+__all__ = [
+           'choose_ch', 'det_befit', 'det_border_speed_count', 'det_buses_other_ch', 'det_con_factor', 'det_dist',
+           'det_linkage_fac', 'det_near_ch', 'det_near_sa', 'det_pot_ch', 'det_pot_ch_dsca', 'image_num',
+           'initiate_new_bus', 'initiate_new_veh', 'mac_address', 'make_slideshow', 'middle_zone', 'presence',
+           'save_img', 'sumo_net_info', 'update_bus_table', 'update_degree_n', 'update_sa_net_graph', 'update_sai',
+           'update_veh_table'
+           ]
 
 import numpy as np
 import random
@@ -19,6 +22,7 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import os
 import cv2
+import re
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -36,7 +40,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 angle=float(veh.getAttribute('angle')),
                 speed=float(veh.getAttribute('speed')) + 0.01,
                 pos=float(veh.getAttribute('pos')),
-                lane=veh.getAttribute('lane'),
+                lane={'id': veh.getAttribute('lane'), 'timer': 0},
                 zone=zone_id,
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
@@ -67,12 +71,21 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
     :param understudied_area:the un_padded area
     :return:a dictionary for initiating the new vehicle coming to the area
     """
+    lane_id = veh.getAttribute('lane')
+    if ":" not in lane_id:
+        pattern = re.compile(f"^(.*?){re.escape('_')}")
+        match = pattern.search(lane_id)
+        if match:
+            lane_id = match.group(1)
+
     return dict(long=float(veh.getAttribute('x')),
                 lat=float(veh.getAttribute('y')),
                 angle=float(veh.getAttribute('angle')),
                 speed=float(veh.getAttribute('speed')) + 0.01,
+                sai=1,  # this feature is added for BeFit factor to make comparison
+                degree_n=0,  # this is the neighborhood degree for Befit factor to make comparison
                 pos=float(veh.getAttribute('pos')),
-                lane=veh.getAttribute('lane'),
+                lane={'id': lane_id, 'timer': 0},
                 zone=zone_id,
                 prev_zone=zone_id,
                 neighbor_zones=zones.neighbor_zones(zone_id),
@@ -92,7 +105,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,  # a counter_time to search and join a cluster
-                start_ch_zone=None,     # This is the zone that vehicle starts becoming a ch
+                start_ch_zone=None,  # This is the zone that vehicle starts becoming a ch
                 cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None})  # the linked_list
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
@@ -103,7 +116,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
 def mac_address():
     """
     This function is used in the Main.py file
-    :return: this function will return a generated random mac Address for ehicles
+    :return: this function will return a generated random mac Address for vehicles
     """
     mac = [152, 237, 92,
            random.randint(0x00, 0x7f),
@@ -128,8 +141,8 @@ def middle_zone(u_row: object, u_col: object,
     middle_row = int(np.floor((u_row + l_row) / 2))
     middle_col = int(np.floor((u_col + l_col) / 2))
     middle_zone_id = ((middle_row - 1) * n_cols) + middle_col - 1
-    middle_row -= 1             # because the formal numbering has been considered form 0 not 1
-    middle_col -= 1             # because the formal numbering has been considered form 0 not 1
+    middle_row -= 1  # because the formal numbering has been considered form 0 not 1
+    middle_col -= 1  # because the formal numbering has been considered form 0 not 1
     return 'zone' + str(middle_zone_id), middle_row, middle_col
 
 
@@ -193,6 +206,15 @@ def det_near_ch(veh_id, veh_table, bus_table,
 
 def det_buses_other_ch(bus_id, veh_table, bus_table,
                        zone_buses, zone_chs):
+    """
+
+    :param bus_id:
+    :param veh_table:
+    :param bus_table:
+    :param zone_buses:
+    :param zone_chs:
+    :return: the CHs in transmission range of bus_id
+    """
     all_near_chs = set()
     all_chs = set()
     for zone in bus_table.values(bus_id)['neighbor_zones']:
@@ -214,78 +236,66 @@ def det_buses_other_ch(bus_id, veh_table, bus_table,
     return all_near_chs
 
 
-def choose_ch(table, veh_table_i,
-              area_zones, candidates, config):
+def choose_ch(table, veh_table_i, area_zones, candidates, config):
     """
-    this function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
-    primary_ch.
-    :param config: config
-    :param table: bus_table or veh_table based on the case that this function will be used
-    :param veh_table_i:
-    :param area_zones:
-    :param candidates:
-    :return: it This function will return the best candidate near to i (vehicle_i) to be
-     its cluster head
+    This function will be used to choose a ch among all other candidates or a ch from other chs nearby as the vehicle's
+    primary_ch. The Factors are [proposed similarity factor, speed similarity, distance].
     """
 
-    # latitude of the centre of previous zone that vehicle were in
+    # Latitude and longitude of the centre of the previous zone that the vehicle was in
     prev_veh_lat = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_lat'] +
                     area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_lat']) / 2
-    # longitude of the centre of previous zone that vehicle were in
     prev_veh_long = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_long'] +
                      area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_long']) / 2
 
-    euclidian_distance = hs.haversine((prev_veh_lat, prev_veh_long),
+    euclidean_distance = hs.haversine((prev_veh_lat, prev_veh_long),
                                       (veh_table_i['lat'], veh_table_i['long']),
                                       unit=hs.Unit.METERS)
 
-    veh_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
-                          (prev_veh_lat - veh_table_i['lat']))
+    veh_alpha = np.arctan2((veh_table_i['long'] - prev_veh_long), (veh_table_i['lat'] - prev_veh_lat))
 
-    veh_vector_x = np.multiply(euclidian_distance, np.cos(veh_alpha))
-    veh_vector_y = np.multiply(euclidian_distance, np.sin(veh_alpha))
+    veh_vector_x = np.multiply(euclidean_distance, np.cos(veh_alpha))
+    veh_vector_y = np.multiply(euclidean_distance, np.sin(veh_alpha))
 
-    # nominee = ''
-    min_ef = 1000000
+    min_ef = float('inf')
+    nominee = None
+
     for j in candidates:
-        # latitude of the centre of previous zone that ch were in
+        # Latitude and longitude of the centre of the previous zone that the candidate was in
         prev_ch_lat = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_lat'] +
                        area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_lat']) / 2
-        # latitude of the centre of previous zone that ch were in
         prev_ch_long = (area_zones.zone_hash.values(table.values(j)['prev_zone'])['max_long'] +
                         area_zones.zone_hash.values(table.values(j)['prev_zone'])['min_long']) / 2
 
-        euclidian_distance = hs.haversine((prev_ch_lat, prev_ch_long),
-                                          (table.values(j)['lat'], table.values(j)['long']),
-                                          unit=hs.Unit.METERS)
+        euclidean_distance_ch = hs.haversine((prev_ch_lat, prev_ch_long),
+                                             (table.values(j)['lat'], table.values(j)['long']),
+                                             unit=hs.Unit.METERS)
 
-        ch_alpha = np.arctan((prev_veh_long - veh_table_i['long']) /
-                             (prev_veh_lat - veh_table_i['lat']))
+        ch_alpha = np.arctan2((table.values(j)['long'] - prev_ch_long), (table.values(j)['lat'] - prev_ch_lat))
 
-        ch_vector_x = np.multiply(euclidian_distance, np.cos(ch_alpha))
-        ch_vector_y = np.multiply(euclidian_distance, np.sin(ch_alpha))
+        ch_vector_x = np.multiply(euclidean_distance_ch, np.cos(ch_alpha))
+        ch_vector_y = np.multiply(euclidean_distance_ch, np.sin(ch_alpha))
 
+        # Calculate cosine similarity
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [ch_vector_x, ch_vector_y])
-        theta_sim = np.arccos(cos_sim) / 2 * np.pi
-        theta_dist = euclidian_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
-        # since it might return RuntimeWarning regarding the division, the warning will be ignored
-        with np.errstate(divide='ignore', invalid='ignore'):
-            speed_sim = np.divide(np.abs(table.values(j)['speed'] - veh_table_i['speed']),
-                                  np.abs(table.values(j)['speed']))
+        theta_sim = np.arccos(np.clip(cos_sim, -1.0, 1.0)) / (2 * np.pi)  # Ensure cos_sim is within valid range
+        print(f'Theta Sim for candidate {j}: {theta_sim}')
 
-        # calculate the Eligibility Factor (EF) for chs
-        weights = np.divide(config.weights, sum(config.weights))    # normalizing the weights
-        ef = np.matmul(np.transpose(weights),
-                       np.array([theta_sim, speed_sim, theta_dist]))
+        theta_dist = euclidean_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            speed_sim = np.divide(np.abs(table.values(j)['speed'] - veh_table_i['speed']) + 0.001,
+                                  max(np.abs(table.values(j)['speed']), veh_table_i['speed']) + 0.001)
+
+        # Calculate the Eligibility Factor (EF) for candidates
+        weights = np.divide(config.weights, sum(config.weights))  # Normalize the weights
+        ef = np.matmul(np.transpose(weights), np.array([theta_sim, speed_sim, theta_dist]))
 
         if ef < min_ef:
             min_ef = ef
             nominee = j
+
     return nominee, min_ef
-
-
-# def det_veh_ch(veh_table, veh_table_i,
-#                area_zones, bus_candidates):
 
 
 def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, zone_buses, zone_ch, current_time):
@@ -310,12 +320,16 @@ def update_bus_table(veh, bus_table, zone_id, understudied_area, zones, config, 
             remove(veh.getAttribute('id'))  # This will remove the vehicle from its previous zone_buses
         zone_ch[bus_table.values(veh.getAttribute('id'))['zone']]. \
             remove(veh.getAttribute('id'))
+        if bus_table.values(veh.getAttribute('id'))['lane']['id'] == veh.getAttribute('lane'):
+            bus_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
+        else:
+            bus_table.values(veh.getAttribute('id'))['lane']['id'] = veh.getAttribute('lane')
+            bus_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
         bus_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         bus_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         bus_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
         bus_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         bus_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
-        bus_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         bus_table.values(veh.getAttribute('id'))['zone'] = zone_id
         bus_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         bus_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
@@ -360,12 +374,23 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_ch[veh_table.values(veh.getAttribute('id'))['zone']]. \
                 remove(veh.getAttribute('id'))
+        if veh_table.values(veh.getAttribute('id'))['lane']['id'] == veh.getAttribute('lane'):
+            veh_table.values(veh.getAttribute('id'))['lane']['timer'] += 1
+        else:
+            lane_id = veh.getAttribute('lane')
+            if ":" not in lane_id:
+                pattern = re.compile(f"^(.*?){re.escape('_')}")
+                match = pattern.search(lane_id)
+                if match:
+                    lane_id = match.group(1)
+            veh_table.values(veh.getAttribute('id'))['lane']['id'] = lane_id
+            veh_table.values(veh.getAttribute('id'))['lane']['timer'] = 0
+        veh_table.values(veh.getAttribute('id'))['sai'] = update_sai(veh_table, veh.getAttribute('id'))
         veh_table.values(veh.getAttribute('id'))['long'] = float(veh.getAttribute('x'))
         veh_table.values(veh.getAttribute('id'))['lat'] = float(veh.getAttribute('y'))
         veh_table.values(veh.getAttribute('id'))['angle'] = float(veh.getAttribute('angle'))
         veh_table.values(veh.getAttribute('id'))['speed'] = float(veh.getAttribute('speed')) + 0.01
         veh_table.values(veh.getAttribute('id'))['pos'] = float(veh.getAttribute('pos'))
-        veh_table.values(veh.getAttribute('id'))['lane'] = veh.getAttribute('lane')
         veh_table.values(veh.getAttribute('id'))['zone'] = zone_id
         veh_table.values(veh.getAttribute('id'))['in_area'] = presence(understudied_area, veh)
         veh_table.values(veh.getAttribute('id'))['neighbor_zones'] = zones.neighbor_zones(zone_id)
@@ -419,6 +444,59 @@ def det_near_sa(veh_id, veh_table,
     return result
 
 
+def det_befit(veh_table, veh_id,
+              sumo_edges, sumo_nodes, config):
+    """
+
+    :param veh_table: self.veh_table
+    :param sumo_edges: info related to roads in sumo
+    :param sumo_nodes: info related to nodes in sumo
+    :param veh_id: vehicle id
+    :param config: config
+    :return: the BF_v for making comparison
+    """
+    # T_leave
+    road = veh_table.values(veh_id)['lane']['id']
+    if (":" in road) or ('cluster' in road):
+        return 0.0001           # because according to data, such edges are too short to be considered
+    t = veh_table.values(veh_id)['lane']['timer']  # amount of time to cover distance "d"
+    l = sumo_edges[road]['length']  # Length of the road segment
+    from_node = sumo_edges[road]['from']
+    if 'cluster' in from_node:  # some nodes are like "cluster_709104099_9493129504" -> 709104099 is good
+        match = re.search(r'\d+', from_node)
+
+        if match:
+            from_node = match.group()
+    d = hs.haversine((veh_table.values(veh_id)['lat'], veh_table.values(veh_id)['long']),
+                     (sumo_nodes[from_node]['lat'], sumo_nodes[from_node]['long']),
+                     unit=hs.Unit.METERS)  # Distance covered by a vehicle on that segment
+    t_leave = (((l - d) / d) * t) / (
+            l / veh_table.values(veh_id)['speed'])  # l/veh_table.values('veh_id)')['speed'] is for normalization
+
+    # Sai_v
+    sai_v = veh_table.values(veh_id)['sai'] / (
+                1 + (config.iter * 0.01))              # (1 + (config.iter*0.01)) is for normalization
+
+    # Degree_n
+    if len(veh_table.values(veh_id)['other_vehs']) > 0:
+        degree_n = update_degree_n(veh_table, veh_id)/len(veh_table.values(veh_id)['other_vehs'])
+    else:
+        degree_n = 0
+
+    return t_leave + sai_v + degree_n
+
+
+def det_con_factor(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: returns te connectivity factor for making comparison
+    """
+    cf_v = det_border_speed_count(veh_table, veh_id) + det_linkage_fac(veh_table, veh_id)
+    return cf_v
+
+
 def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     """
     this function is used to determine chs among the stand-alones to k which is ch too
@@ -428,7 +506,6 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
     :param net_graph:
     :return: chs among the stand-alones to k which is ch too
     """
-    result = set()
     for j in near_sa[k]:
         if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] > 0:
             dist = det_dist(k, veh_table, j, veh_table)
@@ -460,6 +537,14 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
 
 
 def det_dist(id1, table1, id2, table2):
+    """
+
+    :param id1: vehicle 1
+    :param table1: self.veh_table or self.bus_table
+    :param id2: vehicle 2
+    :param table2: self.veh_table or self.bus_table
+    :return: distance between two vehicles or buses
+    """
     dist = hs.haversine((table1.values(id1)["lat"],
                          table1.values(id1)["long"]),
                         (table2.values(id2)['lat'],
@@ -470,10 +555,37 @@ def det_dist(id1, table1, id2, table2):
 
 
 def det_pot_ch(veh_id, near_sa, n_near_sa):
+    """
+
+    :param veh_id:
+    :param near_sa: dictionary shows the SAVs and their nearby SAVs
+    :param n_near_sa: number of stand_alone vehicles to veh_id
+    :return: potential SAVs nearby veh_id that can be CH
+    """
     pot_ch = veh_id
     for mem in near_sa[veh_id]:
         if mem in near_sa.keys():
             if n_near_sa[mem] > n_near_sa[pot_ch]:
+                pot_ch = mem
+            else:
+                continue
+        else:
+            continue
+    return pot_ch
+
+
+def det_pot_ch_dsca(veh_id, near_sa, n_near_sa, sf_factor):
+    """
+
+    :param veh_id:
+    :param near_sa: dictionary shows the SAVs and their nearby SAVs
+    :param n_near_sa: number of stand_alone vehicles to veh_id
+    :return: potential SAVs nearby veh_id that can be CH
+    """
+    pot_ch = veh_id
+    for mem in near_sa[veh_id]:
+        if mem in near_sa.keys():
+            if sf_factor[mem] > sf_factor[pot_ch]:
                 pot_ch = mem
             else:
                 continue
@@ -569,4 +681,102 @@ def make_slideshow(image_folder, output_path, fps):
     out.release()
 
     print("Video creation complete.")
+
+
+def sumo_net_info(sumo_edge, sumo_node):
+    """
+    In this function, the information related to the sumo and its net are going to be put inside two dictionaries to
+    clarify and use them for creating the papers we are going to make comparison with them
+    :param sumo_edge: xml.dom.minidom.parse(sumo_edge_path) which is related to roads segments info
+    :param sumo_node: xml.dom.minidom.parse(sumo_node_path) which is related to nodes info
+    :return: edge_info and node_info
+    """
+    edge_info = dict()
+    node_info = dict()
+    for edge in sumo_edge.documentElement.getElementsByTagName('edge'):
+        # just "from" is enough to define the T_leave
+        if ':' in edge.getAttribute('id'):
+            edge_info[edge.getAttribute('id')] = {'from': None}
+        else:
+            edge_info[edge.getAttribute('id')] = {'from': edge.getAttribute('from')}
+            edge_info[edge.getAttribute('id')]['length'] = float(edge.getElementsByTagName('lane')[0].
+                                                                 getAttribute('length'))
+
+    for node in sumo_node.documentElement.getElementsByTagName('node'):
+        # Note that in the osm_bbox.osm.xml file, the attributes are "lat" and "lon" and is not "long"
+        node_info[node.getAttribute('id')] = {'lat': float(node.getAttribute('lat')),
+                                              'long': float(node.getAttribute('lon'))
+                                              }
+    return edge_info, node_info
+
+
+def update_sai(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: This function returns updated sai_v for each vehicle
+    """
+    neighbors_speed = []
+    dif_speed = []
+    if len(veh_table.values(veh_id)['other_vehs']) == 0:
+        return veh_table.values(veh_id)['sai']
+    for i in veh_table.values(veh_id)['other_vehs']:
+        neighbors_speed.append(veh_table.values(i)['speed'])
+        dif_speed.append(abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']))
+    delta_s = np.std(dif_speed)
+    if abs(veh_table.values(veh_id)['speed'] - np.average(neighbors_speed)) <= delta_s:
+        return veh_table.values(veh_id)['sai'] + 0.01
+    elif abs(veh_table.values(veh_id)['speed'] - np.average(neighbors_speed)) > delta_s:
+        return veh_table.values(veh_id)['sai'] - 0.01
+
+
+def update_degree_n(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: This function returns updated sai_v for each vehicle
+    """
+    neighbors_speed = []
+    dif_speed = []
+    degree_n = 0
+    if len(veh_table.values(veh_id)['other_vehs']) == 0:
+        return 0
+    for i in veh_table.values(veh_id)['other_vehs']:
+        neighbors_speed.append(veh_table.values(i)['speed'])
+        dif_speed.append(abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']))
+    delta_s = np.std(dif_speed)
+    for k in neighbors_speed:
+        if abs(k - np.average(neighbors_speed)) <= delta_s:
+            degree_n += 1
+    return degree_n
+
+
+def det_border_speed_count(veh_table, veh_id):
+    """
+
+    :param veh_table: self.veh_table
+    :param veh_id: vehicle id
+    :return: This function returns BS_count for each vehicle to make comparison
+    """
+    if len(veh_table.values(veh_id)['other_vehs']) == 0:
+        return 0
+    bs_count = 0
+    for i in veh_table.values(veh_id)['other_vehs']:
+        if abs(veh_table.values(veh_id)['speed'] - veh_table.values(i)['speed']) <= 5:
+            bs_count += 1
+    return bs_count
+
+
+def det_linkage_fac(veh_table, veh_id):
+    d_i = 0
+    d = len(veh_table.values(veh_id)['other_vehs'])
+    for i in veh_table.values(veh_id)['other_vehs']:
+        d_i += len(veh_table.values(i)['other_vehs'])
+    return (0.5 * d) + (0.5 * d_i)
+
+
+
+
 

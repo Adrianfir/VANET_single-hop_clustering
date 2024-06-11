@@ -11,6 +11,7 @@ from data_cluster import DataTable
 from configs.config import Configs
 from zonex import ZoneID
 import utils.util as util
+import re
 
 if __name__ == "__main__":
     configs = Configs().config

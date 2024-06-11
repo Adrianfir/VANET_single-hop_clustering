@@ -14,21 +14,33 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
-        # trace_path_big_data = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-        #                           joinpath('big_data_Richmondhill', 'sumoTrace_geo.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace_no_bus_and_rsu.xml'))
+        sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
+                             joinpath('final_data_Richmondhill', 'osm.net.xml'))
+        sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
+                             joinpath('final_data_Richmondhill', 'osm_bbox.osm.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
+        sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
+        sumo_node = xml.dom.minidom.parse(sumo_node_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
         area = dict(min_lat=43.586568,
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
+<<<<<<< HEAD
         alpha = 0.8
         trans_range = 500
         start_time = 1500
         iter = 60
         counter = 5
+=======
+        alpha = 0.5
+        trans_range = 200
+        start_time = 1600
+        iter = 60
+        counter = 4
+>>>>>>> feat/veh_cluster
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 10
@@ -41,6 +53,10 @@ class Inputs:
                             help='this is an assumption regarding the number of cars in order to create a HashTabel')
         parser.add_argument('--sumo_trace', type=xml.dom.minidom.Document, default=sumo_trace,
                             help='This is the sumo_trace file that includes all the data we need from the traffic')
+        parser.add_argument('--sumo_edge', type=xml.dom.minidom.Document, default=sumo_edge,
+                            help='This is the sumo_trace file that includes the edges (lanes) information')
+        parser.add_argument('--sumo_node', type=xml.dom.minidom.Document, default=sumo_node,
+                            help='This is the sumo_trace file that includes the nodes information of sumo net')
         parser.add_argument('--fcd', type=xml.dom.minidom.Element, default=fcd,
                             help='Floating Car Data (FCD) from sumoTrace.xml file')
         parser.add_argument('--times', type=xml.dom.minidom.NodeList, default=times,
