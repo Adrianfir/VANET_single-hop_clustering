@@ -47,7 +47,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 in_area=presence(understudied_area, veh),
                 arrive_time=None,
                 depart_time=None,
-                trans_range=config.trans_range,
+                trans_range=config.bus_trans_range,
                 message_dest={},
                 message_source={},
                 cluster_head=True,
@@ -92,7 +92,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 in_area=presence(understudied_area, veh),
                 arrive_time=None,
                 depart_time=None,
-                trans_range=config.trans_range,
+                trans_range=config.veh_trans_range,
                 message_dest={},
                 message_source={},
                 cluster_head=False,  # if the vehicle is a ch, it will be True
@@ -279,7 +279,6 @@ def choose_ch(table, veh_table_i, area_zones, candidates, config):
         # Calculate cosine similarity
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [ch_vector_x, ch_vector_y])
         theta_sim = np.arccos(np.clip(cos_sim, -1.0, 1.0)) / (2 * np.pi)  # Ensure cos_sim is within valid range
-        print(f'Theta Sim for candidate {j}: {theta_sim}')
 
         theta_dist = euclidean_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
 
@@ -515,7 +514,8 @@ def update_sa_net_graph(veh_table, k, near_sa, net_graph):
                 if veh_table.values(k)['cluster_head'] + veh_table.values(j)['cluster_head'] == 2:
                     veh_table.values(k)['other_chs'].add(j)
                     veh_table.values(j)['other_chs'].add(k)
-                    net_graph.add_edge(k, j)
+                    net_graph.add_edges_from([(k, j),
+                                              (j, k)])
 
                 elif (veh_table.values(k)['cluster_head'] is True) and \
                         (veh_table.values(j)['cluster_head'] is False):

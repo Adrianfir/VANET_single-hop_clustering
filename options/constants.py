@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
                              joinpath('final_data_Richmondhill', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
@@ -28,19 +28,19 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-<<<<<<< HEAD
-        alpha = 0.8
-        trans_range = 500
+
+        alpha = 0.5
+        veh_trans_range = 200
+        bus_trans_range = 800
         start_time = 1500
         iter = 60
         counter = 5
-=======
         alpha = 0.5
         trans_range = 200
         start_time = 1600
         iter = 60
         counter = 4
->>>>>>> feat/veh_cluster
+
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 10
@@ -63,8 +63,10 @@ class Inputs:
                             help='includes data for all seconds')
         parser.add_argument('--alpha', type=float, default=alpha,
                             help='this is the regularization coefficient to change the sie of the zones based on TR')
-        parser.add_argument('--trans_range', type=int, default=trans_range,
-                            help='this is the transmission range considered in this project and it can be up to 2000')
+        parser.add_argument('--veh_trans_range', type=int, default=veh_trans_range,
+                            help='this is the transmission range considered in this project for the vehicles')
+        parser.add_argument('--bus_trans_range', type=int, default=bus_trans_range,
+                            help='this is the transmission range considered in this project for the buses')
         parser.add_argument('--start_time', type=int, default=start_time,
                             help='This is the time that the initial values would be extract from sumo_trace.xml file')
         parser.add_argument('--counter', type=int, default=counter,

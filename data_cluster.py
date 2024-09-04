@@ -86,15 +86,16 @@ class DataTable:
 
             # create the self.net_graph or add the new vertex
             if self.init_count == 1:
-                self.net_graph = Graph(veh.getAttribute('id'), (float(veh.getAttribute('y')),
-                                                                float(veh.getAttribute('x'))
-                                                                )
-                                       )
+                self.net_graph = nx.Graph()
+                self.net_graph.add_node(veh.getAttribute('id'), pos=(float(veh.getAttribute('y')),
+                                                                     float(veh.getAttribute('x'))
+                                                                     )
+                                        )
             else:
-                self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
-                                                                   float(veh.getAttribute('x'))
-                                                                   )
-                                          )
+                self.net_graph.add_node(veh.getAttribute('id'), pos=(float(veh.getAttribute('y')),
+                                                                     float(veh.getAttribute('x'))
+                                                                     )
+                                        )
 
     def update(self, config, zones):
         """
@@ -130,24 +131,26 @@ class DataTable:
                     self.all_chs.add(veh.getAttribute('id'))
             # add the vertex to the graph
             try:
-                self.net_graph.adj_list[veh.getAttribute('id')]['pos'] = (float(veh.getAttribute('y')),
+                self.net_graph.nodes[veh.getAttribute('id')]['pos'] = (float(veh.getAttribute('y')),
                                                                           float(veh.getAttribute('x'))
                                                                           )
                 if 'bus' in veh.getAttribute('id'):
-                    self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.bus_table. \
-                                                                                    values(veh.getAttribute('id'))[
-                                                                                        'cluster_members'])
+                    for i in list(self.bus_table.values(veh.getAttribute('id'))['cluster_members']):
+                        self.net_graph.add_edges_from([(veh.getAttribute('id'), i),
+                                                      (i, veh.getAttribute('id'))]
+                                                      )
                 else:
-                    self.net_graph.adj_list[veh.getAttribute('id')]['edges'] = list(self.veh_table. \
-                                                                                    values(veh.getAttribute('id'))[
-                                                                                        'cluster_members'])
+                    for i in list(self.veh_table.values(veh.getAttribute('id'))['cluster_members']):
+                        self.net_graph.add_edges_from([(veh.getAttribute('id'), i),
+                                                       (i, veh.getAttribute('id'))]
+                                                      )
 
             except KeyError:
 
-                self.net_graph.add_vertex(veh.getAttribute('id'), (float(veh.getAttribute('y')),
+                self.net_graph.add_node(veh.getAttribute('id'), pos=(float(veh.getAttribute('y')),
                                                                    float(veh.getAttribute('x'))
-                                                                   )
-                                          )
+                                                                     )
+                                        )
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
         for k in (self.bus_table.ids() - bus_ids):
             for m in self.bus_table.values(k)['cluster_members']:
@@ -170,7 +173,7 @@ class DataTable:
             self.left_bus[k] = self.bus_table.values(k)
 
             self.bus_table.remove(k)
-            self.net_graph.remove_vertex(k)
+            self.net_graph.remove_node(k)
 
         # removing the vehicles, that have left the understudied area, from self.veh_table and self.zone_vehicles
         for k in (self.veh_table.ids() - veh_ids):
@@ -204,7 +207,7 @@ class DataTable:
             self.left_veh[k] = self.veh_table.values(k)
 
             self.veh_table.remove(k)
-            self.net_graph.remove_vertex(k)
+            self.net_graph.remove_node(k)
 
     def update_cluster(self, veh_ids, config, zones):
 
@@ -442,8 +445,6 @@ class DataTable:
         n_near_sa = dict()
         pot_ch = dict()
         for veh_id in self.stand_alone:
-            if self.veh_table.values(veh_id)['cluster_head'] is True:
-                print('2: ', veh_id)
             near_sa[veh_id] = util.det_near_sa(veh_id, self.veh_table,
                                                self.stand_alone, self.zone_stand_alone
                                                )
@@ -669,6 +670,21 @@ class DataTable:
                 temp = temp.next
             total_clusters += one_veh
         return np.divide(total_clusters, np.add(len(self.veh_table.ids()), len(self.left_veh)) - n_sav_ch)
+
+    def eval_connections(self):
+        n = 0      # this would return the minimum number of path needed to connect all the clusters
+        investigated = set()
+        for i in self.all_chs:
+            investigated.add(i)
+            temp_table = self.veh_table if 'veh' in i else self.bus_table
+            for j in (self.all_chs - temp_table.values(i)['other_chs'] -
+                      temp_table.values(i)['gate_chs'] - investigated):
+
+                try:
+                    nx.shortest_path(self.net_graph, source=i, target=j)
+                except nx.exception.NetworkXNoPath:
+                    n += 1
+        return n
 
     def show_graph(self, configs):
         """
