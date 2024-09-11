@@ -20,6 +20,7 @@ from PIL import Image
 from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 import os
 import cv2
 import re
@@ -97,6 +98,8 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 message_source={},
                 cluster_head=False,  # if the vehicle is a ch, it will be True
                 primary_ch=None,
+                priority_ch=None,
+                priority_counter=config.priority_counter,
                 other_chs=set(),  # other chs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),  # This will be a Graph if the vehicle is a ch
                 gates=dict(),
@@ -111,6 +114,168 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
                 # vehicle would remain in that cluster
                 )
+
+def add_member(ch_id, bus_table,
+               veh_id, veh_table, config,
+               ef, sec, bus_candidates,
+               ch_candidates, stand_alone,
+               zone_stand_alone,
+               other_vehs):
+    """
+    this function is used for adding a vehicle to a cluster as a 'member' not 'sum_member'
+    :param ch_id:
+    :param bus_table:
+    :param veh_id:
+    :param veh_table:
+    :param config:
+    :param ef:
+    :param sec: self.time in the data_cluster.py
+    :param bus_candidates:
+    :param ch_candidates:
+    :param stand_alone:
+    :param zone_stand_alone:
+    :param other_vehs:
+    :return:
+    """
+    veh_table.values(veh_id)['primary_ch'] = ch_id
+
+    if ch_id == veh_table.values(veh_id)['priority_ch']:
+        veh_table.values(veh_id)['cluster_record'].pop()
+        veh_table.values(veh_id)['cluster_record'].tail.value['timer'] += 1
+
+    else:
+        veh_table.values(veh_id)['cluster_record'].tail.key = ch_id
+        veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = sec
+        veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
+        veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
+
+
+    veh_table.values(veh_id)['sub_cluster_members'] = set()
+    veh_table.values(veh_id)['counter'] = config.counter
+    veh_table.values(veh_id)['priority_ch'] = ch_id
+    veh_table.values(veh_id)['priority_counter'] = config.priority_counter
+    # bus_candidates.remove(bus_ch)
+    veh_table.values(veh_id)['other_chs']. \
+        update(veh_table.values(veh_id)['other_chs'].union(bus_candidates))
+
+    veh_table.values(veh_id)['other_chs']. \
+        update(veh_table.values(veh_id)['other_chs'].union(ch_candidates))
+    if 'bus' in ch_id:
+        bus_table.values(ch_id)['cluster_members'].add(veh_id)
+        bus_table.values(ch_id)['gates'][veh_id] = veh_table.values(veh_id)['other_chs']
+        bus_table.values(ch_id)['gate_chs']. \
+            update(bus_table.values(ch_id)['gate_chs'].
+                   union(veh_table.values(veh_id)['other_chs']))
+    else:
+        veh_table.values(ch_id)['cluster_members'].add(veh_id)
+        veh_table.values(ch_id)['gates'][veh_id] = veh_table.values(veh_id)['other_chs']
+        veh_table.values(ch_id)['gate_chs']. \
+            update(veh_table.values(ch_id)['gate_chs'].
+                   union(veh_table.values(veh_id)['other_chs']))
+    stand_alone.remove(veh_id)
+    zone_stand_alone[veh_table.values(veh_id)['zone']].remove(veh_id)
+
+    return (bus_table, veh_table,
+            stand_alone, zone_stand_alone)
+
+
+def remove_member(mem, ch_id, veh_table, bus_table, config,
+                  stand_alone, zone_stand_alone,
+                  ch_stays=True, mem_stays=True):
+    """
+    This function would remove a cluster member from the cluster
+    :param ch_stays:
+    :type
+    :param mem:
+    :param ch_id:
+    :param veh_table:
+    :param bus_table:
+    :param config:
+    :param stand_alone:
+    :param zone_stand_alone:
+    :param mem_stays:
+    :return:
+    """
+
+    veh_table.values(mem)['counter'] = config.counter
+    if ch_stays is True:
+        veh_table.values(mem)['priority_ch'] = ch_id
+    else:
+        veh_table.values(mem)['priority_ch'] = None
+    veh_table.values(mem)['priority_counter'] = config.priority_counter
+    if 'bus' in ch_id:
+        bus_table.values(ch_id)['cluster_members'].remove(mem)
+    else:
+        veh_table.values(ch_id)['cluster_members'].remove(mem)
+    if mem_stays is True:
+        stand_alone.add(mem)
+        zone_stand_alone[veh_table.values(mem)['zone']].add(mem)
+    veh_table.values(mem)['primary_ch'] = None
+    veh_table.values(mem)['cluster_record'].append(None, {'is_ch': False, 'start_time': None,
+                                                          'ef': None, 'timer': None})
+
+    return (veh_table, bus_table,
+            stand_alone, zone_stand_alone)
+
+def set_ch(veh_id, veh_table, all_chs, stand_alone,
+           zone_stand_alone, zone_ch, config, its_sa_clustering=False):
+    """
+    This function would update the information of a vehicle turning into a CH
+    :param veh_id:
+    :param veh_table:
+    :param all_chs:
+    :param stand_alone:
+    :param zone_stand_alone:
+    :param zone_ch:
+    :param config:
+    :param its_sa_clustering:
+    :return:
+    """
+    veh_table.values(veh_id)['cluster_head'] = True
+    veh_table.values(veh_id)['cluster_record'].tail.value['is_ch'] = True
+    veh_table.values(veh_id)['start_ch_zone'] = veh_table.values(veh_id)['zone']
+    all_chs.add(veh_id)
+    zone_ch[veh_table.values(veh_id)['zone']].add(veh_id)
+    veh_table.values(veh_id)['counter'] = config.counter
+    veh_table.values(veh_id)['priority_counter'] = config.priority_counter
+    veh_table.values(veh_id)['priority_ch'] = None
+    if its_sa_clustering is False:
+        stand_alone.remove(veh_id)
+        zone_stand_alone[veh_table.values(veh_id)['zone']].remove(veh_id)
+    else:
+        try:
+            stand_alone.remove(veh_id)
+            zone_stand_alone[veh_table.values(veh_id)['zone']].remove(veh_id)
+        except KeyError:
+            pass
+
+    return (veh_table, all_chs, stand_alone,
+            zone_stand_alone, zone_ch)
+
+
+def set_ch_to_veh(veh_id, veh_table, zone_ch,
+                  all_chs, stand_alone, zone_stand_alone):
+    """
+    This function would set a CH to a stand_alone vehicle
+    :param veh_id:
+    :param veh_table:
+    :param zone_ch:
+    :param all_chs:
+    :param stand_alone:
+    :param zone_stand_alone:
+    :return:
+    """
+    veh_table.values(veh_id)['cluster_members'] = set()
+    veh_table.values(veh_id)['cluster_head'] = False
+    veh_table.values(veh_id)['cluster_record'].append(None, {'is_ch': False, 'start_time': None,
+                                                 'ef': None,  'timer': None})
+    veh_table.values(veh_id)['start_ch_zone'] = None
+    zone_ch[veh_table.values(veh_id)['zone']].remove(veh_id)
+    all_chs.remove(veh_id)
+    stand_alone.add(veh_id)
+    zone_stand_alone[veh_table.values(veh_id)['zone']].add(veh_id)
+    return (veh_table, zone_ch, all_chs,
+            stand_alone, zone_stand_alone)
 
 
 def mac_address():
@@ -279,7 +444,6 @@ def choose_ch(table, veh_table_i, area_zones, candidates, config):
         # Calculate cosine similarity
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [ch_vector_x, ch_vector_y])
         theta_sim = np.arccos(np.clip(cos_sim, -1.0, 1.0)) / (2 * np.pi)  # Ensure cos_sim is within valid range
-        print(f'Theta Sim for candidate {j}: {theta_sim}')
 
         theta_dist = euclidean_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
 
@@ -596,29 +760,32 @@ def det_pot_ch_dsca(veh_id, near_sa, n_near_sa, sf_factor):
 
 def save_img(m, zoom_out_value, name):
     """
-    :param name: name of the image
-    :param zoom_out_value: zoom amount
-    :param m: the map
-    :return: an image will be saved to the directory path
+    Saves a screenshot of a map to an image file.
+
+    :param m: The map object to save as an image.
+    :param zoom_out_value: The amount to zoom out on the map.
+    :param name: The name of the image file to save.
     """
     # Save the map as an HTML file
-    map_file = "map.html"
+    map_file = "/Users/pouyafirouzmakan/Desktop/slideshow/map.html"
     m.save(map_file)
 
-    # Set up the options for the webdriver
+    # Setup the Firefox WebDriver with headless option
+    service = Service(executable_path='/usr/local/bin/geckodriver')
     options = Options()
-    options.headless = True  # Run the browser in headless mode (without opening a visible window)
+    options.headless = True
 
     # Initialize the Firefox webdriver
-    driver = webdriver.Firefox(options=options)
+    driver = webdriver.Firefox(service=service, options=options)
 
-    # Open the map HTML file
-    driver.get('file:/Users/pouyafirouzmakan/Desktop/VANET/graph_map.html')
+    # Open the map HTML file using the correct file URL format
+    driver.get(f'file://{map_file}')
 
-    # change the zoom
+    # Change the zoom level of the map using JavaScript
     script = f"document.getElementsByClassName('leaflet-control')[0].style.transform = 'scale({1 / zoom_out_value})';"
     driver.execute_script(script)
-    # Wait for the map to load (you can adjust the waiting time if needed)
+
+    # Wait for the map to load
     time.sleep(1)
 
     # Take a screenshot of the entire webpage (including the map)
@@ -626,7 +793,7 @@ def save_img(m, zoom_out_value, name):
 
     # Save the screenshot as an image file with good resolution
     img = Image.open(BytesIO(screenshot))
-    img.save(name + '.png', 'PNG', quality=800)
+    img.save(name + '.png', 'PNG', quality=95)
 
     # Close the Firefox window and quit the webdriver instance
     driver.quit()
@@ -777,6 +944,57 @@ def det_linkage_fac(veh_table, veh_id):
     return (0.5 * d) + (0.5 * d_i)
 
 
+def other_connections_update(veh_table, bus_table, zone_ch,
+                             zone_buses, zone_vehicles):
+    """
+    In this funtion, the other_chs, other_vehs, gate_chs, and gates would be updated after
+    :param veh_table:
+    :param bus_table:
+    :param zone_ch:
+    :param zone_buses:
+    :param zone_vehicles:
+    :return:
+    """
+    for veh_id in veh_table.ids():
+        (bus_candidates, ch_candidates, other_vehs) = det_near_ch(veh_id, veh_table, bus_table,
+                                                                  zone_buses, zone_vehicles)
 
+        if veh_table.values(veh_id)['primary_ch'] is not None:
+            ch = veh_table.values(veh_id)['primary_ch']
+            veh_table.values(veh_id)['other_chs'] = bus_candidates.union(ch_candidates) - {ch}
+            veh_table.values(veh_id)['other_vehs'] = other_vehs - {veh_id}
+            if 'veh' in ch:
+                veh_table.values(ch)['gates'][veh_id] = veh_table.values(veh_id)['other_chs']
+                veh_table.values(ch)['gate_chs'] = veh_table.values(veh_id)['other_chs']
+            else:
+                bus_table.values(ch)['gates'][veh_id] = veh_table.values(veh_id)['other_chs']
+                bus_table.values(ch)['gate_chs'] = veh_table.values(veh_id)['other_chs']
+
+        elif veh_table.values(veh_id)['cluster_head'] is True:
+            veh_table.values(veh_id)['other_chs'] = bus_candidates.union(ch_candidates)
+            veh_table.values(veh_id)['other_vehs'] = other_vehs - veh_table.values(veh_id)['cluster_members'] - {veh_id}
+
+        else:
+            veh_table.values(veh_id)['other_vehs'] = other_vehs - {veh_id}
+
+    for bus in bus_table.ids():
+        bus_other_vehs = set()
+        neigh_veh = list()
+
+        for neigh_z in bus_table.values(bus)['neighbor_zones']:
+            neigh_veh += zone_vehicles[neigh_z]
+
+        for j in neigh_veh:
+            euclidian_dist = det_dist(bus, bus_table, j, veh_table)
+
+            if euclidian_dist <= min(bus_table.values(bus)['trans_range'],
+                                     veh_table.values(j)['trans_range']):
+                if veh_table.values(j)['primary_ch'] != bus:
+                    bus_other_vehs.add(j)
+        bus_table.values(bus)['other_vehs'] = bus_other_vehs - bus_table.values(bus)['cluster_members']
+
+        bus_table.values(bus)['other_chs'] = det_buses_other_ch(bus, veh_table,bus_table, zone_buses, zone_ch)
+
+    return veh_table, bus_table
 
 

@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
                              joinpath('final_data_Richmondhill', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
@@ -33,10 +33,11 @@ class Inputs:
         start_time = 1600
         iter = 60
         counter = 4
+        priority_counter = 10   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
-        fps = 10
-        weights = np.array([0.9, 0, 0.1])       # direction's angle, speed, distance
+        fps = 5
+        weights = np.array([0.2, 0.0, 0.8])      # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -62,6 +63,9 @@ class Inputs:
         parser.add_argument('--counter', type=int, default=counter,
                             help='This is the a counter for vehicle to make themselves as CH if they can not'
                                  ' find any Ch or nearby stand-alone vehicles to create a cluster')
+        parser.add_argument('--priority_counter', type=int, default=priority_counter,
+                            help='This is the a counter for vehicle to join same cluster through sub_chs after leaving '
+                                 'that cluster')
         parser.add_argument('--map_zoom', type=float, default=map_zoom,
                             help='This is the amount to have a specific zoom on the map')
         parser.add_argument('--center_loc', type=float, default=center_loc,
