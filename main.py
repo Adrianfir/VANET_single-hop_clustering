@@ -17,7 +17,7 @@ import re
 
 if __name__ == "__main__":
     configs = Configs().config
-    dif_tr = [100, 200, 300, 400]
+    dif_tr = [400, ]
     ########################### Define different weights
     # Define the size of each list and the step increment
     list_size = 3
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     num_times = 1
     start_time = time.time()
 
-    for configs.trans_range in dif_tr:
+    for configs.veh_trans_range in dif_tr:
         cols = ['rsu', 'TR', 'weights', 'n_veh', 'n_buses', 'n_sav', 'n_chs', 'stab_eval', 'con_eval']
         out_put = pd.DataFrame(columns=cols)
         for configs.weights in all_weight_lists:
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
             eval_cluster = cluster.eval_cluster(configs)
 
-            print(num_times, configs.trans_range, configs.weights,
+            print(num_times, configs.veh_trans_range, configs.weights,
                   len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
                   len(cluster.stand_alone), len(cluster.all_chs), eval_cluster,
                   sum(connections)/len(connections)

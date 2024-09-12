@@ -32,11 +32,6 @@ class Inputs:
         alpha = 0.5
         veh_trans_range = 200
         bus_trans_range = 800
-        start_time = 1500
-        iter = 60
-        counter = 5
-        alpha = 0.5
-        trans_range = 200
         start_time = 1600
         iter = 60
         counter = 4
