@@ -430,7 +430,7 @@ class DataTable:
         for i in self.veh_table.ids():
             if self.veh_table.values(i)['depart_time'] is None:
                 self.veh_table.values(i)['depart_time'] = configs.start_time + configs.iter
-            in_area_time = self.veh_table.values(i)["depart_time"] - self.veh_table.values(i)["arrive_time"] + 1
+            in_area_time = self.veh_table.values(i)["depart_time"] - self.veh_table.values(i)["arrive_time"]
             total_length = self.veh_table.values(i)['cluster_record'].length
             if (total_length == 1) and (self.veh_table.values(i)['cluster_record'].head.value['timer'] is None):
                 n_sav_ch += 1
@@ -456,7 +456,7 @@ class DataTable:
             one_veh = 0
             temp = self.left_veh[i]['cluster_record'].head
             summing = 0
-            in_area_time = self.left_veh[i]['depart_time'] - self.left_veh[i]['arrive_time'] + 1
+            in_area_time = self.left_veh[i]['depart_time'] - self.left_veh[i]['arrive_time']
             while temp:
                 if temp.value['timer'] is not None:
                     summing += np.divide(temp.value['timer'],
