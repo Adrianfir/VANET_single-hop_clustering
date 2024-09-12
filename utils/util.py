@@ -48,7 +48,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 in_area=presence(understudied_area, veh),
                 arrive_time=None,
                 depart_time=None,
-                trans_range=config.trans_range,
+                trans_range=config.bus_trans_range,
                 message_dest={},
                 message_source={},
                 cluster_head=True,
@@ -93,7 +93,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 in_area=presence(understudied_area, veh),
                 arrive_time=None,
                 depart_time=None,
-                trans_range=config.trans_range,
+                trans_range=config.veh_trans_range,
                 message_dest={},
                 message_source={},
                 cluster_head=False,  # if the vehicle is a ch, it will be True

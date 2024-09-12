@@ -363,8 +363,8 @@ class DataTable:
         # for-loop, check if veh_id is in it to not do anything new and ruin it
         temp = self.stand_alone.copy()
         temp = list(temp)
-        # temp.sort()
-        # temp.reverse()
+        temp.sort()
+        temp.reverse()
         for veh_id in temp:
             if (self.veh_table.values(veh_id)['cluster_head'] is True) or \
                     (self.veh_table.values(veh_id)['primary_ch'] is not None) or \
@@ -456,7 +456,7 @@ class DataTable:
             one_veh = 0
             temp = self.left_veh[i]['cluster_record'].head
             summing = 0
-            in_area_time = self.left_veh[i]['depart_time'] - self.left_veh[i]['arrive_time']
+            in_area_time = self.left_veh[i]['depart_time'] - self.left_veh[i]['arrive_time'] + 1
             while temp:
                 if temp.value['timer'] is not None:
                     summing += np.divide(temp.value['timer'],
@@ -673,23 +673,15 @@ class DataTable:
             if (n_near_sa[veh_id] == 1) and (list(near_sa[veh_id])[0] in near_sa.keys()):
                 if (n_near_sa[list(near_sa[veh_id])[0]]) == 1:
                     veh_id_2 = list(near_sa[veh_id])[0]
-                    self.veh_table.values(veh_id)['cluster_head'] = True
-                    self.veh_table.values(veh_id_2)['cluster_head'] = True
-                    self.veh_table.values(veh_id)['counter'] = configs.counter
-                    self.veh_table.values(veh_id_2)['counter'] = configs.counter
-                    self.veh_table.values(veh_id)['start_ch_zone'] = self.veh_table.values(veh_id)['zone']
-                    self.veh_table.values(veh_id_2)['start_ch_zone'] = self.veh_table.values(veh_id_2)['zone']
-                    self.veh_table.values(veh_id)['other_chs'].add(veh_id_2)
-                    self.veh_table.values(veh_id_2)['other_chs'].add(veh_id)
-                    self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
-                    self.zone_ch[self.veh_table.values(veh_id_2)['zone']].add(veh_id_2)
-                    self.all_chs.add(veh_id)
-                    self.all_chs.add(veh_id_2)
-                    self.stand_alone.remove(veh_id)
-                    self.stand_alone.remove(veh_id_2)
-                    self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
-                    self.zone_stand_alone[self.veh_table.values(veh_id_2)['zone']].remove(veh_id_2)
-                    self.net_graph.add_edge(veh_id, veh_id_2)
+                    (self.veh_table, self.all_chs, self.stand_alone,
+                     self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id, self.veh_table, self.all_chs,
+                                                                        self.stand_alone, self.zone_stand_alone,
+                                                                        self.zone_ch, configs, its_sa_clustering=True)
+
+                    (self.veh_table, self.all_chs, self.stand_alone,
+                     self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id_2, self.veh_table, self.all_chs,
+                                                                        self.stand_alone, self.zone_stand_alone,
+                                                                        self.zone_ch, configs, its_sa_clustering=True)
                     selected_chs.add(veh_id)
                     selected_chs.add(veh_id_2)
                     continue
@@ -706,25 +698,16 @@ class DataTable:
                             ch = ch_i
                 selected_chs.add(ch)
 
-                self.veh_table.values(ch)['cluster_head'] = True
-                self.veh_table.values(ch)['cluster_members'].add(veh_id)
-                self.veh_table.values(veh_id)['primary_ch'] = ch
-                self.veh_table.values(veh_id)['counter'] = configs.counter
-                self.veh_table.values(ch)['counter'] = configs.counter
-                self.veh_table.values(ch)['start_ch_zone'] = self.veh_table.values(ch)['zone']
+                (self.veh_table, self.all_chs, self.stand_alone,
+                 self.zone_stand_alone, self.zone_ch) = util.set_ch(ch, self.veh_table, self.all_chs,
+                                                                    self.stand_alone, self.zone_stand_alone,
+                                                                    self.zone_ch, configs, its_sa_clustering=True)
 
-                self.veh_table.values(veh_id)['cluster_record'].tail.key = ch
-                self.veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = self.time
-                self.veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
-                # the ...tail.value['timer'] must be set to 0 here because at the end of this method,
-                # update_cluster method would be called again
-                self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
-
-                self.net_graph.add_edge(ch, veh_id)
-                self.all_chs.add(ch)
-                self.zone_ch[self.veh_table.values(ch)['zone']].add(ch)
-                self.stand_alone.remove(veh_id)
-                self.zone_stand_alone[self.veh_table.values(veh_id)['zone']].remove(veh_id)
+                (self.bus_table, self.veh_table,
+                 self.stand_alone,
+                 self.zone_stand_alone) = util.add_member(ch, self.bus_table, veh_id, self.veh_table,
+                                                          configs, ef, self.time, set(), set(), self.stand_alone,
+                                                          self.zone_stand_alone, set())
                 mem_control.add(veh_id)
                 try:
                     self.stand_alone.remove(ch)
