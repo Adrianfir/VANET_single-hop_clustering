@@ -13,12 +13,12 @@ import xml.dom.minidom
 class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
-        trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace.xml'))
-        sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                             joinpath('final_data_Richmondhill', 'osm.net.xml'))
-        sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                             joinpath('final_data_Richmondhill', 'osm_bbox.osm.xml'))
+        trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+                         joinpath('multi-hop_data_Richmondhill', 'sumoTrace.xml'))
+        sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+                             joinpath('multi-hop_data_Richmondhill', 'osm.net.xml'))
+        sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+                             joinpath('multi-hop_data_Richmondhill', 'osm_bbox.osm.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -29,8 +29,8 @@ class Inputs:
                     max_lat=44.012923,
                     max_long=-79.238069)
         alpha = 0.8
-        veh_trans_range = 800
-        bus_trans_range = 1000
+        veh_trans_range = 400
+        bus_trans_range = 800
         start_time = 1600
         iter = 60
         counter = 4
@@ -38,7 +38,7 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.0, 1.0, 1.0])      # direction's angle, speed, distance
+        weights = np.array([1, 0.0, 0.0])      # direction's angle, speed, distance
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
