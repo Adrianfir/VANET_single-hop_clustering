@@ -60,6 +60,7 @@ class DataTable:
         self.init_count = 0  # this counter is just for defining the self.net_graph for the very first time
         self.edge_color = ''
         self.sumo_edges, self.sumo_nodes = util.sumo_net_info(config.sumo_edge, config.sumo_node)
+        self.ch_net = None
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             self.init_count += 1
@@ -466,20 +467,24 @@ class DataTable:
             total_clusters += one_veh
         return np.divide(total_clusters, len(self.veh_table.ids()) + len(self.left_veh) - n_sav_ch)
 
-    def eval_connections(self):
+    def connected_components(self):
         n = 0  # this would return the minimum number of path needed to connect all the clusters
         investigated = set()
+        self.ch_net = nx.Graph()
+        self.ch_net.add_nodes_from(list(self.all_chs))
+
         for i in self.all_chs:
             investigated.add(i)
-            temp_table = self.veh_table if 'veh' in i else self.bus_table
-            if temp_table.values(i)['cluster_members'] != set():
-                for j in (self.all_chs - temp_table.values(i)['other_chs'] -
-                          temp_table.values(i)['gate_chs'] - investigated):
-                    try:
-                        nx.shortest_path(self.net_graph, source=i, target=j)
-                    except nx.exception.NetworkXNoPath:
-                        n += 1
-        return n
+            for j in (self.all_chs - investigated):
+                try:
+                    nx.shortest_path(self.net_graph, source=i, target=j)
+                    self.ch_net.add_edge(i,j)
+                except nx.exception.NetworkXNoPath:
+                    n += 1
+
+        conn_comp = list(nx.connected_components(self.ch_net))
+
+        return len(conn_comp)
 
     def show_graph(self, configs):
         """
