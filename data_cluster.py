@@ -310,36 +310,38 @@ class DataTable:
                 # determining the buses and cluster_head in neighbor zones
                 (bus_candidates, ch_candidates, other_vehs) = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                                    self.zone_buses, self.zone_vehicles)
-
-                self.single_hop(veh_id, config, zones,
-                                bus_candidates, ch_candidates, other_vehs)
+                if len(ch_candidates) > 0:
+                    self.single_hop(veh_id, config, zones,
+                                    bus_candidates, ch_candidates, other_vehs)
 
     def single_hop(self, veh_id, config, zones,
                    bus_candidates, ch_candidates, other_vehs):
 
-                if len(bus_candidates) > 0:
-                    bus_ch, ef = util.choose_ch(self.bus_table, self.veh_table.values(veh_id), zones,
-                                                bus_candidates, config)  # determine the best from bus_candidates
+        ef = 0
+        if len(ch_candidates) == 1:
+            veh_ch = list(ch_candidates)[0]
+        else:
+            #################################### calculating BeFit factor
+            befit_factor = dict()
+            con_factor = dict()
+            sf_factor = dict()
+            for jj in ch_candidates:
+                befit_factor[jj] = util.det_befit(self.veh_table, jj,
+                                                  self.sumo_edges, self.sumo_nodes, config)
+                con_factor[jj] = util.det_con_factor(self.veh_table, jj)
+                sf_factor[jj] = (0.5 * befit_factor[jj]) + (0.5 * con_factor[jj])
+            ###################################
+            veh_ch = list(ch_candidates)[0]
+            for ch_i in ch_candidates:
+                if sf_factor[ch_i] > sf_factor[veh_ch]:
+                    veh_ch = ch_i
 
-                    (self.bus_table, self.veh_table,
-                     self.stand_alone,
-                     self.zone_stand_alone) = util.add_member(bus_ch, self.bus_table, veh_id, self.veh_table,
-                                                              config, ef, self.time, bus_candidates,
-                                                              ch_candidates, self.stand_alone,
-                                                              self.zone_stand_alone, other_vehs)
-
-
-                elif (len(bus_candidates) == 0) and (len(ch_candidates) > 0):
-
-                    veh_ch, ef = util.choose_ch(self.veh_table, self.veh_table.values(veh_id),
-                                                zones, ch_candidates, config)  # determine the best from vehicles
-
-                    (self.bus_table, self.veh_table,
-                     self.stand_alone,
-                     self.zone_stand_alone) = util.add_member(veh_ch, self.bus_table, veh_id, self.veh_table,
-                                                              config, ef, self.time, bus_candidates,
-                                                              ch_candidates, self.stand_alone,
-                                                              self.zone_stand_alone, other_vehs)
+            (self.bus_table, self.veh_table,
+             self.stand_alone,
+             self.zone_stand_alone) = util.add_member(veh_ch, self.bus_table, veh_id, self.veh_table,
+                                                      config, ef, self.time, bus_candidates,
+                                                      ch_candidates, self.stand_alone,
+                                                      self.zone_stand_alone, other_vehs)
 
     def stand_alones_cluster(self, configs, zones):
         near_sa = dict()
@@ -698,6 +700,7 @@ class DataTable:
                     ef = 0
                 else:
                     ch = list(unique_pot_ch.intersection(near_sa[veh_id]))[0]
+                    ef = 0
                     for ch_i in unique_pot_ch.intersection(near_sa[veh_id]):
                         if sf_factor[ch_i] > sf_factor[ch]:
                             ch = ch_i
@@ -726,5 +729,3 @@ class DataTable:
             self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
-
-

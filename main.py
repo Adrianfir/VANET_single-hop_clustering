@@ -27,7 +27,7 @@ if __name__ == "__main__":
         cluster.update(configs, area_zones)
         print(cluster.time)
         cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
-        cluster.stand_alones_cluster(configs, area_zones)
+        cluster.dsca_clustering(configs, area_zones)
         cluster.update_other_connections()
         cluster.form_net_graph()
         connection_evaluation = cluster.connected_components()
