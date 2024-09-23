@@ -965,10 +965,12 @@ def other_connections_update(veh_table, bus_table, zone_ch,
             veh_table.values(veh_id)['other_vehs'] = other_vehs - {veh_id}
             if 'veh' in ch:
                 veh_table.values(ch)['gates'][veh_id] = veh_table.values(veh_id)['other_chs']
-                veh_table.values(ch)['gate_chs'] = veh_table.values(veh_id)['other_chs']
+                veh_table.values(ch)['gate_chs'].update(veh_table.values(ch)['gate_chs'].
+                                                           union(veh_table.values(veh_id)['other_chs']))
             else:
                 bus_table.values(ch)['gates'][veh_id] = veh_table.values(veh_id)['other_chs']
-                bus_table.values(ch)['gate_chs'] = veh_table.values(veh_id)['other_chs']
+                bus_table.values(ch)['gate_chs'].update(bus_table.values(ch)['gate_chs'].
+                                                           union(veh_table.values(veh_id)['other_chs']))
 
         elif veh_table.values(veh_id)['cluster_head'] is True:
             veh_table.values(veh_id)['other_chs'] = bus_candidates.union(ch_candidates)
