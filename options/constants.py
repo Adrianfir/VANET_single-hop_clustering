@@ -28,8 +28,8 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        alpha = 0.2
-        veh_trans_range = 100
+        alpha = 0.8
+        veh_trans_range = 400
         bus_trans_range = 800
         start_time = 1600
         iter = 120

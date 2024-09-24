@@ -146,7 +146,8 @@ class DataTable:
                                                                      )
                                         )
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
-        for k in (self.bus_table.ids() - bus_ids):
+        temp_left_buses = self.bus_table.ids() - bus_ids
+        for k in temp_left_buses:
             cm_temp = self.bus_table.values(k)['cluster_members'].copy()
             for m in cm_temp:
                 if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
@@ -157,20 +158,21 @@ class DataTable:
                                                                                    self.zone_stand_alone,
                                                                                    ch_stays=False)
                     # since k is not inside the area anymore, the priority_ch must be None
-                    self.veh_table.values(m)['priority_ch'] = None
-                    self.veh_table.values(m)['priority_counter'] = config.priority_counter
+                    # self.veh_table.values(m)['priority_ch'] = None
+                    # self.veh_table.values(m)['priority_counter'] = config.priority_counter
 
-                self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
-                self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
-                self.all_chs.remove(k)
-                self.bus_table.values(k)['depart_time'] = self.time - 1
-                self.left_bus[k] = self.bus_table.values(k)
+            self.zone_buses[self.bus_table.values(k)['zone']].remove(k)
+            self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
+            self.all_chs.remove(k)
+            self.bus_table.values(k)['depart_time'] = self.time - 1
+            self.left_bus[k] = self.bus_table.values(k)
 
-                self.bus_table.remove(k)
-                self.net_graph.remove_node(k)
+            self.bus_table.remove(k)
+            self.net_graph.remove_node(k)
 
         # removing the vehicles, that have left the understudied area, from self.veh_table and self.zone_vehicles
-        for k in (self.veh_table.ids() - veh_ids):
+        temp_left_vehs = self.veh_table.ids() - veh_ids
+        for k in temp_left_vehs:
             if self.veh_table.values(k)['cluster_head'] is True:
                 temp_cluster_members = self.veh_table.values(k)['cluster_members'].copy()
                 for m in temp_cluster_members:
