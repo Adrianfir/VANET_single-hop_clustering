@@ -151,12 +151,16 @@ class DataTable:
             cm_temp = self.bus_table.values(k)['cluster_members'].copy()
             for m in cm_temp:
                 if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
-                    (self.veh_table, self.bus_table,
-                     self.stand_alone, self.zone_stand_alone) = util.remove_member(m, k, self.veh_table,
-                                                                                   self.bus_table, config,
-                                                                                   self.stand_alone,
-                                                                                   self.zone_stand_alone,
-                                                                                   ch_stays=False)
+                    mem_stays = True
+                else:
+                    mem_stays = False
+                (self.veh_table, self.bus_table,
+                 self.stand_alone, self.zone_stand_alone) = util.remove_member(m, k, self.veh_table,
+                                                                               self.bus_table, config,
+                                                                               self.stand_alone,
+                                                                               self.zone_stand_alone,
+                                                                               ch_stays=False,
+                                                                              mem_stays=mem_stays)
                     # since k is not inside the area anymore, the priority_ch must be None
                     # self.veh_table.values(m)['priority_ch'] = None
                     # self.veh_table.values(m)['priority_counter'] = config.priority_counter
@@ -176,14 +180,17 @@ class DataTable:
             if self.veh_table.values(k)['cluster_head'] is True:
                 temp_cluster_members = self.veh_table.values(k)['cluster_members'].copy()
                 for m in temp_cluster_members:
-                    # if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
-                    if m in self.veh_table.values(k)['cluster_members']:
-                        (self.veh_table, self.bus_table,
-                         self.stand_alone, self.zone_stand_alone) = util.remove_member(m, k, self.veh_table,
-                                                                                       self.bus_table, config,
-                                                                                       self.stand_alone,
-                                                                                       self.zone_stand_alone,
-                                                                                       ch_stays=False)
+                    if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
+                        mem_stays = True
+                    else:
+                        mem_stays = False
+                    (self.veh_table, self.bus_table,
+                     self.stand_alone, self.zone_stand_alone) = util.remove_member(m, k, self.veh_table,
+                                                                                   self.bus_table, config,
+                                                                                   self.stand_alone,
+                                                                                   self.zone_stand_alone,
+                                                                                   ch_stays=False,
+                                                                                   mem_stays=mem_stays)
 
                 self.zone_ch[self.veh_table.values(k)['zone']].remove(k)
                 self.all_chs.remove(k)
