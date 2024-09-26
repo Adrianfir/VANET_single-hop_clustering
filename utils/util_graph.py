@@ -8,6 +8,7 @@ import networkx as nx
 
 def veh_add_edges(veh_id, veh_table, net_graph):
     """
+    Note: in this function we wont consider the stand-alone vehicles and will remove them from the other_vehs
     :param veh_id:
     :param veh_table:
     :param net_graph:
@@ -18,8 +19,12 @@ def veh_add_edges(veh_id, veh_table, net_graph):
         net_graph.add_edges_from([(veh_id, veh_table.values(veh_id)['primary_ch']),
                                  (veh_table.values(veh_id)['primary_ch'], veh_id)])
 
+    # Let's remove the stand_alone vehicles as they are not trustworthy to be considered as gates
+    temp_other_vehs = set([i for i in veh_table.values(veh_id)['other_vehs']
+                           if veh_table.values(i)['primary_ch'] is not None])
+
     all_nearby.update(all_nearby.union(all_nearby, veh_table.values(veh_id)['other_chs'],
-                     veh_table.values(veh_id)['other_vehs']
+                     temp_other_vehs
                                        )
                       )
 
