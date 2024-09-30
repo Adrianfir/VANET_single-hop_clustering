@@ -4,50 +4,77 @@
 This project is related to clustering and routing problem in VANET
 
 """
-__author__: str = "Pouya 'Adrian' Firouzmakan"
+author: str = "Pouya 'Adrian' Firouzmakan"
 
 import time
+import numpy as np
+import pandas as pd
 from data_cluster import DataTable
 from configs.config import Configs
 from zonex import ZoneID
 import utils.util as util
 import re
-import networkx as nx
-import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     configs = Configs().config
+    dif_tr = [100,]
+    ########################### Define different weights
+    # Define the size of each list and the step increment
+    list_size = 3
+    step = 0.1
+
+    # Generate all possible values from 0 to 1 with the given step
+    possible_values = [round(i * step, 1) for i in range(int(1 / step) + 1)]
+
+    # Generate all possible combinations of values with sum equal to 1
+    all_weight_lists = []
+
+    for val1 in possible_values:
+        for val2 in possible_values:
+            remaining = round(1 - val1 - val2, 1)
+            if remaining in possible_values and remaining >= 0:
+                all_weight_lists.append([val1, val2, remaining])
+    ############################
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
-    cluster = DataTable(configs, area_zones)
-    connections = list()
+    num_times = 1
     start_time = time.time()
-    for i in range(configs.iter):
-        cluster.update(configs, area_zones)
-        print(cluster.time)
-        cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
-        cluster.stand_alones_cluster(configs, area_zones)
-        cluster.update_other_connections()
-        cluster.form_net_graph()
-        connection_evaluation = cluster.connected_components()
-        connections.append(connection_evaluation)
-        # cluster.show_graph(configs)
-    #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
-    #
-    end_time = time.time()
-    # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
-    #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
 
-    cluster.print_table()
-    nx.draw(cluster.ch_net, with_labels=False)
-    print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
-    print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
-    print('\n')
-    print(f'n_vehs: {len(cluster.veh_table.ids())}')
-    print(f'n_buses: {len(cluster.bus_table.ids())}')
-    print(f'chs: {len(cluster.all_chs)}->{cluster.all_chs}')
-    print(f'stand_alones: {len(cluster.stand_alone)}->{cluster.stand_alone}')
-    print(f'execution time: {end_time - start_time}')
-    print(f'all the edges: \n{cluster.net_graph.edges()}')
-    plt.show()
+    for configs.veh_trans_range in dif_tr:
+        cols = ['rsu', 'TR', 'weights', 'n_veh', 'n_buses', 'n_sav', 'n_chs', 'stab_eval', 'connected_componentes']
+        out_put = pd.DataFrame(columns=cols)
+        for configs.weights in all_weight_lists:
+            configs.weights = np.array(configs.weights)
+            cluster = DataTable(configs, area_zones)
+            connections = list()
+            n_chs = list()
+            n_sav = list()
+            for i in range(configs.iter):
+                cluster.update(configs, area_zones)
+                print(cluster.time)
+                cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
+                cluster.stand_alones_cluster(configs, area_zones)
+                connections.append(cluster.connected_components())
+                n_chs.append(len(cluster.all_chs))
+                n_sav.append(len(cluster.stand_alone))
+
+            eval_cluster = cluster.eval_cluster(configs)
+
+            print(num_times, configs.veh_trans_range, configs.weights,
+                  len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
+                  len(cluster.stand_alone), len(cluster.all_chs), eval_cluster,
+                  sum(connections)/len(connections)
+                  )
+            num_times += 1
+
+            new_row = pd.Series(['no', configs.trans_range, configs.weights,
+                                 len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
+                                 sum(n_sav)/len(n_sav), sum(n_chs)/len(n_chs), eval_cluster,
+                                 sum(connections)/len(connections)], index=cols)
+
+            out_put = pd.concat([out_put, new_row.to_frame().T], ignore_index=True)
+
+        out_put.to_csv('results/' + str(configs.trans_range) + '.csv')
+        end_time = time.time()
+        print("execution time: ", end_time - start_time)
