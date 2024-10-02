@@ -406,14 +406,14 @@ def choose_ch(table, veh_table_i, area_zones, candidates, config):
     prev_veh_long = (area_zones.zone_hash.values(veh_table_i['prev_zone'])['max_long'] +
                      area_zones.zone_hash.values(veh_table_i['prev_zone'])['min_long']) / 2
 
-    euclidean_distance = hs.haversine((prev_veh_lat, prev_veh_long),
+    euclidean_distance_veh = hs.haversine((prev_veh_lat, prev_veh_long),
                                       (veh_table_i['lat'], veh_table_i['long']),
                                       unit=hs.Unit.METERS)
 
     veh_alpha = np.arctan2((veh_table_i['long'] - prev_veh_long), (veh_table_i['lat'] - prev_veh_lat))
 
-    veh_vector_x = np.multiply(euclidean_distance, np.cos(veh_alpha))
-    veh_vector_y = np.multiply(euclidean_distance, np.sin(veh_alpha))
+    veh_vector_x = np.multiply(euclidean_distance_veh, np.cos(veh_alpha))
+    veh_vector_y = np.multiply(euclidean_distance_veh, np.sin(veh_alpha))
 
     min_ef = float('inf')
     nominee = None
@@ -433,11 +433,13 @@ def choose_ch(table, veh_table_i, area_zones, candidates, config):
 
         ch_vector_x = np.multiply(euclidean_distance_ch, np.cos(ch_alpha))
         ch_vector_y = np.multiply(euclidean_distance_ch, np.sin(ch_alpha))
-
         # Calculate cosine similarity
         cos_sim = 1 - spatial.distance.cosine([veh_vector_x, veh_vector_y], [ch_vector_x, ch_vector_y])
         theta_sim = np.arccos(np.clip(cos_sim, -1.0, 1.0)) / (2 * np.pi)  # Ensure cos_sim is within valid range
 
+        euclidean_distance = hs.haversine((veh_table_i['lat'], veh_table_i['long']),
+                                      (table.values(j)['lat'], table.values(j)['long']),
+                                      unit=hs.Unit.METERS)
         theta_dist = euclidean_distance / min(table.values(j)['trans_range'], veh_table_i['trans_range'])
 
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -447,7 +449,6 @@ def choose_ch(table, veh_table_i, area_zones, candidates, config):
         # Calculate the Eligibility Factor (EF) for candidates
         weights = np.divide(config.weights, sum(config.weights))  # Normalize the weights
         ef = np.matmul(np.transpose(weights), np.array([theta_sim, speed_sim, theta_dist]))
-
         if ef < min_ef:
             min_ef = ef
             nominee = j
