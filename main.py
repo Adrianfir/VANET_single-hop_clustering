@@ -17,7 +17,7 @@ import re
 
 if __name__ == "__main__":
     configs = Configs().config
-    dif_tr = [100,]
+    dif_tr = [500, 600]
     ########################### Define different weights
     # Define the size of each list and the step increment
     list_size = 3
@@ -68,13 +68,13 @@ if __name__ == "__main__":
                   )
             num_times += 1
 
-            new_row = pd.Series(['no', configs.trans_range, configs.weights,
+            new_row = pd.Series(['no', configs.veh_trans_range, configs.weights,
                                  len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
                                  sum(n_sav)/len(n_sav), sum(n_chs)/len(n_chs), eval_cluster,
                                  sum(connections)/len(connections)], index=cols)
 
             out_put = pd.concat([out_put, new_row.to_frame().T], ignore_index=True)
 
-        out_put.to_csv('results/' + str(configs.trans_range) + '.csv')
+        out_put.to_csv('results/' + str(configs.veh_trans_range) + '.csv')
         end_time = time.time()
         print("execution time: ", end_time - start_time)
