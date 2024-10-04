@@ -17,7 +17,7 @@ import re
 
 if __name__ == "__main__":
     configs = Configs().config
-    dif_tr = [500, 600]
+    dif_tr = [200, 300, 400, 500]
     ########################### Define different weights
     # Define the size of each list and the step increment
     list_size = 3
