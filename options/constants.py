@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill', 'sumoTrace_rsu.xml'))
+                         joinpath('final_data_Richmondhill', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
                              joinpath('final_data_Richmondhill', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
