@@ -17,7 +17,7 @@ import re
 
 if __name__ == "__main__":
     configs = Configs().config
-    dif_tr = [500, ]
+    dif_tr = [300, ]
     ########################### Define different weights
     # Define the size of each list and the step increment
     list_size = 3
@@ -75,6 +75,6 @@ if __name__ == "__main__":
 
             out_put = pd.concat([out_put, new_row.to_frame().T], ignore_index=True)
 
-        out_put.to_csv('results/' + str(configs.veh_trans_range) + '.csv')
+        out_put.to_csv('results/' + str(configs.veh_trans_range) + '_RSU.csv')
         end_time = time.time()
         print("execution time: ", end_time - start_time)
