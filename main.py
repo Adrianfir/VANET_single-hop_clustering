@@ -42,12 +42,11 @@ if __name__ == "__main__":
     start_time = time.time()
 
     for configs.veh_trans_range in dif_tr:
-        cols = ['rsu', 'TR', 'weights', 'n_veh', 'n_buses', 'n_sav', 'n_chs', 'stab_eval', 'connected_componentes']
+        cols = ['rsu', 'TR', 'weights', 'n_veh', 'n_buses', 'n_sav', 'n_chs', 'stab_eval']
         out_put = pd.DataFrame(columns=cols)
         for configs.weights in all_weight_lists:
             configs.weights = np.array(configs.weights)
             cluster = DataTable(configs, area_zones)
-            connections = list()
             n_chs = list()
             n_sav = list()
             for i in range(configs.iter):
@@ -55,7 +54,6 @@ if __name__ == "__main__":
                 print(cluster.time)
                 cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
                 cluster.stand_alones_cluster(configs, area_zones)
-                connections.append(cluster.connected_components())
                 n_chs.append(len(cluster.all_chs))
                 n_sav.append(len(cluster.stand_alone))
 
@@ -63,15 +61,13 @@ if __name__ == "__main__":
 
             print(num_times, configs.veh_trans_range, configs.weights,
                   len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
-                  len(cluster.stand_alone), len(cluster.all_chs), eval_cluster,
-                  connections[-1]
+                  len(cluster.stand_alone), len(cluster.all_chs), eval_cluster
                   )
             num_times += 1
 
             new_row = pd.Series(['no', configs.veh_trans_range, configs.weights,
                                  len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
-                                 sum(n_sav)/len(n_sav), sum(n_chs)/len(n_chs), eval_cluster,
-                                 sum(connections)/len(connections)], index=cols)
+                                 sum(n_sav)/len(n_sav), sum(n_chs)/len(n_chs), eval_cluster], index=cols)
 
             out_put = pd.concat([out_put, new_row.to_frame().T], ignore_index=True)
 
