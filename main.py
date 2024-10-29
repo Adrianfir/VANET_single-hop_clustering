@@ -64,7 +64,7 @@ if __name__ == "__main__":
             print(num_times, configs.veh_trans_range, configs.weights,
                   len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
                   len(cluster.stand_alone), len(cluster.all_chs), eval_cluster,
-                  sum(connections)/len(connections)
+                  connections[-1]
                   )
             num_times += 1
 
