@@ -32,9 +32,9 @@ if __name__ == "__main__":
         cluster.form_net_graph()
         connection_evaluation = cluster.connected_components()
         connections.append(connection_evaluation)
-        # cluster.show_graph(configs)
+    #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
-    #
+    # #
     end_time = time.time()
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
