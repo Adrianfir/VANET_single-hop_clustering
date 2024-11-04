@@ -146,6 +146,11 @@ class DataTable:
                                                                      )
                                         )
         # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
+        for veh_id in veh_ids:
+            self.veh_table.values(veh_id)['other_chs'] = set()
+            self.veh_table.values(veh_id)['gates'] = dict()
+            self.veh_table.values(veh_id)['gate_chs'] = set()
+            self.veh_table.values(veh_id)['other_vehs'] = set()
         temp_left_buses = self.bus_table.ids() - bus_ids
         for k in temp_left_buses:
             cm_temp = self.bus_table.values(k)['cluster_members'].copy()
