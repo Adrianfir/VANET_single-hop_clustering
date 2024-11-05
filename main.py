@@ -22,6 +22,8 @@ if __name__ == "__main__":
     area_zones.zones()
     cluster = DataTable(configs, area_zones)
     connections = list()
+    n_chs = list()
+    n_savs = list()
     start_time = time.time()
     for i in range(configs.iter):
         cluster.update(configs, area_zones)
@@ -32,6 +34,8 @@ if __name__ == "__main__":
         cluster.form_net_graph()
         connection_evaluation = cluster.connected_components()
         connections.append(connection_evaluation)
+        n_chs.append(len(cluster.all_chs))
+        n_savs.append(len(cluster.stand_alone))
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
@@ -46,8 +50,13 @@ if __name__ == "__main__":
     print('\n')
     print(f'n_vehs: {len(cluster.veh_table.ids())}')
     print(f'n_buses: {len(cluster.bus_table.ids())}')
-    print(f'chs: {len(cluster.all_chs)}->{cluster.all_chs}')
-    print(f'stand_alones: {len(cluster.stand_alone)}->{cluster.stand_alone}')
+    print(f'avg_chs: {sum(n_chs)/len(n_chs)}')
+    print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
     print(f'execution time: {end_time - start_time}')
     print(f'all the edges: \n{cluster.net_graph.edges()}')
+    ch_high_mems = 0
+    for i in cluster.all_chs:
+        if len(cluster.veh_table.values(i)['cluster_members'])>10:
+            ch_high_mems += 1
+    print(f'ch_high_mems: {ch_high_mems}')
     plt.show()

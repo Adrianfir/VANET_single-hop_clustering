@@ -18,8 +18,8 @@ def remove_bus_vehicles(xml_file_path, output_file_path):
     tree.write(output_file_path)
 
 
-input_xml_file = '/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill_midsize/sumoTrace.xml'
-output_xml_file = ('/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill_midsize/'
+input_xml_file = '/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill_largesize/sumoTrace.xml'
+output_xml_file = ('/Users/pouyafirouzmakan/Desktop/VANET_single-hop_clustering/final_data_Richmondhill_largesize/'
                    'sumoTrace_no_bus_and_rsu.xml')
 
 remove_bus_vehicles(input_xml_file, output_xml_file)
