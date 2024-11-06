@@ -322,6 +322,7 @@ class DataTable:
                 self.veh_table.values(veh_id)['gate_chs'] = set()
                 self.veh_table.values(veh_id)['other_vehs'] = set()
 
+
                 # determining the buses and cluster_head in neighbor zones
                 (bus_candidates, ch_candidates, other_vehs) = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
                                                                    self.zone_buses, self.zone_vehicles)
@@ -344,7 +345,7 @@ class DataTable:
                 befit_factor[jj] = util.det_befit(self.veh_table, jj,
                                                   self.sumo_edges, self.sumo_nodes, config)
                 con_factor[jj] = util.det_con_factor(self.veh_table, jj)
-                sf_factor[jj] = (0.5 * befit_factor[jj]) + (0.5 * con_factor[jj])
+                sf_factor[jj] = (1 * befit_factor[jj]) + (0.0 * con_factor[jj])
             ###################################
             veh_ch = list(ch_candidates)[0]
             for ch_i in ch_candidates:
