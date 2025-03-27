@@ -13,12 +13,12 @@ import xml.dom.minidom
 class Inputs:
     def __init__(self):
         # Constants that we need to pass as arguments
-        trace_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                         joinpath('final_data_Richmondhill_largesize', 'sumoTrace_no_bus_and_rsu.xml'))
-        sumo_edge_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                             joinpath('final_data_Richmondhill_largesize', 'osm.net.xml'))
-        sumo_node_path = str(pathlib.Path(__file__).parent.parent.absolute().
-                             joinpath('final_data_Richmondhill_largesize', 'osm_bbox.osm.xml'))
+        trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'sumoTrace.xml'))
+        sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+                         joinpath('final_data_Richmondhill_largesize', 'osm.net.xml'))
+        sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
+                         joinpath('final_data_Richmondhill_largesize', 'osm_bbox.osm.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
