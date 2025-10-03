@@ -24,6 +24,7 @@ from selenium.webdriver.firefox.service import Service
 import os
 import cv2
 import re
+from queue import Queue
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -49,8 +50,6 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 arrive_time=None,
                 depart_time=None,
                 trans_range=config.bus_trans_range,
-                message_dest={},
-                message_source={},
                 cluster_head=True,
                 other_chs=set(),  # other chs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),
@@ -58,7 +57,11 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 gates=dict(),
                 ip=None,
                 mac=mac_address(),
-                counter=config.counter
+                counter=config.counter,
+                message_to_sent=list(),
+                message_received=list(),
+                message_to_pass=Queue(),
+                pass_messages=list()
                 )
 
 
@@ -94,8 +97,6 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 arrive_time=None,
                 depart_time=None,
                 trans_range=config.veh_trans_range,
-                message_dest={},
-                message_source={},
                 cluster_head=False,  # if the vehicle is a ch, it will be True
                 primary_ch=None,
                 priority_ch=None,
@@ -109,10 +110,14 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 mac=mac_address(),
                 counter=config.counter,  # a counter_time to search and join a cluster
                 start_ch_zone=None,  # This is the zone that vehicle starts becoming a ch
-                cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None})  # the linked_list
+                cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None}),  # the linked_list
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
                 # vehicle would remain in that cluster
+                message_to_send=list(),
+                message_received=list(),
+                message_to_pass=Queue(),
+                pass_messages=list()
                 )
 
 def add_member(ch_id, bus_table,
@@ -993,5 +998,3 @@ def other_connections_update(veh_table, bus_table, zone_ch,
         bus_table.values(bus)['other_chs'] = det_buses_other_ch(bus, veh_table,bus_table, zone_buses, zone_ch)
 
     return veh_table, bus_table
-
-
