@@ -12,7 +12,7 @@ import xml.dom.minidom
 
 class Inputs:
     def __init__(self):
-        # Constants that we need to pass as arguments
+        ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
                          joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'sumoTrace.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
@@ -39,6 +39,12 @@ class Inputs:
         center_loc = [43.869846, -79.443523]
         fps = 5
         weights = np.array([0.5, 0.5, 0.0])      # direction's angle, speed, distance
+
+        ####### Clustering Constants that we need to pass as arguments
+        link_limit = 4      # maximum number of packets to be transmitted via a link
+        drop_count = 10     # after this amount of iteration, the packet would be dropped
+
+
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--area', type=dict, default=area,
@@ -77,7 +83,13 @@ class Inputs:
                             help='The specific center location of the map for saving images and make slide-show')
         parser.add_argument('--fps', type=float, default=fps, help='frame per second')
         parser.add_argument('--iter', type=int, default=iter, help='number of intervals to run')
-        parser.add_argument('--weights', type=numpy.ndarray, default=weights, help='weights used for clustering')
+        parser.add_argument('--weights', type=numpy.ndarray, default=weights,
+                            help='weights used for clustering')
+        parser.add_argument('--link_limit', type=int, default=link_limit,
+                            help='maximum number of packets to be transmitted via a link')
+        parser.add_argument('--drop_count', type=int, default=drop_count,
+                            help='this is a counter. The packet would be dropped after this counter ends in case it '
+                                 'is not transmitted to the destination node')
         self.parser = parser
 
     def get_parser(self):

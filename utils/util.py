@@ -58,10 +58,8 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,
-                message_to_sent=list(),
-                message_received=list(),
-                message_to_pass=Queue(),
-                pass_messages=list()
+                packets_to_pass=Queue(),
+                passed_packets=list()
                 )
 
 
@@ -116,7 +114,8 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 # vehicle would remain in that cluster
                 message_to_send=list(),
                 message_received=list(),
-                message_to_pass=Queue(),
+                packets_to_pass=Queue(),
+                packets_to_send=Queue(),
                 pass_messages=list()
                 )
 

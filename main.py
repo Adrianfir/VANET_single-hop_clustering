@@ -14,8 +14,10 @@ import utils.util as util
 import re
 import networkx as nx
 import matplotlib.pyplot as plt
+import random
 
 if __name__ == "__main__":
+    random.seed(42)
     configs = Configs().config
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
