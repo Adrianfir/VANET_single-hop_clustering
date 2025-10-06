@@ -24,7 +24,6 @@ from selenium.webdriver.firefox.service import Service
 import os
 import cv2
 import re
-from queue import Queue
 
 
 def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
@@ -58,8 +57,8 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,
-                packets_to_pass=Queue(),
-                passed_packets=list()
+                packets_to_pass=dict(),
+                pck_queue=0,
                 )
 
 
@@ -112,11 +111,11 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
                 # vehicle would remain in that cluster
-                message_to_send=list(),
+                message_sent=list(),
                 message_received=list(),
-                packets_to_pass=Queue(),
-                packets_to_send=Queue(),
-                pass_messages=list()
+                packets_to_pass=dict(),
+                pck_queue=0,
+                packets_received=dict()
                 )
 
 def add_member(ch_id, bus_table,
