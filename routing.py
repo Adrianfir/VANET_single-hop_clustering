@@ -65,7 +65,12 @@ class Routing:
 
         on_way_packets = self.on_way_packets.copy()
         for pack in on_way_packets.keys():
-            if pack['check'] == 1:
+            if pack['del_check'] == 1:
                 self.on_way_packets.pop(pack)
+
+            else:
+                current_node = on_way_packets[pack]['current_node']
+                if current_node is on_way_packets[pack]['pack']['s_id']:
+                    util_routing.pass_packet(current_node, self.cluster.values(current_node)['primary_ch'])
 
         return self

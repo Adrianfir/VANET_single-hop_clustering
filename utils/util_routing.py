@@ -52,3 +52,7 @@ def gen_message(veh_table, s_id, d_id, send_time):
     for i in range(len(message)):
         pck_dict[i] = dict(pck=message[i], s_time=send_time, d_time=None, hops=0)
     return pck_dict
+
+def pass_packet(current_node, next_node):
+
+    return True
