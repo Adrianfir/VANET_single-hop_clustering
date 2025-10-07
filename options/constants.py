@@ -42,9 +42,10 @@ class Inputs:
 
 
 
-        ####### Clustering Constants that we need to pass as arguments
+        ####### Routing Constants that we need to pass as arguments
         link_limit = 5      # maximum number of packets to be transmitted via a link
         drop_count = 10     # after this amount of iteration, the packet would be dropped
+
 
 
 
