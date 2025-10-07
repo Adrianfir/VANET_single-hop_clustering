@@ -63,9 +63,9 @@ class Routing:
         self.link_cap = dict(zip(self.cluster.net_graph.edges(),
                                  [self.configs.link_limit for l in range(len(self.cluster.net_graph.edges()))]))
 
-        on_way_packets =
-        for pack in on_way_packets:
+        on_way_packets = self.on_way_packets.copy()
+        for pack in on_way_packets.keys():
             if pack['check'] == 1:
-                self.on_way_packets.get()
+                self.on_way_packets.pop(pack)
 
         return self
