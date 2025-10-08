@@ -57,8 +57,11 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,
+                message_sent=list(),
+                message_received=list(),
                 packets_to_pass=dict(),
                 pck_queue=0,
+                packets_received=dict()
                 )
 
 

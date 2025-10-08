@@ -17,6 +17,7 @@ import sys
 from graph import Graph
 import utils.util as util
 import utils.util_graph as util_graph
+import utils.util_routing as util_routing
 import hash
 
 
@@ -99,7 +100,15 @@ class DataTable:
                                                                      float(veh.getAttribute('x'))
                                                                      )
                                         )
-
+        # initiation for routing part
+        self.drops = list()
+        self.sent_messages = dict()
+        self.message_id = 0
+        self.on_way_packets = dict()
+        self.pck_queue = 0
+        self.delivered_packets = list()
+        self.delivered_messages = list()
+        self.link_cap = dict()
     def update(self, config, zones):
         """
         this method updates the bus_table and veh_table values for the current interval.
@@ -736,3 +745,71 @@ class DataTable:
             self.veh_table, self.net_graph = util.update_sa_net_graph(self.veh_table, k, near_sa, self.net_graph)
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
+
+    def gen_message(self, s_id, d_id):
+        message = ("Hey!" + "I" + " am" + " at " + str(self.veh_table.values(s_id)['lat'],
+                                                       self.veh_table.values(s_id)['long']) + "! I" +  "'ll" +
+                   " be" + " there" + " soon!!")
+        self.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
+                                                                        s_time=self.time, d_time=None,
+                                                                        hops=0
+                                                                        )
+
+
+        self.sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=self.time,
+                                                d_time=None, hops=0
+                                                )
+
+
+        pck_dict = dict()
+        for i in range(len(message)):
+            pck_dict[i] = dict(pck=message[i], message_id=self.message_id, source=s_id, dest=d_id, current_node=s_id,
+                               s_time=self.time, d_time=None, del_check=0, hops=list())
+
+            self.veh_table.values(s_id)['packets_to_pass'][self.veh_table.values(s_id)['pck_queue']] = pck_dict[i]
+            self.on_way_packets[self.pck_queue] = pck_dict[i]
+            self.pck_queue += 1
+            self.message_id += 1
+
+    def route(self, configs):
+        self.link_cap = dict(zip(self.net_graph.edges(),
+                                 [configs.link_limit for l in range(len(self.net_graph.edges()))]))
+
+        on_way_packets = self.on_way_packets.copy()
+        for pack in sorted(on_way_packets.keys()):
+            current_node = on_way_packets[pack]['current_node']
+            if current_node in self.stand_alone:  # if the node is a SAV now, have the packets in its buffer
+                continue
+            if current_node is on_way_packets[pack]['source']:
+                ch_id = self.veh_table.values(current_node)['primary_ch']
+                if self.link_cap[sorted((current_node, ch_id))] > 0:
+                    if 'bus' in ch_id:
+                        q_link = util_routing.intra_q_link(current_node, ch_id, self.veh_table,
+                                                           self.bus_table, configs)
+                        if q_link >= configs.qol_thresh:
+                            (current_node, self.veh_table,
+                             self.bus_table) = util_routing.pass_packet(current_node, self.veh_table,
+                                                                                self.bus_table, configs)
+                    else:
+                        (current_node, self.veh_table,
+                         self.bus_table) = util_routing.extra_pass_packet(current_node, self.veh_table,
+                                                                                  self.bus_table, configs)
+
+                    self.link_cap[sorted((current_node, ch_id))] -= 1
+
+                else:
+                    pass
+
+            check_receiver = util_routing.check_receiver(on_way_packets, pack, self.cluster.veh_table,
+                                                         self.bus_table, current_node)
+            if check_receiver == 1:
+                (self.veh_table, self.bus_table,
+                 pack, self.on_way_packets,
+                 self.delivered_packets) = util_routing.pack_delivered(current_node, self.veh_table,
+                                                                       self.bus_table, pack,
+                                                                       self.on_way_packets,
+                                                                       self.delivered_packets)
+
+            elif check_receiver == 0:
+                util_routing.pack_delivered(current_node, self.veh_table, self.bus_table, pack,
+                                            self.on_way_packets, self.delivered_packets)

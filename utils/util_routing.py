@@ -10,6 +10,8 @@ from distutils.command.config import config
 import numpy as np
 import random
 import haversine as hs
+from debugpy.common.timestamp import current
+
 from linked_list import LinkedList
 import utils.util as util
 from scipy import spatial
@@ -73,8 +75,15 @@ def check_receiver(on_way_packets, pack, veh_table, bus_table, current_node):
         return -1
 
 
-def pack_delivered(veh_table, bus_table,
+def pack_delivered(current_node, veh_table, bus_table,
                    pack, on_way_packets, delivered_packets):
+    if 'bus' in current_node:
+        on_way_packets[pack]['del_check'] = 1
+        bus_table.values(current_node)['packet_received'][pack] = on_way_packets[pack]
+        temp_pack = bus_table.values(current_node)['packet_received'][pack].pop()
+
+
+    else:
 
     return True
 
