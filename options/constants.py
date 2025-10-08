@@ -45,7 +45,7 @@ class Inputs:
         ####### Routing Constants that we need to pass as arguments
         link_limit = 5      # maximum number of packets to be transmitted via a link
         drop_count = 10     # after this amount of iteration, the packet would be dropped
-
+        qol_thresh = 0.7    # threshold for quality of link
 
 
 
@@ -93,6 +93,8 @@ class Inputs:
         parser.add_argument('--drop_count', type=int, default=drop_count,
                             help='this is a counter. The packet would be dropped after this counter ends in case it '
                                  'is not transmitted to the destination node')
+        parser.add_argument('--qol_thresh', type=float, default=qol_thresh,
+                            help='Threshold for quality of the link')
         self.parser = parser
 
     def get_parser(self):

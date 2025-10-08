@@ -47,7 +47,7 @@ import re
 #         pck_dict[i] = dict(pck=message[i], s_time=send_time, d_time=None, hops=0)
 #     return message, pck_dict
 
-def intra_pass_packet(current_node, veh_table, bus_table, configs):
+def intra_pass_packet(current_node, veh_table, bus_table, packet, configs):
     """
     The important thing is that the maximum speed is considered as 80 here
     :param current_node:
@@ -57,11 +57,18 @@ def intra_pass_packet(current_node, veh_table, bus_table, configs):
     :return:
     """
     ch_id = veh_table.values(current_node)['primary_ch']
-    table = bus_table if 'bus' in ch_id else veh_table
+    if 'bus' in ch_id:
+         q_link = intra_q_link(current_node, ch_id, veh_table, bus_table, configs)
 
-    q_link = intra_q_link(current_node, ch_id, veh_table, table, configs)
+        if q_link >= configs.qol_thresh:
+            bus_table.values(ch_id)['packets_to_pass'][bus_table.values(ch_id)['packet_queue']] = packet
 
-    if q_link >= configs.qol_thresh:
+    else:
+        q_link = intra_q_link(current_node, ch_id, veh_table, veh_table, configs)
+
+
+
+
 
 
 
