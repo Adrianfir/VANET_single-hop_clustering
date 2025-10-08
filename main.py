@@ -56,9 +56,9 @@ if __name__ == "__main__":
     print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
     print(f'execution time: {end_time - start_time}')
     print(f'all the edges: \n{cluster.net_graph.edges()}')
-    ch_high_mems = 0
-    for i in cluster.all_chs:
-        if len(cluster.veh_table.values(i)['cluster_members'])>10:
-            ch_high_mems += 1
-    print(f'ch_high_mems: {ch_high_mems}')
+    # ch_high_mems = 0
+    # for i in cluster.all_chs:
+    #     if len(cluster.veh_table.values(i)['cluster_members'])>10:
+    #         ch_high_mems += 1
+    # print(f'ch_high_mems: {ch_high_mems}')
     plt.show()

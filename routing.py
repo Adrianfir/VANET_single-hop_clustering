@@ -53,13 +53,35 @@ class Routing:
 
         on_way_packets = self.on_way_packets.copy()
         for pack in on_way_packets.keys():
-
             current_node = on_way_packets[pack]['current_node']
-            if current_node is on_way_packets[pack]['pack']['s_id']:
-                (current_node, self.cluster.veh_table,
-                 self.cluster.bus_table) = util_routing.intra_pass_packet(current_node, self.cluster.veh_table,
-                                               self.cluster.bus_table, self.configs)
-            else:
-                (current_node, self.cluster.veh_table,
-                 self.cluster.bus_table) = util_routing.extra_pass_packet(current_node, self.cluster.veh_table,
-                                               self.cluster.bus_table, self.configs)
+            if current_node in self.cluster.stand_alone: # if the node is a SAV now, have the packets in its buffer
+                continue
+            if current_node is on_way_packets[pack]['source']:
+                ch_id = self.cluster.values(current_node)['primary_ch']
+                if self.link_cap[sorted((current_node, ch_id))] > 0:
+                    if 'bus' in ch_id:
+                        q_link = util_routing.intra_q_link(current_node, ch_id, self.cluster.veh_table,
+                                                           self.cluster.bus_table, self.configs)
+                        if q_link >= self.configs.qol_thresh:
+                            (current_node, self.cluster.veh_table,
+                             self.cluster.bus_table) = util_routing.pass_packet(current_node, self.cluster.veh_table,
+                                                           self.cluster.bus_table, self.configs)
+                    else:
+                        (current_node, self.cluster.veh_table,
+                         self.cluster.bus_table) = util_routing.extra_pass_packet(current_node, self.cluster.veh_table,
+                                                       self.cluster.bus_table, self.configs)
+
+                    self.link_cap[sorted((current_node, ch_id))] -= 1
+
+                else:
+                    pass
+
+            check_receiver = util_routing.check_receiver(on_way_packets, pack, self.cluster.veh_table,
+                                                         self.cluster.bus_table, current_node)
+            if check_receiver == 1:
+                util_routing.pack_delivered(self.cluster.veh_table, self.cluster.bus_table, pack, self.on_way_packets,
+                                                self.delivered_packets)
+
+            elif check_receiver == 0:
+                util_routing.pack_delivered(self.cluster.veh_table, self.cluster.bus_table, pack, self.on_way_packets,
+                                            self.delivered_packets)

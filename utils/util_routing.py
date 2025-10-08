@@ -3,7 +3,7 @@ This is the utils file including the small functions for basic routing implement
 using https://ieeexplore.ieee.org/abstract/document/8588189
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['gen_message', 'intra_pass_packet', 'extra_pass_packet']
+__all__ = ['check_receiver', 'extra_ch_evaluation', 'intra_q_link', 'pack_delivered', 'pass_packet']
 
 from distutils.command.config import config
 
@@ -47,35 +47,56 @@ import re
 #         pck_dict[i] = dict(pck=message[i], s_time=send_time, d_time=None, hops=0)
 #     return message, pck_dict
 
-def intra_pass_packet(current_node, veh_table, bus_table, packet, configs):
+def check_receiver(on_way_packets, pack, veh_table, bus_table, current_node):
+    """
+    this function checks f the packet is delivered ti the destination.
+    :param on_way_packets:
+    :param pack: packet_id of the packet
+    :param veh_table:
+    :param bus_table:
+    :param current_node:
+    :return: 1 if the destination is the ch node having the packet. 0 if the destination node is inside the
+    cluster members of the ch node that has received the packet. -1 if the destination node is  neither the ch nor
+    inside that cluster
+    """
+    if current_node == on_way_packets[pack]['dest']:
+        return 1
+
+    elif ((('bus' in current_node) and
+          (on_way_packets[pack]['dest'] in bus_table.values(current_node)['cluster_members']))
+          or ((('veh' in current_node) and (veh_table.values(current_node)['cluster_head'] is True))
+              and (on_way_packets[pack]['dest'] in veh_table.values(current_node)['cluster_members']))):
+        return 0
+
+    else:
+
+        return -1
+
+
+def pack_delivered(veh_table, bus_table,
+                   pack, on_way_packets, delivered_packets):
+
+    return True
+
+
+def pass_packet(current_node, veh_table, bus_table, packet, configs):
     """
     The important thing is that the maximum speed is considered as 80 here
     :param current_node:
     :param veh_table:
     :param bus_table:
-    :param configs:
+    :param configs
     :return:
     """
     ch_id = veh_table.values(current_node)['primary_ch']
     if 'bus' in ch_id:
-         q_link = intra_q_link(current_node, ch_id, veh_table, bus_table, configs)
 
-        if q_link >= configs.qol_thresh:
-            bus_table.values(ch_id)['packets_to_pass'][bus_table.values(ch_id)['packet_queue']] = packet
-
+        q_link = intra_q_link(current_node, ch_id, veh_table, bus_table, configs)
     else:
         q_link = intra_q_link(current_node, ch_id, veh_table, veh_table, configs)
 
-
-
-
-
-
-
-
-def extra_pass_packet(current_node, veh_table, bus_table, configs):
-
     return True
+
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
 
@@ -86,3 +107,9 @@ def intra_q_link(current_node, ch_id, veh_table, table, configs):
                                                      ) * (1 - (abs(veh_table.values(current_node)['angle'] -
                                                                    table.values(ch_id)['angle']) / 180))
     return q_link
+
+
+def extra_ch_evaluation(current_node, veh_table, bus_table, configs):
+
+    return True
+
