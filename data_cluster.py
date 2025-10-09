@@ -104,11 +104,12 @@ class DataTable:
         self.drops = list()
         self.sent_messages = dict()
         self.message_id = 0
-        self.on_way_packets = dict()
         self.pck_queue = 0
         self.delivered_packets = list()
         self.delivered_messages = list()
         self.link_cap = dict()
+        self.nodes_with_pack = set()
+
     def update(self, config, zones):
         """
         this method updates the bus_table and veh_table values for the current interval.
@@ -746,7 +747,7 @@ class DataTable:
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
 
-    def gen_message(self, s_id, d_id):
+    def gen_message(self, s_id, d_id, configs):
         message = ("Hey!" + "I" + " am" + " at " + str(self.veh_table.values(s_id)['lat'],
                                                        self.veh_table.values(s_id)['long']) + "! I" +  "'ll" +
                    " be" + " there" + " soon!!")
@@ -764,52 +765,89 @@ class DataTable:
         pck_dict = dict()
         for i in range(len(message)):
             pck_dict[i] = dict(pck=message[i], message_id=self.message_id, source=s_id, dest=d_id, current_node=s_id,
-                               s_time=self.time, d_time=None, del_check=0, hops=list())
+                               s_time=self.time, d_time=None, del_check=0, drop_count=configs.drop_count, hops=list())
 
-            self.veh_table.values(s_id)['packets_to_pass'][self.veh_table.values(s_id)['pck_queue']] = pck_dict[i]
-            self.on_way_packets[self.pck_queue] = pck_dict[i]
+            self.veh_table.values(s_id)['packets_to_pass'][self.veh_table.values(s_id)].put(pck_dict[i])
+            self.nodes_with_pack.add(s_id)
             self.pck_queue += 1
             self.message_id += 1
 
     def route(self, configs):
+        """
+        This routing approach is a basic approach that is proposed in https://ieeexplore.ieee.org/abstract/document/8588189.
+        In this routing approach, the packets would be passed from one CH to another CH and the only communication
+        between the cm and ch is when a cm is the source or the destination node
+        :param configs:
+        :return:
+        """
         self.link_cap = dict(zip(self.net_graph.edges(),
                                  [configs.link_limit for l in range(len(self.net_graph.edges()))]))
 
-        on_way_packets = self.on_way_packets.copy()
-        for pack in sorted(on_way_packets.keys()):
-            current_node = on_way_packets[pack]['current_node']
-            if current_node in self.stand_alone:  # if the node is a SAV now, have the packets in its buffer
+        for node in self.nodes_with_pack:
+            table = self.bus_table if 'bus' in node else self.veh_table
+            if len(table.values(node)['packet_to_pass'].queue) is 0:
                 continue
-            if current_node is on_way_packets[pack]['source']:
-                ch_id = self.veh_table.values(current_node)['primary_ch']
-                if self.link_cap[sorted((current_node, ch_id))] > 0:
-                    if 'bus' in ch_id:
-                        q_link = util_routing.intra_q_link(current_node, ch_id, self.veh_table,
-                                                           self.bus_table, configs)
-                        if q_link >= configs.qol_thresh:
-                            (current_node, self.veh_table,
-                             self.bus_table) = util_routing.pass_packet(current_node, self.veh_table,
-                                                                                self.bus_table, configs)
-                    else:
-                        (current_node, self.veh_table,
-                         self.bus_table) = util_routing.extra_pass_packet(current_node, self.veh_table,
-                                                                                  self.bus_table, configs)
 
-                    self.link_cap[sorted((current_node, ch_id))] -= 1
 
-                else:
-                    pass
 
-            check_receiver = util_routing.check_receiver(on_way_packets, pack, self.cluster.veh_table,
-                                                         self.bus_table, current_node)
-            if check_receiver == 1:
-                (self.veh_table, self.bus_table,
-                 pack, self.on_way_packets,
-                 self.delivered_packets) = util_routing.pack_delivered(current_node, self.veh_table,
-                                                                       self.bus_table, pack,
-                                                                       self.on_way_packets,
-                                                                       self.delivered_packets)
 
-            elif check_receiver == 0:
-                util_routing.pack_delivered(current_node, self.veh_table, self.bus_table, pack,
-                                            self.on_way_packets, self.delivered_packets)
+            if table.values(node)['other_chs'] is set():
+                temp_queue = list(table.values(node)['packet_to_pass'].queue)
+                for p in temp_queue:
+                    if ('veh' in node) and (node == p['source']):
+                        if self.veh_table.values(node)['cluster_head'] is False:
+                            ch_id = self.veh_table.values(node)['primary_ch']
+                            ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
+                            if util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs) > 0.7:
+                                
+
+                    table.values(node)['packet_to_pass'].queue[p]['drop_count'] -= 1
+                    if table.values(node)['packet_to_pass'].queue[p]['drop_count'] == 0:
+                        table.values(node)['packet_to_pass'].queue.get()   #Since it is a queue, then if there is any
+                        # packet to be dropped is the first packet.vIt should be noted that after each hop, the
+                        # count-down for dropping the packet would get reset.
+                continue
+
+            else:
+
+
+
+
+
+        # for pack in sorted(on_way_packets.keys()):
+        #     current_node = on_way_packets[pack]['current_node']
+        #     if current_node in self.stand_alone:  # if the node is a SAV now, have the packets in its buffer
+        #         continue
+        #     if current_node is on_way_packets[pack]['source']:
+        #         ch_id = self.veh_table.values(current_node)['primary_ch']
+        #         if self.link_cap[sorted((current_node, ch_id))] > 0:
+        #             if 'bus' in ch_id:
+        #                 q_link = util_routing.intra_q_link(current_node, ch_id, self.veh_table,
+        #                                                    self.bus_table, configs)
+        #                 if q_link >= configs.qol_thresh:
+        #                     (current_node, self.veh_table,
+        #                      self.bus_table) = util_routing.pass_packet(current_node, self.veh_table,
+        #                                                                         self.bus_table, configs)
+        #             else:
+        #                 (current_node, self.veh_table,
+        #                  self.bus_table) = util_routing.extra_pass_packet(current_node, self.veh_table,
+        #                                                                           self.bus_table, configs)
+        #
+        #             self.link_cap[sorted((current_node, ch_id))] -= 1
+        #
+        #         else:
+        #             pass
+        #
+        #     check_receiver = util_routing.check_receiver(on_way_packets, pack, self.cluster.veh_table,
+        #                                                  self.bus_table, current_node)
+        #     if check_receiver == 1:
+        #         (self.veh_table, self.bus_table,
+        #          pack, self.on_way_packets,
+        #          self.delivered_packets) = util_routing.pack_delivered(current_node, self.veh_table,
+        #                                                                self.bus_table, pack,
+        #                                                                self.on_way_packets,
+        #                                                                self.delivered_packets)
+        #
+        #     elif check_receiver == 0:
+        #         util_routing.pack_delivered(current_node, self.veh_table, self.bus_table, pack,
+        #                                     self.on_way_packets, self.delivered_packets)
