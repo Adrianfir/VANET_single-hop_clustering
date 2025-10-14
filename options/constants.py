@@ -43,9 +43,14 @@ class Inputs:
 
 
         ####### Routing Constants that we need to pass as arguments
-        link_limit = 5      # maximum number of packets to be transmitted via a link
-        drop_count = 10     # after this amount of iteration, the packet would be dropped
+        link_limit = 500000      # the link capacity based on bps
+        drop_count = 15     # after this amount of iteration, the packet would be dropped
         qol_thresh = 0.7    # threshold for quality of link
+        mtu = 1500          # Maximum Transmission Unit which is the maximum size of each packet based on byte
+        header_size = 70    # the header_size of each packet can be around 58-70 bytes
+        beacon_size = 160   # it should be considered for the beacons related to the clustering
+        # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
+
 
 
 
@@ -89,12 +94,18 @@ class Inputs:
         parser.add_argument('--weights', type=numpy.ndarray, default=weights,
                             help='weights used for clustering')
         parser.add_argument('--link_limit', type=int, default=link_limit,
-                            help='maximum number of packets to be transmitted via a link')
+                            help='link capacity based on Mbps')
         parser.add_argument('--drop_count', type=int, default=drop_count,
                             help='this is a counter. The packet would be dropped after this counter ends in case it '
                                  'is not transmitted to the destination node')
         parser.add_argument('--qol_thresh', type=float, default=qol_thresh,
                             help='Threshold for quality of the link')
+        parser.add_argument('--mtu', type=float, default=mtu,
+                            help='Maximum Transmission Unit which is the maximum size of each packet based on byte')
+        parser.add_argument('--header_size', type=float, default=header_size,
+                            help='header size of each packet. it can be between 58 to 70 bytes.')
+        parser.add_argument('--beacon_size', type=float, default=beacon_size,
+                            help='size of beacons related to clustering per second (kbps)')
         self.parser = parser
 
     def get_parser(self):

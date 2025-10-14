@@ -7,6 +7,8 @@ understudied area and creating and updating the clusters using recursion.
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
 
+import random
+
 import numpy as np
 import networkx as nx
 import folium
@@ -748,29 +750,39 @@ class DataTable:
         self.update_cluster(self.veh_table.ids(), configs, zones)
 
     def gen_message(self, s_id, d_id, configs):
-        message = ("Hey!" + "I" + " am" + " at " + str(self.veh_table.values(s_id)['lat'],
-                                                       self.veh_table.values(s_id)['long']) + "! I" +  "'ll" +
-                   " be" + " there" + " soon!!")
-        self.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
-                                                                        s_time=self.time, d_time=None,
-                                                                        hops=0
+        """
+        here we assumed that each message contains 3-10 packets. the last packet would have a size more than 50-70 bytes
+        (which is the size dedicated to header size) and configs.mtu which is the maximum size of a packet.
+        :param s_id:
+        :param d_id:
+        :param configs:
+        :return:
+        """
+        # message = ("Hey!" + "I" + " am" + " at " + str((self.veh_table.values(s_id)['lat'],
+        #                                                self.veh_table.values(s_id)['long'])) + "! I" +  "'ll" +
+        #            " be" + " there" + " soon!!")
+        len_message = random.randint(3, 10)
+        message = ['packet'+str(pck) for pck in range(len_message)]
+        self.veh_table.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
+                                                                          s_time=self.time, d_time=None,hops=0
                                                                         )
 
 
         self.sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=self.time,
-                                                d_time=None, hops=0
-                                                )
+                                                d_time=None,hops=0)
 
-
+        self.message_id += 1
         pck_dict = dict()
-        for i in range(len(message)):
+        for i in range(len_message):
             pck_dict[i] = dict(pck=message[i], message_id=self.message_id, source=s_id, dest=d_id, current_node=s_id,
                                s_time=self.time, d_time=None, del_check=0, drop_count=configs.drop_count, hops=list())
+            pck_dict[i]['size'] = random.randint(configs.header_size+1, configs.mtu) if i == len_message-1 \
+                else  configs.mtu    # the last packet of the message can have a size
+            # between configs.header_size+1 and configs.mtu
 
             self.veh_table.values(s_id)['packets_to_pass'][self.veh_table.values(s_id)].put(pck_dict[i])
             self.nodes_with_pack.add(s_id)
             self.pck_queue += 1
-            self.message_id += 1
 
     def route(self, configs):
         """
@@ -788,27 +800,33 @@ class DataTable:
             if len(table.values(node)['packet_to_pass'].queue) is 0:
                 continue
 
-
-
-
-            if table.values(node)['other_chs'] is set():
+            if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
                 temp_queue = list(table.values(node)['packet_to_pass'].queue)
-                for p in temp_queue:
-                    if ('veh' in node) and (node == p['source']):
-                        if self.veh_table.values(node)['cluster_head'] is False:
-                            ch_id = self.veh_table.values(node)['primary_ch']
-                            ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
-                            if util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs) > 0.7:
-                                
 
-                    table.values(node)['packet_to_pass'].queue[p]['drop_count'] -= 1
-                    if table.values(node)['packet_to_pass'].queue[p]['drop_count'] == 0:
-                        table.values(node)['packet_to_pass'].queue.get()   #Since it is a queue, then if there is any
-                        # packet to be dropped is the first packet.vIt should be noted that after each hop, the
-                        # count-down for dropping the packet would get reset.
+                for packet in temp_queue:
+                    table.values(node)['packet_to_pass'].queue[packet]['drop_count'] -= 1
+
+                    if table.values(node)['packet_to_pass'].queue[packet]['drop_count'] == 0:
+                        self.drops.append(table.values(node)['packet_to_pass'].queue.get())   #Since it is a queue,
+                        # then if there is any packet to be dropped is the first packet.vIt should be noted that after
+                        # each hop, the count-down for dropping the packet would get reset.
                 continue
 
+            if (table.values(node)['cluster_head'] is False) and (node == packet['source']):
+                if ((self.veh_table.values(node)['cluster_head'] is False) and
+                        (self.link_cap[sorted((node, self.veh_table.values(node)['primary_ch']))] > 0)):
+                    ch_id = self.veh_table.values(node)['primary_ch']
+                    ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
+
+                    q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
+                    if q_link >= configs.qol_thresh:
+                        util_routing.pass_packet(node, self.veh_table, self.bus_table, packet, configs)
+
+                    else:
+                        temp_gates = (
+                            self.veh_table.values(node)['other_vehs'].union(ch_table.values(ch_id)['cluster_members']))
             else:
+
 
 
 
