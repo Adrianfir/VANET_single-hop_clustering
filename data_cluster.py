@@ -782,7 +782,7 @@ class DataTable:
                 else  configs.mtu    # the last packet of the message can have a size
             # between configs.header_size+1 and configs.mtu
 
-            self.veh_table.values(s_id)['packets_to_pass'][self.veh_table.values(s_id)].put(pck_dict[i])
+            self.veh_table.values(s_id)['packets_to_pass'][self.veh_table.values(s_id)].append(pck_dict[i])
             self.nodes_with_pack.add(s_id)
             self.pck_queue += 1
 
@@ -797,38 +797,62 @@ class DataTable:
         self.link_cap = dict(zip(self.net_graph.edges(),
                                  [configs.link_limit for l in range(len(self.net_graph.edges()))]))
 
-        for node in self.nodes_with_pack:
-            table = self.bus_table if 'bus' in node else self.veh_table
-            if len(table.values(node)['packet_to_pass']) == 0:
-                continue
+        for h in range(configs.max_hop):
+            any_pck_transmitted = 0    # this is a control parameter to break from the hop-loop if no packet transmitted
 
-            if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
-                temp_pack_list = table.values(node)['packet_to_pass'].copy()
+            for node in self.nodes_with_pack:
+                table = self.bus_table if 'bus' in node else self.veh_table
+                if len(table.values(node)['packet_to_pass']) == 0:
+                    continue
 
-                for packet in temp_pack_list:
-                    table.values(node)['packet_to_pass'][packet]['drop_count'] -= 1
+                if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
 
-                    if table.values(node)['packet_to_pass'].queue[packet]['drop_count'] == 0:
-                        self.drops.append(table.values(node)['packet_to_pass'].queue.get())   #Since it is a queue,
-                        # then if there is any packet to be dropped is the first packet.vIt should be noted that after
-                        # each hop, the count-down for dropping the packet would get reset.
-                continue
+                    # temp_pack_list = table.values(node)['packet_to_pass'].copy()
+                    # for packet in temp_pack_list:
+                    #     table.values(node)['packet_to_pass'][packet]['drop_count'] -= 1
+                    #
+                    #     if table.values(node)['packet_to_pass'].queue[packet]['drop_count'] == 0:
+                    #         self.drops.append(table.values(node)['packet_to_pass'].pop(0))   #Since it is a queue,
+                    #         # then if there is any packet to be dropped is the first packet. It should be noted that after
+                    #         # each hop, the count-down for dropping the packet would get reset.
+                    continue
 
-            if (table.values(node)['cluster_head'] is False) and (node == packet['source']):
-                if ((self.veh_table.values(node)['cluster_head'] is False) and
-                        (self.link_cap[sorted((node, self.veh_table.values(node)['primary_ch']))] > 0)):
-                    ch_id = self.veh_table.values(node)['primary_ch']
-                    ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
+                if (table.values(node)['cluster_head'] is False) and (table.values(node)['packets_to_pass'] is True):
+                    # This means that the source is the node itself, and we need to pass the packet to it CH
+                    for packet in self.veh_table.values(node)['packets_to_pass']:
+                        if self.link_cap[sorted((node, self.veh_table.values(node)['primary_ch']))] > 0:
+                            ch_id = self.veh_table.values(node)['primary_ch']
+                            ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
 
-                    q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
-                    if q_link >= configs.qol_thresh:
-                        util_routing.pass_packet(node, self.veh_table, self.bus_table, packet, configs)
+                            q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
+                            temp_gates = (self.veh_table.values(node)['other_vehs'].
+                                          union(ch_table.values(ch_id)['cluster_members']))
+                            if (q_link >= configs.qol_thresh) or (len(temp_gates) is 0):
+                                self.veh_table, self.bus_table, self.nodes_with_pack = (
+                                    util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
+                                                             self.nodes_with_pack, packet, configs))
+                                self.link_cap[sorted((node, ch_id))] -= (
+                                    packet['size'])
+                                any_pck_transmitted = 1
 
-                    else:
-                        temp_gates = (
-                            self.veh_table.values(node)['other_vehs'].union(ch_table.values(ch_id)['cluster_members']))
-            else:
+                            else:
+                                next_node = ch_id
+                                for n in temp_gates:
+                                    if util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs) > q_link:
+                                        next_node = n
+                                        q_link =  util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs)
 
+                                self.veh_table, self.bus_table, self.nodes_with_pack = (
+                                    util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
+                                                             self.nodes_with_pack, packet, configs))
+                                self.link_cap[sorted((node, next_node))] -= (
+                                    packet['size'])
+                                any_pck_transmitted = 1
+                else:
+                    pass
+
+            if any_pck_transmitted is 0:
+                break
 
 
 

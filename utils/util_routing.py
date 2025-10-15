@@ -25,29 +25,6 @@ import os
 import cv2
 import re
 
-# def gen_message(veh_table, s_id, d_id, send_time):
-#     """
-#     This function defines the message generation and encoding to be transmitted. Also the whole message considered in
-#     this message generator can be considered as one packet, still in the paper we are going to say each word is
-#     considered as one packet just for evaluation purposes. In general, to have more than one packet,
-#     the message must exceed  Maximum Transmission Unit (MTU), e.g., 512B or even 1500B depending on the network
-#     raw_message = dict(text= "Hey!!" + "This is" str(s_id) + "!! still on the road! I’ll be there soon!",
-#                    source=s_id,
-#                    dest=d_id,
-#                    )
-#     :param veh_table: vehicle's hash table
-#     :param s_id: source id
-#     :param d_id: destination id
-#     :param send_time: time that the message is about to be sent
-#     :return: the updated vehicle's hash table
-#     """
-#     message = ("Hey!" + "I" + " am" + " at " + str(veh_table.values(s_id)['lat'], veh_table.values(s_id)['long']) +
-#                "! I" +  "'ll" + " be" + " there" + " soon!!")
-#
-#     pck_dict = dict()
-#     for i in range(len(message)):
-#         pck_dict[i] = dict(pck=message[i], s_time=send_time, d_time=None, hops=0)
-#     return message, pck_dict
 
 def check_receiver(on_way_packets, pack, veh_table, bus_table, current_node):
     """
@@ -88,7 +65,7 @@ def pack_delivered(current_node, veh_table, bus_table,
     return True
 
 
-def pass_packet(current_node, veh_table, bus_table, packet, configs):
+def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet, packet, configs):
     """
     The important thing is that the maximum speed is considered as 80 here
     :param current_node:
@@ -97,15 +74,27 @@ def pass_packet(current_node, veh_table, bus_table, packet, configs):
     :param configs
     :return:
     """
-    ch_id = veh_table.values(current_node)['primary_ch']
-    if 'bus' in ch_id:
+    # ch_id = veh_table.values(current_node)['primary_ch']
+    # if 'bus' in ch_id:
+    #
+    #     q_link = intra_q_link(current_node, ch_id, veh_table, bus_table, configs)
+    # else:
+    #     q_link = intra_q_link(current_node, ch_id, veh_table, veh_table, configs)
+    #
+    # return True
+    if ('veh' in current_node) and ('veh' in next_node):
+        veh_table.values(next_node)['packet_to_pass'].append(packet)
+        veh_table.values(next_node)['packet_to_pass'].remove(packet)
+        nodes_with_packet.add(next_node)
+        node_with_packet.remove(current_node) if len(veh_table.values(current_node)['packet_to_pass'])==0
 
-        q_link = intra_q_link(current_node, ch_id, veh_table, bus_table, configs)
-    else:
-        q_link = intra_q_link(current_node, ch_id, veh_table, veh_table, configs)
+    if ('veh' in current_node) and ('bus' in next_node):
 
-    return True
+    if ('bus' in current_node) and ('veh' in next_node):
 
+    if ('bus' in current_node) and ('bus' in next_node):
+
+    return veh_table, bus_table
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
 
