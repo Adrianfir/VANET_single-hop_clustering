@@ -12,7 +12,6 @@ __all__ = [
 
 import numpy as np
 import random
-from queue import Queue
 import haversine as hs
 from linked_list import LinkedList
 from scipy import spatial
@@ -60,7 +59,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 counter=config.counter,
                 message_sent=list(),
                 message_received=list(),
-                packets_to_pass=Queue(),
+                packets_to_pass=list(),
                 packets_received=dict()
                 )
 
@@ -116,7 +115,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 # vehicle would remain in that cluster
                 message_sent=list(),
                 message_received=list(),
-                packets_to_pass=Queue(),
+                packets_to_pass=list(),
                 packets_received=dict()
                 )
 

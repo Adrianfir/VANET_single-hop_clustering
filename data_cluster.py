@@ -764,18 +764,20 @@ class DataTable:
         len_message = random.randint(3, 10)
         message = ['packet'+str(pck) for pck in range(len_message)]
         self.veh_table.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
-                                                                          s_time=self.time, d_time=None,hops=0
+                                                                          s_time=self.time, d_time=None, hops=0
                                                                         )
 
 
         self.sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=self.time,
-                                                d_time=None,hops=0)
+                                                d_time=None, hops=0,)
 
         self.message_id += 1
         pck_dict = dict()
         for i in range(len_message):
             pck_dict[i] = dict(pck=message[i], message_id=self.message_id, source=s_id, dest=d_id, current_node=s_id,
-                               s_time=self.time, d_time=None, del_check=0, drop_count=configs.drop_count, hops=list())
+                               s_time=self.time, d_time=None, del_check=0, drop_count=configs.drop_count, hops=list(),
+                               hop_limit=configs.max_hop
+                               )
             pck_dict[i]['size'] = random.randint(configs.header_size+1, configs.mtu) if i == len_message-1 \
                 else  configs.mtu    # the last packet of the message can have a size
             # between configs.header_size+1 and configs.mtu
@@ -797,14 +799,14 @@ class DataTable:
 
         for node in self.nodes_with_pack:
             table = self.bus_table if 'bus' in node else self.veh_table
-            if len(table.values(node)['packet_to_pass'].queue) is 0:
+            if len(table.values(node)['packet_to_pass']) == 0:
                 continue
 
             if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
-                temp_queue = list(table.values(node)['packet_to_pass'].queue)
+                temp_pack_list = table.values(node)['packet_to_pass'].copy()
 
-                for packet in temp_queue:
-                    table.values(node)['packet_to_pass'].queue[packet]['drop_count'] -= 1
+                for packet in temp_pack_list:
+                    table.values(node)['packet_to_pass'][packet]['drop_count'] -= 1
 
                     if table.values(node)['packet_to_pass'].queue[packet]['drop_count'] == 0:
                         self.drops.append(table.values(node)['packet_to_pass'].queue.get())   #Since it is a queue,

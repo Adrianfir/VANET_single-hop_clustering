@@ -50,6 +50,7 @@ class Inputs:
         header_size = 70    # the header_size of each packet can be around 58-70 bytes
         beacon_size = 160   # it should be considered for the beacons related to the clustering
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
+        max_hop = 18        # maximum number of hops that a packet can travel per tick
 
 
 
@@ -106,6 +107,8 @@ class Inputs:
                             help='header size of each packet. it can be between 58 to 70 bytes.')
         parser.add_argument('--beacon_size', type=float, default=beacon_size,
                             help='size of beacons related to clustering per second (kbps)')
+        parser.add_argument('--max_hop', type=float, default=max_hop,
+                            help='maximum number of hops that a packet can travel per tick')
         self.parser = parser
 
     def get_parser(self):
