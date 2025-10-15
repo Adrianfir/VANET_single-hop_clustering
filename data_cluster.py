@@ -108,7 +108,7 @@ class DataTable:
         self.message_id = 0
         self.pck_queue = 0
         self.delivered_packets = list()
-        self.delivered_messages = list()
+        # self.delivered_messages = list()
         self.link_cap = dict()
         self.nodes_with_pack = set()
 
@@ -826,23 +826,29 @@ class DataTable:
                             q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
                             temp_gates = (self.veh_table.values(node)['other_vehs'].
                                           union(ch_table.values(ch_id)['cluster_members']))
-                            if (q_link >= configs.qol_thresh) or (len(temp_gates) is 0):
-                                self.veh_table, self.bus_table, self.nodes_with_pack = (
+                            if (((q_link >= configs.qol_thresh) or (len(temp_gates) is 0))
+                                    and (self.link_cap[sorted((node, ch_id))] > packet['size'])):
+                                self.veh_table, self.bus_table, self.nodes_with_pack , self.delivered_packets = (
                                     util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
-                                                             self.nodes_with_pack, packet, configs, self.time))
+                                                             self.nodes_with_pack, self.delivered_packets, packet,
+                                                             configs, self.time))
                                 self.link_cap[sorted((node, ch_id))] -= packet['size']
                                 any_pck_transmitted = 1
 
                             else:
                                 next_node = ch_id
                                 for n in temp_gates:
-                                    if util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs) > q_link:
-                                        next_node = n
-                                        q_link =  util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs)
+                                    if self.link_cap[sorted((node, ch_id))] > packet['size']:
+                                        if (util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs) >
+                                                q_link):
+                                            next_node = n
+                                            q_link =  util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table,
+                                                                                configs)
 
-                                self.veh_table, self.bus_table, self.nodes_with_pack = (
+                                self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets = (
                                     util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
-                                                             self.nodes_with_pack, packet, configs, self.time))
+                                                             self.nodes_with_pack, self.delivered_packets, packet,
+                                                             configs, self.time))
                                 self.link_cap[sorted((node, next_node))] -= packet['size']
                                 any_pck_transmitted = 1
 
@@ -851,7 +857,11 @@ class DataTable:
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is True):
 
 
+
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is False):
+                    for pack in range(table.values(node)['cluster_head']['packet_to_pass']):
+                        table.values(node)['cluster_head']['packet_to_pass'][pack]['drop_count'] -= 1
+
                     continue
 
             if any_pck_transmitted is 0:

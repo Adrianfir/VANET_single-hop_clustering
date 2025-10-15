@@ -3,27 +3,27 @@ This is the utils file including the small functions for basic routing implement
 using https://ieeexplore.ieee.org/abstract/document/8588189
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['check_receiver', 'extra_ch_evaluation', 'intra_q_link', 'pack_delivered', 'pass_packet']
+__all__ = ['check_receiver', 'extra_ch_evaluation', 'intra_q_link', 'pass_packet']
 
-from distutils.command.config import config
-
-import numpy as np
-import random
-import haversine as hs
-from debugpy.common.timestamp import current
-
-from linked_list import LinkedList
+# from distutils.command.config import config
+#
+# import numpy as np
+# import random
+# import haversine as hs
+# from debugpy.common.timestamp import current
+#
+# from linked_list import LinkedList
 import utils.util as util
-from scipy import spatial
-import time
-from PIL import Image
-from io import BytesIO
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.firefox.service import Service
-import os
-import cv2
-import re
+# from scipy import spatial
+# import time
+# from PIL import Image
+# from io import BytesIO
+# from selenium import webdriver
+# from selenium.webdriver.firefox.options import Options
+# from selenium.webdriver.firefox.service import Service
+# import os
+# import cv2
+# import re
 
 
 def check_receiver(on_way_packets, pack, veh_table, bus_table, current_node):
@@ -52,26 +52,13 @@ def check_receiver(on_way_packets, pack, veh_table, bus_table, current_node):
         return -1
 
 
-def pack_delivered(current_node, veh_table, bus_table,
-                   pack, on_way_packets, delivered_packets):
-    if 'bus' in current_node:
-        on_way_packets[pack]['del_check'] = 1
-        bus_table.values(current_node)['packet_received'][pack] = on_way_packets[pack]
-        temp_pack = bus_table.values(current_node)['packet_received'][pack].pop()
-
-
-    else:
-
-    return True
-
-
-def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet, packet, configs, time):
+def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
+                delivered_packets, packet, time):
     """
     The important thing is that the maximum speed is considered as 80 here
     :param current_node:
     :param veh_table:
     :param bus_table:
-    :param configs
     :return:
     """
     # ch_id = veh_table.values(current_node)['primary_ch']
@@ -92,7 +79,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
                 veh_table.values(next_node)['packets_received'][packet['message_id']] = list()
             veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
-
+            delivered_packets.append(packet)
         else:
             veh_table.values(next_node)['packet_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
@@ -112,7 +99,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
                 bus_table.values(next_node)['packets_received'][packet['message_id']] = list()
             bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
-
+            delivered_packets.append(packet)
         else:
             bus_table.values(next_node)['packet_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
@@ -130,7 +117,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
                 veh_table.values(next_node)['packets_received'][packet['message_id']] = list()
             veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
-
+            delivered_packets.append(packet)
         else:
             veh_table.values(next_node)['packet_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
@@ -148,7 +135,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
                 bus_table.values(next_node)['packets_received'][packet['message_id']] = list()
             bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
-
+            delivered_packets.append(packet)
         else:
             bus_table.values(next_node)['packet_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
@@ -157,7 +144,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         if len(bus_table.values(current_node)['packet_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
 
-    return veh_table, bus_table, nodes_with_packet
+    return veh_table, bus_table, nodes_with_packet, delivered_packets
 
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
