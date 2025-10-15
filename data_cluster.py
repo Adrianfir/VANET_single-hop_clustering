@@ -764,19 +764,18 @@ class DataTable:
         len_message = random.randint(3, 10)
         message = ['packet'+str(pck) for pck in range(len_message)]
         self.veh_table.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
-                                                                          s_time=self.time, d_time=None, hops=0
-                                                                        )
+                                                                          s_time=self.time, d_time=None, hops=0,
+                                                                          length=len_message)
 
 
         self.sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=self.time,
-                                                d_time=None, hops=0,)
+                                                d_time=None, hops=0, length=len_message)
 
         self.message_id += 1
         pck_dict = dict()
         for i in range(len_message):
             pck_dict[i] = dict(pck=message[i], message_id=self.message_id, source=s_id, dest=d_id, current_node=s_id,
                                s_time=self.time, d_time=None, del_check=0, drop_count=configs.drop_count, hops=list(),
-                               hop_limit=configs.max_hop
                                )
             pck_dict[i]['size'] = random.randint(configs.header_size+1, configs.mtu) if i == len_message-1 \
                 else  configs.mtu    # the last packet of the message can have a size
@@ -817,7 +816,7 @@ class DataTable:
                     #         # each hop, the count-down for dropping the packet would get reset.
                     continue
 
-                if (table.values(node)['cluster_head'] is False) and (table.values(node)['packets_to_pass'] is True):
+                if table.values(node)['cluster_head'] is False:
                     # This means that the source is the node itself, and we need to pass the packet to it CH
                     for packet in self.veh_table.values(node)['packets_to_pass']:
                         if self.link_cap[sorted((node, self.veh_table.values(node)['primary_ch']))] > 0:
@@ -830,9 +829,8 @@ class DataTable:
                             if (q_link >= configs.qol_thresh) or (len(temp_gates) is 0):
                                 self.veh_table, self.bus_table, self.nodes_with_pack = (
                                     util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
-                                                             self.nodes_with_pack, packet, configs))
-                                self.link_cap[sorted((node, ch_id))] -= (
-                                    packet['size'])
+                                                             self.nodes_with_pack, packet, configs, self.time))
+                                self.link_cap[sorted((node, ch_id))] -= packet['size']
                                 any_pck_transmitted = 1
 
                             else:
@@ -844,12 +842,17 @@ class DataTable:
 
                                 self.veh_table, self.bus_table, self.nodes_with_pack = (
                                     util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
-                                                             self.nodes_with_pack, packet, configs))
-                                self.link_cap[sorted((node, next_node))] -= (
-                                    packet['size'])
+                                                             self.nodes_with_pack, packet, configs, self.time))
+                                self.link_cap[sorted((node, next_node))] -= packet['size']
                                 any_pck_transmitted = 1
-                else:
-                    pass
+
+                    continue
+
+                if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is True):
+
+
+                if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is False):
+                    continue
 
             if any_pck_transmitted is 0:
                 break
