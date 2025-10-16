@@ -792,24 +792,12 @@ class DataTable:
                     self.nodes_with_pack.remove(node)
                     continue
 
-                if ('veh' in node) and (table.values(node)['primary_ch'] is None): # when the primary_ch has left
-                    for pack in range(len(table.values(node)['packets_to_pass'])):
-                        table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
-                    continue
-
-                if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
-
-                    for pack in range(len(table.values(node)['packets_to_pass'])):
-                        table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
-
-                    continue
-
-                if table.values(node)['cluster_head'] is False:
+                if (table.values(node)['cluster_head'] is False) and (table.values(node)['primary_ch'] is not None):
                     # This means that the source is the node itself, and we need to pass the packet to it CH
 
                     for packet in self.veh_table.values(node)['packets_to_pass']:
 
-                        if (self.link_cap[tuple(sorted((node,self.veh_table.values(node)['primary_ch'])))]
+                        if (self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))]
                                 > configs.link_limit):
                             ch_id = self.veh_table.values(node)['primary_ch']
                             ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
@@ -848,70 +836,89 @@ class DataTable:
                         self.nodes_with_pack.remove(node)
                     continue
 
-                if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is True):
+                if (table.values(node)['cluster_head'] is False) and (table.values(node)['primary_ch'] is None): # when the primary_ch has left
+                    for pack in range(len(table.values(node)['packets_to_pass'])):
+                        table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
+                    continue
 
-                    if len(table.values(node)['other_chs']) > 1:
-                        temp_i = 0
-                        temp_control = False
-                        inter_link_q = 0
-                        while temp_control is False:
-                            if (self.link_cap[tuple(sorted((node,table.values(node)['other_chs'][temp_i])))]
-                                    > configs.link_limit):
-                                temp_ch = table.values(node)['other_chs'][temp_i]
-                                inter_link_q = util_routing.inter_ch_eval(node, temp_ch, self.veh_table, self.bus_table,
-                                                                                            configs)
-                                temp_control = True
-                            else:
-                                if len(table.values(node)['other_chs']) > temp_i + 2:
-                                    temp_i += 1
-                                else:
-                                    break
+                if table.values(node)['cluster_head'] is True:
 
-                        for ch in table.values(node)['other_chs'][1:]:
-
-                            if self.link_cap[tuple(sorted((node,ch)))] > configs.link_limit:
-                                temp_ling_q = util_routing.inter_ch_eval(node, ch, self.veh_table, self.bus_table, configs)
-
-                                if temp_ling_q < inter_link_q:
-                                    temp_ch = ch
-                                    inter_link_q = temp_ling_q
-
-                        for packet in table.values(node)['packets_to_pass']:
-                            (self.veh_table, self.bus_table,
-                             self.nodes_with_pack,
-                             self.delivered_packets,
-                             self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, temp_ch, self.veh_table,
-                                                                                self.bus_table, self.nodes_with_pack,
-                                                                                self.delivered_packets, self.link_cap,
-                                                                                any_pck_transmitted, packet, self.time)
-
-                            if self.link_cap[tuple(sorted((node,temp_ch)))] < configs.link_limit:
-                                continue
-
-                    else:
-                        next_ch = table.values(node)['other_chs'][0]
-
-                        for packet in table.values(node)['packets_to_pass']:
-                            if self.link_cap[tuple(sorted((node,next_ch)))] > configs.link_limit:
+                    for packet in table.values(node)['packets_to_pass']:
+                        if packet['dest'] in table.values(node)['cluster_members']:
+                            member = packet['dest']
+                            if self.link_cap[tuple(sorted((node, member)))] > configs.link_limit:
                                 (self.veh_table, self.bus_table,
                                  self.nodes_with_pack,
                                  self.delivered_packets,
-                                 self.link_cap, any_pck_transmitted) = (
-                                    util_routing.pass_packet(node, temp_ch,self.veh_table, self.bus_table,
-                                                             self.nodes_with_pack, self.delivered_packets, self.link_cap,
-                                                             any_pck_transmitted, packet, self.time))
+                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, member,
+                                                                                                self.veh_table,
+                                                                                                self.bus_table,
+                                                                                                self.nodes_with_pack,
+                                                                                                self.delivered_packets,
+                                                                                                self.link_cap,
+                                                                                                any_pck_transmitted,
+                                                                                                packet, self.time)
+
+                        elif table.values(node)['other_chs'] is False:
+                            table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
+
+                        elif table.values(node)['other_chs'] is True:
+                            if len(table.values(node)['other_chs']) > 1:
+                                temp_i = 0
+                                temp_control = False
+                                inter_link_q = 0
+                                while temp_control is False:
+                                    if (self.link_cap[tuple(sorted((node, table.values(node)['other_chs'][temp_i])))]
+                                            > configs.link_limit):
+                                        temp_ch = table.values(node)['other_chs'][temp_i]
+                                        inter_link_q = util_routing.inter_ch_eval(node, temp_ch, self.veh_table,
+                                                                                  self.bus_table,
+                                                                                  configs)
+                                        temp_control = True
+                                    else:
+                                        if len(table.values(node)['other_chs']) > temp_i + 2:
+                                            temp_i += 1
+                                        else:
+                                            break
+                                for ch in table.values(node)['other_chs'][1:]:
+
+                                    if self.link_cap[tuple(sorted((node, ch)))] > configs.link_limit:
+                                        temp_ling_q = util_routing.inter_ch_eval(node, ch, self.veh_table,
+                                                                                 self.bus_table, configs)
+
+                                        if temp_ling_q < inter_link_q:
+                                            temp_ch = ch
+                                            inter_link_q = temp_ling_q
+
+                                (self.veh_table, self.bus_table,
+                                 self.nodes_with_pack,
+                                 self.delivered_packets,
+                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, temp_ch,
+                                                                                                self.veh_table,
+                                                                                                self.bus_table,
+                                                                                                self.nodes_with_pack,
+                                                                                                self.delivered_packets,
+                                                                                                self.link_cap,
+                                                                                                any_pck_transmitted,
+                                                                                                packet, self.time)
+
+                                if self.link_cap[tuple(sorted((node, temp_ch)))] < configs.link_limit:
+                                    continue
+
                             else:
-                                break
+                                next_ch = table.values(node)['other_chs'][0]
+                                if self.link_cap[tuple(sorted((node, next_ch)))] > configs.link_limit:
+                                    (self.veh_table, self.bus_table,
+                                     self.nodes_with_pack,
+                                     self.delivered_packets,
+                                     self.link_cap, any_pck_transmitted) = (
+                                        util_routing.pass_packet(node, temp_ch, self.veh_table, self.bus_table,
+                                                                 self.nodes_with_pack, self.delivered_packets,
+                                                                 self.link_cap,
+                                                                 any_pck_transmitted, packet, self.time))
 
                     if len(table.values(node)['packets_to_pass']) == 0:
                         self.nodes_with_pack.remove(node)
-
-                if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is False):
-
-                    for pack in range(table.values(node)['cluster_head']['packets_to_pass']):
-                        table.values(node)['cluster_head']['packets_to_pass'][pack]['drop_count'] -= 1
-
-                    continue
 
             if any_pck_transmitted is False:
                 break
