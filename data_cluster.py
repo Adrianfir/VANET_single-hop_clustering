@@ -788,7 +788,7 @@ class DataTable:
             for node in self.nodes_with_pack:
                 table = self.bus_table if 'bus' in node else self.veh_table
 
-                if len(table.values(node)['packet_to_pass']) == 0:
+                if len(table.values(node)['packets_to_pass']) == 0:
                     continue
 
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
@@ -799,7 +799,7 @@ class DataTable:
 
                     for packet in self.veh_table.values(node)['packets_to_pass']:
 
-                        if self.link_cap[sorted((node, self.veh_table.values(node)['primary_ch']))] > 0:
+                        if self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))] > 0:
                             ch_id = self.veh_table.values(node)['primary_ch']
                             ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
 
@@ -807,14 +807,13 @@ class DataTable:
                             temp_gates = (self.veh_table.values(node)['other_vehs'].
                                           union(ch_table.values(ch_id)['cluster_members']))
 
-                            if (((q_link >= configs.qol_thresh) or (len(temp_gates) is 0))
+                            if (((q_link >= configs.qol_thresh) or (len(temp_gates) == 0))
                                     and (self.link_cap[sorted((node, ch_id))] > packet['size'])):
                                 self.veh_table, self.bus_table, self.nodes_with_pack , self.delivered_packets = (
                                     util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
-                                                             self.nodes_with_pack, self.delivered_packets, packet,
+                                                             self.nodes_with_pack, self.delivered_packets,
+                                                             self.link_cap, any_pck_transmitted, packet,
                                                              self.time))
-                                self.link_cap[sorted((node, ch_id))] -= packet['size']
-                                any_pck_transmitted = True
 
                             else:
                                 next_node = ch_id
@@ -829,10 +828,9 @@ class DataTable:
 
                                 self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets = (
                                     util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
-                                                             self.nodes_with_pack, self.delivered_packets, packet,
-                                                             self.time))
-                                self.link_cap[sorted((node, next_node))] -= packet['size']
-                                any_pck_transmitted = True
+                                                             self.nodes_with_pack, self.delivered_packets,
+                                                             self.link_cap, any_pck_transmitted, packet, self.time))
+
 
                     continue
 
@@ -853,13 +851,14 @@ class DataTable:
                                                                                               self.bus_table,
                                                                                               self.nodes_with_pack,
                                                                                               self.delivered_packets,
-                                                                                              self.time)
-                    any_pck_transmitted = True
+                                                                                              self.link_cap,
+                                                                                              any_pck_transmitted,
+                                                                                              packet, self.time)
 
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is False):
 
-                    for pack in range(table.values(node)['cluster_head']['packet_to_pass']):
-                        table.values(node)['cluster_head']['packet_to_pass'][pack]['drop_count'] -= 1
+                    for pack in range(table.values(node)['cluster_head']['packets_to_pass']):
+                        table.values(node)['cluster_head']['packets_to_pass'][pack]['drop_count'] -= 1
 
                     continue
 

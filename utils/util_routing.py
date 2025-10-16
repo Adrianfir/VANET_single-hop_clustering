@@ -67,9 +67,11 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
         return veh_table,sent_messages, message_id, nodes_with_pack, pck_queue
 
 def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
-                delivered_packets, packet, time):
+                delivered_packets, link_cap, any_pck_transmitted ,packet, time):
     """
     The important thing is that the maximum speed is considered as 80 here
+    :param any_pck_transmitted:
+    :param link_cap:
     :param nodes_with_packet:
     :param next_node:
     :param time:
@@ -163,7 +165,10 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         if len(bus_table.values(current_node)['packet_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
 
-    return veh_table, bus_table, nodes_with_packet, delivered_packets
+    link_cap[tuple(sorted((current_node, next_node)))] -= packet['size']
+    any_pck_transmitted = True
+
+    return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
 
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):

@@ -57,7 +57,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 ip=None,
                 mac=mac_address(),
                 counter=config.counter,
-                message_sent=list(),
+                messages_sent=dict(),
                 message_received=list(),
                 packets_to_pass=list(),
                 packets_received=dict()
@@ -113,7 +113,7 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
                 # vehicle would remain in that cluster
-                message_sent=list(),
+                messages_sent=dict(),
                 message_received=list(),
                 packets_to_pass=list(),
                 packets_received=dict()
