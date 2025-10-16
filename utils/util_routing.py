@@ -163,7 +163,16 @@ def intra_q_link(current_node, ch_id, veh_table, table, configs):
     return q_link
 
 
-def extra_ch_evaluation(current_node, veh_table, bus_table, configs):
+def inter_ch_eval(node, ch, veh_table, bus_table, configs):
+    node_table = veh_table if 'veh' in node else bus_table
+    next_ch_table = veh_table if 'veh' in node else bus_table
 
-    return True
+    d = (util.det_dist(node, node_table, ch, next_ch_table)/
+         max(node_table.values(node)['trans_range'], next_ch_table.values(ch)['trans_range']))
+
+    v = (abs(node_table.values(node)['speed'] - next_ch_table.values(ch)['speed'])/
+         max(node_table.values(node)['speed'], next_ch_table.values(ch)['speed']))
+
+
+    return
 

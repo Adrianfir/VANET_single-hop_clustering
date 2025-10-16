@@ -857,12 +857,10 @@ class DataTable:
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is True):
 
                     temp_ch = table.values(node)['other_chs'][0]
-                    temp_table = self.veh_table if 'veh' in temp_ch else self.bus_table
-                    inter_link_q = util_routing.intra_q_link(node, temp_ch, self.veh_table, temp_table,
+                    inter_link_q = util_routing.inter_ch_eval(node, temp_ch, self.veh_table, self.bus_table,
                                                                                 configs)
                     for ch in table.values(node)['other_chs'][1:]:
-                        temp_table = self.veh_table if 'veh' in ch else self.bus_table
-                        temp_ling_q = util_routing.intra_q_link(node, ch, self.veh_table, temp_table, configs)
+                        temp_ling_q = util_routing.inter_ch_eval(node, ch, self.veh_table, self.bus_table, configs)
                         if temp_ling_q < inter_link_q:
                             temp_ch = ch
                             inter_link_q = temp_ling_q
