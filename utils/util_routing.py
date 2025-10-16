@@ -92,7 +92,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     # return True
     if ('veh' in current_node) and ('veh' in next_node):
 
-        packet['hop'].append(next_node)
+        packet['hops'].append(next_node)
         packet['current_node'] = next_node
         if next_node is packet['dest']:
             packet['del_check'] = True
@@ -102,11 +102,11 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
             delivered_packets.append(packet)
         else:
-            veh_table.values(next_node)['packet_to_pass'].append(packet)
+            veh_table.values(next_node)['packets_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
 
-        veh_table.values(current_node)['packet_to_pass'].remove(packet)
-        if len(veh_table.values(current_node)['packet_to_pass']) == 0:
+        veh_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(veh_table.values(current_node)['packets_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
 
 
@@ -122,11 +122,11 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
             delivered_packets.append(packet)
         else:
-            bus_table.values(next_node)['packet_to_pass'].append(packet)
+            bus_table.values(next_node)['packets_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
 
-        veh_table.values(current_node)['packet_to_pass'].remove(packet)
-        if len(veh_table.values(current_node)['packet_to_pass']) == 0:
+        veh_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(veh_table.values(current_node)['packets_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
 
     if ('bus' in current_node) and ('veh' in next_node):
@@ -140,11 +140,11 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
             delivered_packets.append(packet)
         else:
-            veh_table.values(next_node)['packet_to_pass'].append(packet)
+            veh_table.values(next_node)['packets_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
 
-        bus_table.values(current_node)['packet_to_pass'].remove(packet)
-        if len(bus_table.values(current_node)['packet_to_pass']) == 0:
+        bus_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(bus_table.values(current_node)['packets_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
 
     if ('bus' in current_node) and ('bus' in next_node):
@@ -158,11 +158,11 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
             delivered_packets.append(packet)
         else:
-            bus_table.values(next_node)['packet_to_pass'].append(packet)
+            bus_table.values(next_node)['packets_to_pass'].append(packet)
             nodes_with_packet.add(next_node)
 
-        bus_table.values(current_node)['packet_to_pass'].remove(packet)
-        if len(bus_table.values(current_node)['packet_to_pass']) == 0:
+        bus_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(bus_table.values(current_node)['packets_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
 
     link_cap[tuple(sorted((current_node, next_node)))] -= packet['size']
@@ -193,5 +193,5 @@ def inter_ch_eval(node, ch, veh_table, bus_table, configs):
          max(node_table.values(node)['speed'], next_ch_table.values(ch)['speed']))
 
 
-    return
+    return (0.5 * v) + (0.5 * d)
 
