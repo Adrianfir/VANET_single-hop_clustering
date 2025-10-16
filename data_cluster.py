@@ -16,7 +16,7 @@ from folium.plugins import MarkerCluster
 import webbrowser
 import sys
 
-from graph import Graph
+# from graph import Graph
 import utils.util as util
 import utils.util_graph as util_graph
 import utils.util_routing as util_routing
@@ -831,7 +831,7 @@ class DataTable:
                                 self.veh_table, self.bus_table, self.nodes_with_pack , self.delivered_packets = (
                                     util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
                                                              self.nodes_with_pack, self.delivered_packets, packet,
-                                                             configs, self.time))
+                                                             self.time))
                                 self.link_cap[sorted((node, ch_id))] -= packet['size']
                                 any_pck_transmitted = 1
 
@@ -848,7 +848,7 @@ class DataTable:
                                 self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets = (
                                     util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
                                                              self.nodes_with_pack, self.delivered_packets, packet,
-                                                             configs, self.time))
+                                                             self.time))
                                 self.link_cap[sorted((node, next_node))] -= packet['size']
                                 any_pck_transmitted = 1
 
@@ -856,7 +856,24 @@ class DataTable:
 
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is True):
 
+                    temp_ch = table.values(node)['other_chs'][0]
+                    temp_table = self.veh_table if 'veh' in temp_ch else self.bus_table
+                    inter_link_q = util_routing.intra_q_link(node, temp_ch, self.veh_table, temp_table,
+                                                                                configs)
+                    for ch in table.values(node)['other_chs'][1:]:
+                        temp_table = self.veh_table if 'veh' in ch else self.bus_table
+                        temp_ling_q = util_routing.intra_q_link(node, ch, self.veh_table, temp_table, configs)
+                        if temp_ling_q < inter_link_q:
+                            temp_ch = ch
+                            inter_link_q = temp_ling_q
 
+                    (self.veh_table, self.bus_table,
+                     self.nodes_with_pack, self.delivered_packets) = util_routing.pass_packet(node, temp_ch,
+                                                                                              self.veh_table,
+                                                                                              self.bus_table,
+                                                                                              self.nodes_with_pack,
+                                                                                              self.delivered_packets,
+                                                                                              self.time)
 
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is False):
                     for pack in range(table.values(node)['cluster_head']['packet_to_pass']):
@@ -866,45 +883,3 @@ class DataTable:
 
             if any_pck_transmitted is 0:
                 break
-
-
-
-
-
-        # for pack in sorted(on_way_packets.keys()):
-        #     current_node = on_way_packets[pack]['current_node']
-        #     if current_node in self.stand_alone:  # if the node is a SAV now, have the packets in its buffer
-        #         continue
-        #     if current_node is on_way_packets[pack]['source']:
-        #         ch_id = self.veh_table.values(current_node)['primary_ch']
-        #         if self.link_cap[sorted((current_node, ch_id))] > 0:
-        #             if 'bus' in ch_id:
-        #                 q_link = util_routing.intra_q_link(current_node, ch_id, self.veh_table,
-        #                                                    self.bus_table, configs)
-        #                 if q_link >= configs.qol_thresh:
-        #                     (current_node, self.veh_table,
-        #                      self.bus_table) = util_routing.pass_packet(current_node, self.veh_table,
-        #                                                                         self.bus_table, configs)
-        #             else:
-        #                 (current_node, self.veh_table,
-        #                  self.bus_table) = util_routing.extra_pass_packet(current_node, self.veh_table,
-        #                                                                           self.bus_table, configs)
-        #
-        #             self.link_cap[sorted((current_node, ch_id))] -= 1
-        #
-        #         else:
-        #             pass
-        #
-        #     check_receiver = util_routing.check_receiver(on_way_packets, pack, self.cluster.veh_table,
-        #                                                  self.bus_table, current_node)
-        #     if check_receiver == 1:
-        #         (self.veh_table, self.bus_table,
-        #          pack, self.on_way_packets,
-        #          self.delivered_packets) = util_routing.pack_delivered(current_node, self.veh_table,
-        #                                                                self.bus_table, pack,
-        #                                                                self.on_way_packets,
-        #                                                                self.delivered_packets)
-        #
-        #     elif check_receiver == 0:
-        #         util_routing.pack_delivered(current_node, self.veh_table, self.bus_table, pack,
-        #                                     self.on_way_packets, self.delivered_packets)

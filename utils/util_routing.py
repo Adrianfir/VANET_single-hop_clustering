@@ -56,6 +56,11 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
                 delivered_packets, packet, time):
     """
     The important thing is that the maximum speed is considered as 80 here
+    :param nodes_with_packet:
+    :param next_node:
+    :param time:
+    :param packet:
+    :param delivered_packets:
     :param current_node:
     :param veh_table:
     :param bus_table:
