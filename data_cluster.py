@@ -792,10 +792,15 @@ class DataTable:
                     self.nodes_with_pack.remove(node)
                     continue
 
+                if ('veh' in node) and (table.values(node)['primary_ch'] is None): # when the primary_ch has left
+                    for pack in range(len(table.values(node)['packets_to_pass'])):
+                        table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
+                    continue
+
                 if (table.values(node)['cluster_head'] is True) and (table.values(node)['other_chs'] is set()):
 
-                    for pack in range(table.values(node)['cluster_head']['packets_to_pass']):
-                        table.values(node)['cluster_head']['packets_to_pass'][pack]['drop_count'] -= 1
+                    for pack in range(len(table.values(node)['packets_to_pass'])):
+                        table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
 
                     continue
 
@@ -804,7 +809,7 @@ class DataTable:
 
                     for packet in self.veh_table.values(node)['packets_to_pass']:
 
-                        if (self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))]
+                        if (self.link_cap[tuple(sorted((node,self.veh_table.values(node)['primary_ch'])))]
                                 > configs.link_limit):
                             ch_id = self.veh_table.values(node)['primary_ch']
                             ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
