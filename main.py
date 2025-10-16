@@ -38,6 +38,8 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
+        cluster.gen_message(configs)
+        cluster.route(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
