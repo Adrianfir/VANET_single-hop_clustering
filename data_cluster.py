@@ -779,8 +779,12 @@ class DataTable:
         :param configs:
         :return:
         """
-        self.link_cap = dict(zip(self.net_graph.edges(),
-                                 [configs.link_limit for l in range(len(self.net_graph.edges()))]))
+        # self.link_cap = dict(zip(self.net_graph.edges(),
+        #                          [configs.link_limit for l in range(len(self.net_graph.edges()))]))
+
+        for edge in range(len(list(self.net_graph.edges()))):
+            self.link_cap[tuple(sorted(list(self.net_graph.edges())[edge]))] = configs.link_limit
+
         self.nodes_with_pack = self.nodes_with_pack.intersection(self.veh_table.ids())
         for h in range(configs.max_hop):
             any_pck_transmitted = False    # this is a control parameter to break from the hop-loop if no packet transmitted
