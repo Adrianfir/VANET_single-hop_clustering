@@ -756,9 +756,11 @@ class DataTable:
         :param configs:
         :return:
         """
-        n_messages = random.randint(0, len(self.veh_table.ids()))
+        n_messages = random.randint(0, int(len(self.veh_table.ids())/10))
         available_vehs = list(self.veh_table.ids())
         for s_id in random.sample(available_vehs, n_messages):
+            if s_id in self.stand_alone:
+                continue
             d_id = None
             d_control = False
             while d_control is False:
@@ -882,9 +884,14 @@ class DataTable:
                                             temp_i += 1
                                         else:
                                             break
-                                for ch in table.values(node)['other_chs'][1:]:
-
-                                    if self.link_cap[tuple(sorted((node, ch)))] >= packet['size']:
+                                for ch in table.values(node)['other_chs']:
+                                    temp_ch_table = self.veh_table if 'veh' in ch else self.bus_table
+                                    if ((((ch == packet['dest']) or
+                                            (packet['dest'] in temp_ch_table.values(ch)['cluster_members'])))
+                                            and self.link_cap[tuple(sorted((node, ch)))] >= packet['size']):
+                                        temp_ch = ch
+                                        break
+                                    elif self.link_cap[tuple(sorted((node, ch)))] >= packet['size']:
                                         temp_ling_q = util_routing.inter_ch_eval(node, ch, self.veh_table,
                                                                                  self.bus_table, configs)
 
@@ -908,8 +915,8 @@ class DataTable:
                                     continue
 
                             else:
-                                next_ch = table.values(node)['other_chs'][0]
-                                if self.link_cap[tuple(sorted((node, next_ch)))] >= packet['size']:
+                                temp_ch = table.values(node)['other_chs'][0]
+                                if self.link_cap[tuple(sorted((node, temp_ch)))] >= packet['size']:
                                     (self.veh_table, self.bus_table,
                                      self.nodes_with_pack,
                                      self.delivered_packets,

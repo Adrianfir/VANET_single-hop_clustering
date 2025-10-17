@@ -38,7 +38,7 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if cluster.time < start_time + configs.iter - 20:
+        if cluster.time < start_time + (configs.iter/2):
            cluster.gen_message(configs)
         cluster.route(configs)
     #     cluster.show_graph(configs)
@@ -61,6 +61,13 @@ if __name__ == "__main__":
     print(f'all the edges: \n{cluster.net_graph.edges()}')
     print(f'number of generated packets: {cluster.pck_queue}')
     print(f'number of delivered packets: {len(cluster.delivered_packets)}')
+    non_delivered_packets = list()
+    for i in cluster.veh_table.ids().union(cluster.veh_table.ids()):
+        table = cluster.veh_table if 'veh' in i else cluster.bus_table
+        for j in table.values(i)['packets_to_pass']:
+            non_delivered_packets.append(j)
+    print(f'number of non-delivered packets: {len([non_delivered_packets])}')
+
     # ch_high_mems = 0
     # for i in cluster.all_chs:
     #     if len(cluster.veh_table.values(i)['cluster_members'])>10:
