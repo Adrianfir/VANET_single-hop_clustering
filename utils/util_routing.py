@@ -112,7 +112,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
 
     if ('veh' in current_node) and ('bus' in next_node):
-        packet['hop'].append(next_node)
+        packet['hops'].append(next_node)
         packet['current_node'] = next_node
         if next_node is packet['dest']:
             packet['del_check'] = True
@@ -130,7 +130,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             nodes_with_packet.remove(current_node)
 
     if ('bus' in current_node) and ('veh' in next_node):
-        packet['hop'].append(next_node)
+        packet['hops'].append(next_node)
         packet['current_node'] = next_node
         if next_node is packet['dest']:
             packet['del_check'] = True
@@ -148,7 +148,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             nodes_with_packet.remove(current_node)
 
     if ('bus' in current_node) and ('bus' in next_node):
-        packet['hop'].append(next_node)
+        packet['hops'].append(next_node)
         packet['current_node'] = next_node
         if next_node is packet['dest']:
             packet['del_check'] = True
@@ -174,13 +174,10 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
 
     dist = util.det_dist(current_node, veh_table, ch_id, table)
-    q_link = (1 - dist / configs.veh_trans_range) * (1 - abs(
-        (veh_table.values(current_node)['speed'] - veh_table.values(ch_id)['speed']) / 80
-    )
-                                                     ) * (1 - (abs(veh_table.values(current_node)['angle'] -
-                                                                   table.values(ch_id)['angle']) / 180))
+    q_link = ((1 - dist / configs.veh_trans_range) * (1 - abs((veh_table.values(current_node)['speed'] -
+                                                              table.values(ch_id)['speed']) / 80)) *
+              (1 - (abs(veh_table.values(current_node)['angle'] -table.values(ch_id)['angle']) / 180)))
     return q_link
-
 
 def inter_ch_eval(node, ch, veh_table, bus_table, configs):
     node_table = veh_table if 'veh' in node else bus_table

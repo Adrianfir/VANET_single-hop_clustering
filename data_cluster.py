@@ -768,7 +768,7 @@ class DataTable:
             (self.veh_table, self.sent_messages,
              self.message_id, self.nodes_with_pack,
              self.pck_queue) = util_routing.gen_message(s_id, d_id, self.veh_table,self.sent_messages, self.message_id,
-                                                        self. nodes_with_pack, self.pck_queue, self.time, configs)
+                                                        self.nodes_with_pack, self.pck_queue, self.time, configs)
 
 
     def route(self, configs):
@@ -784,8 +784,8 @@ class DataTable:
         self.nodes_with_pack = self.nodes_with_pack.intersection(self.veh_table.ids())
         for h in range(configs.max_hop):
             any_pck_transmitted = False    # this is a control parameter to break from the hop-loop if no packet transmitted
-
-            for node in self.nodes_with_pack:
+            nodes_with_pack = self.nodes_with_pack.copy()
+            for node in nodes_with_pack:
                 table = self.bus_table if 'bus' in node else self.veh_table
 
                 if len(table.values(node)['packets_to_pass']) == 0:
@@ -798,16 +798,16 @@ class DataTable:
                     for packet in self.veh_table.values(node)['packets_to_pass']:
 
                         if (self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))]
-                                > configs.link_limit):
+                                >= packet['size']):
                             ch_id = self.veh_table.values(node)['primary_ch']
                             ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
 
                             q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
                             temp_gates = (self.veh_table.values(node)['other_vehs'].
-                                          union(ch_table.values(ch_id)['cluster_members']))
+                                          intersection(ch_table.values(ch_id)['cluster_members']))
 
-                            if (((q_link >= configs.qol_thresh) or (len(temp_gates) == 0))
-                                    and (self.link_cap[tuple(sorted((node, ch_id)))] > packet['size'])):
+                            if (((q_link < configs.qol_thresh) or (len(temp_gates) == 0))
+                                    and (self.link_cap[tuple(sorted((node, ch_id)))] >= packet['size'])):
                                 (self.veh_table, self.bus_table, self.nodes_with_pack , self.delivered_packets,
                                  self.link_cap, any_pck_transmitted) = (
                                     util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
@@ -817,9 +817,8 @@ class DataTable:
 
                             else:
                                 next_node = ch_id
-
                                 for n in temp_gates:
-                                    if self.link_cap[tuple(sorted((node, ch_id)))] > packet['size']:
+                                    if self.link_cap[tuple(sorted((node, ch_id)))] >= packet['size']:
                                         if (util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs) >
                                                 q_link):
                                             next_node = n
@@ -832,8 +831,7 @@ class DataTable:
                                                              self.nodes_with_pack, self.delivered_packets,
                                                              self.link_cap, any_pck_transmitted, packet, self.time))
 
-                    if len(table.values(node)['packets_to_pass']) == 0:
-                        self.nodes_with_pack.remove(node)
+
                     continue
 
                 if (table.values(node)['cluster_head'] is False) and (table.values(node)['primary_ch'] is None): # when the primary_ch has left
@@ -846,7 +844,7 @@ class DataTable:
                     for packet in table.values(node)['packets_to_pass']:
                         if packet['dest'] in table.values(node)['cluster_members']:
                             member = packet['dest']
-                            if self.link_cap[tuple(sorted((node, member)))] > configs.link_limit:
+                            if self.link_cap[tuple(sorted((node, member)))] >= packet['size']:
                                 (self.veh_table, self.bus_table,
                                  self.nodes_with_pack,
                                  self.delivered_packets,
@@ -869,7 +867,7 @@ class DataTable:
                                 inter_link_q = 0
                                 while temp_control is False:
                                     if (self.link_cap[tuple(sorted((node, table.values(node)['other_chs'][temp_i])))]
-                                            > configs.link_limit):
+                                            >= configs.mtu):
                                         temp_ch = table.values(node)['other_chs'][temp_i]
                                         inter_link_q = util_routing.inter_ch_eval(node, temp_ch, self.veh_table,
                                                                                   self.bus_table,
@@ -882,7 +880,7 @@ class DataTable:
                                             break
                                 for ch in table.values(node)['other_chs'][1:]:
 
-                                    if self.link_cap[tuple(sorted((node, ch)))] > configs.link_limit:
+                                    if self.link_cap[tuple(sorted((node, ch)))] >= packet['size']:
                                         temp_ling_q = util_routing.inter_ch_eval(node, ch, self.veh_table,
                                                                                  self.bus_table, configs)
 
@@ -902,12 +900,12 @@ class DataTable:
                                                                                                 any_pck_transmitted,
                                                                                                 packet, self.time)
 
-                                if self.link_cap[tuple(sorted((node, temp_ch)))] < configs.link_limit:
+                                if self.link_cap[tuple(sorted((node, temp_ch)))] < packet['size']:
                                     continue
 
                             else:
                                 next_ch = table.values(node)['other_chs'][0]
-                                if self.link_cap[tuple(sorted((node, next_ch)))] > configs.link_limit:
+                                if self.link_cap[tuple(sorted((node, next_ch)))] >= packet['size']:
                                     (self.veh_table, self.bus_table,
                                      self.nodes_with_pack,
                                      self.delivered_packets,
@@ -916,9 +914,6 @@ class DataTable:
                                                                  self.nodes_with_pack, self.delivered_packets,
                                                                  self.link_cap,
                                                                  any_pck_transmitted, packet, self.time))
-
-                    if len(table.values(node)['packets_to_pass']) == 0:
-                        self.nodes_with_pack.remove(node)
 
             if any_pck_transmitted is False:
                 break
