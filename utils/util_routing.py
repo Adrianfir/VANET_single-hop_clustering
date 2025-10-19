@@ -63,7 +63,6 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
         veh_table.values(s_id)['packets_to_pass'].append(pck_dict[i])
         nodes_with_pack.add(s_id)
         pck_queue += 1
-
         return veh_table,sent_messages, message_id, nodes_with_pack, pck_queue
 
 def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
@@ -94,7 +93,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
         packet['hops'].append(next_node)
         packet['current_node'] = next_node
-        if next_node is packet['dest']:
+        if next_node == packet['dest']:
             packet['del_check'] = True
             packet['d_time=None'] = time
             if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
@@ -114,7 +113,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     if ('veh' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
         packet['current_node'] = next_node
-        if next_node is packet['dest']:
+        if next_node == packet['dest']:
             packet['del_check'] = True
             packet['d_time=None'] = time
             if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
@@ -132,7 +131,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     if ('bus' in current_node) and ('veh' in next_node):
         packet['hops'].append(next_node)
         packet['current_node'] = next_node
-        if next_node is packet['dest']:
+        if next_node == packet['dest']:
             packet['del_check'] = True
             packet['d_time=None'] = time
             if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
@@ -150,7 +149,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     if ('bus' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
         packet['current_node'] = next_node
-        if next_node is packet['dest']:
+        if next_node == packet['dest']:
             packet['del_check'] = True
             packet['d_time=None'] = time
             if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():

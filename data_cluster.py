@@ -183,6 +183,8 @@ class DataTable:
             self.bus_table.values(k)['depart_time'] = self.time - 1
             self.left_bus[k] = self.bus_table.values(k)
 
+            for drop in self.bus_table.values(k)['packets_to_pass']:
+                self.drops.append(drop)
             self.bus_table.remove(k)
             self.net_graph.remove_node(k)
 
@@ -224,6 +226,8 @@ class DataTable:
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.values(k)['depart_time'] = self.time - 1
             self.left_veh[k] = self.veh_table.values(k)
+            for drop in self.veh_table.values(k)['packets_to_pass']:
+                self.drops.append(drop)
 
             self.veh_table.remove(k)
             self.net_graph.remove_node(k)
