@@ -11,6 +11,7 @@ from data_cluster import DataTable
 from configs.config import Configs
 from zonex import ZoneID
 import utils.util as util
+import utils.util_routing as util_routing
 import re
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -50,6 +51,7 @@ if __name__ == "__main__":
 
     cluster.print_table()
     nx.draw(cluster.ch_net, with_labels=False)
+    avg_hops, avg_delay = util_routing.eval_routing(cluster)
     print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
     print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
     print('\n')
@@ -69,6 +71,8 @@ if __name__ == "__main__":
     print(f'number of non-delivered packets: {non_delivered_packets}')
     print(f'number of dropped packets: {len(cluster.drops)}')
     print(f'delivered_packets are: {cluster.delivered_packets}')
+    print(f'average_hops: {avg_hops}')
+    print(f'average delay: {avg_delay}')
 
 
     # ch_high_mems = 0

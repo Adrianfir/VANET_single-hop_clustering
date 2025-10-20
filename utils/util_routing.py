@@ -195,3 +195,14 @@ def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
 
     return (0.5 * v) + (0.5 * d)
 
+def eval_routing(cluster):
+    hops_pck = 0
+    delay_pck = 0
+
+    for pck in cluster.delivered_packets:
+        hops_pck += len(pck['hops'])
+        delay_pck += pck['d_time'] - pck['s_time']
+
+    return hops_pck/len(cluster.delivered_packets), delay_pck/len(cluster.delivered_packets)
+
+
