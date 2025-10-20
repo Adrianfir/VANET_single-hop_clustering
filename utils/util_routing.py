@@ -95,7 +95,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
-            packet['d_time=None'] = time
+            packet['d_time'] = time
             if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
                 veh_table.values(next_node)['packets_received'][packet['message_id']] = list()
             veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
@@ -115,7 +115,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
-            packet['d_time=None'] = time
+            packet['d_time'] = time
             if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
                 bus_table.values(next_node)['packets_received'][packet['message_id']] = list()
             bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
@@ -133,7 +133,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
-            packet['d_time=None'] = time
+            packet['d_time'] = time
             if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
                 veh_table.values(next_node)['packets_received'][packet['message_id']] = list()
             veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
@@ -151,7 +151,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
-            packet['d_time=None'] = time
+            packet['d_time'] = time
             if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
                 bus_table.values(next_node)['packets_received'][packet['message_id']] = list()
             bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
@@ -178,16 +178,20 @@ def intra_q_link(current_node, ch_id, veh_table, table, configs):
               (1 - (abs(veh_table.values(current_node)['angle'] -table.values(ch_id)['angle']) / 180)))
     return q_link
 
-def inter_ch_eval(node, ch, veh_table, bus_table, configs):
+def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
     node_table = veh_table if 'veh' in node else bus_table
     next_ch_table = veh_table if 'veh' in node else bus_table
+    dest_table = veh_table if 'veh' in dest else bus_table
 
     d = (util.det_dist(node, node_table, ch, next_ch_table)/
+         max(node_table.values(node)['trans_range'], next_ch_table.values(ch)['trans_range']))
+
+    d_dest = (util.det_dist(node, node_table, dest, next_ch_table)/
          max(node_table.values(node)['trans_range'], next_ch_table.values(ch)['trans_range']))
 
     v = (abs(node_table.values(node)['speed'] - next_ch_table.values(ch)['speed'])/
          max(node_table.values(node)['speed'], next_ch_table.values(ch)['speed']))
 
 
-    return (0.5 * v) + (0.5 * d)
+    return (0.5 * v) + (0.5 * d_dest)
 
