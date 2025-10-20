@@ -31,8 +31,8 @@ class Inputs:
         alpha = 1
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1600
-        iter = 120
+        start_time = 1000
+        iter = 1000
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
@@ -43,6 +43,7 @@ class Inputs:
 
 
         ####### Routing Constants that we need to pass as arguments
+        mess_gen_repeat = 1    # number of times at each interval that we do the message generation
         link_limit = 500000      # the link capacity based on bps
         drop_count = 15     # after this amount of iteration, the packet would be dropped
         qol_thresh = 0.7    # threshold for quality of link
@@ -94,6 +95,8 @@ class Inputs:
         parser.add_argument('--iter', type=int, default=iter, help='number of intervals to run')
         parser.add_argument('--weights', type=numpy.ndarray, default=weights,
                             help='weights used for clustering')
+        parser.add_argument('--mess_gen_repeat', type=int, default=mess_gen_repeat,
+                            help='number of times at each interval that we do the message generation')
         parser.add_argument('--link_limit', type=int, default=link_limit,
                             help='link capacity based on Mbps')
         parser.add_argument('--drop_count', type=int, default=drop_count,

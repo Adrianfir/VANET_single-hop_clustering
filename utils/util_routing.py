@@ -193,5 +193,5 @@ def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
          max(node_table.values(node)['speed'], next_ch_table.values(ch)['speed']))
 
 
-    return (0.5 * v) + (0.5 * d_dest)
+    return (0.5 * v) + (0.5 * d)
 
