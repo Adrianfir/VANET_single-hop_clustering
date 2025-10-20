@@ -31,8 +31,8 @@ class Inputs:
         alpha = 1
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1000
-        iter = 1000
+        start_time = 1600
+        iter = 300
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
@@ -43,7 +43,7 @@ class Inputs:
 
 
         ####### Routing Constants that we need to pass as arguments
-        mess_gen_repeat = 1    # number of times at each interval that we do the message generation
+        mess_gen_repeat = 5    # number of times at each interval that we do the message generation
         link_limit = 500000      # the link capacity based on bps
         drop_count = 15     # after this amount of iteration, the packet would be dropped
         qol_thresh = 0.7    # threshold for quality of link
