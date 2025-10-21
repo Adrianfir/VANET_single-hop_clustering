@@ -52,18 +52,18 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
 
     message_id += 1
     pck_dict = dict()
-    for i in range(len_message):
-        pck_dict[i] = dict(pck=message[i], message_id=message_id, source=s_id, dest=d_id, current_node=s_id,
+    for pck in message:
+        pck_dict = dict(pck=pck, message_id=message_id, source=s_id, dest=d_id, current_node=s_id,
                            s_time=time, d_time=None, del_check=False, drop_count=configs.drop_count, hops=list(),
                            )
-        pck_dict[i]['size'] = random.randint(configs.header_size + 1, configs.mtu) if i == len_message - 1 \
+        pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == message[-1] \
             else configs.mtu  # the last packet of the message can have a size
         # between configs.header_size+1 and configs.mtu
 
-        veh_table.values(s_id)['packets_to_pass'].append(pck_dict[i])
+        veh_table.values(s_id)['packets_to_pass'].append(pck_dict)
         nodes_with_pack.add(s_id)
         pck_queue += 1
-        return veh_table,sent_messages, message_id, nodes_with_pack, pck_queue
+    return veh_table,sent_messages, message_id, nodes_with_pack, pck_queue
 
 def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
                 delivered_packets, link_cap, any_pck_transmitted ,packet, time):
@@ -186,14 +186,14 @@ def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
     d = (util.det_dist(node, node_table, ch, next_ch_table)/
          max(node_table.values(node)['trans_range'], next_ch_table.values(ch)['trans_range']))
 
-    d_dest = (util.det_dist(node, node_table, dest, next_ch_table)/
+    d_dest = (util.det_dist(ch, next_ch_table, dest, next_ch_table)/
          max(node_table.values(node)['trans_range'], next_ch_table.values(ch)['trans_range']))
 
     v = (abs(node_table.values(node)['speed'] - next_ch_table.values(ch)['speed'])/
          max(node_table.values(node)['speed'], next_ch_table.values(ch)['speed']))
 
 
-    return (0.5 * v) + (0.5 * d)
+    return (0.5 * v) + (0.5 * d_dest)
 
 def eval_routing(cluster):
     hops_pck = 0

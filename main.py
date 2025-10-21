@@ -73,6 +73,7 @@ if __name__ == "__main__":
     print(f'delivered_packets are: {cluster.delivered_packets}')
     print(f'average_hops: {avg_hops}')
     print(f'average delay: {avg_delay}')
+    # print(f'dropped_packers are: {cluster.drops}')
 
 
     # ch_high_mems = 0
