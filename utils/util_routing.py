@@ -3,7 +3,7 @@ This is the utils file including the small functions for basic routing implement
 using https://ieeexplore.ieee.org/abstract/document/8588189
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-__all__ = ['gen_message', 'intra_q_link', 'pass_packet']
+__all__ = ['gen_message', 'intra_q_link', 'pass_packet', 'packet_pass_left_ch']
 
 # from distutils.command.config import config
 #
@@ -170,6 +170,113 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
 
 
+def packet_pass_left_ch(current_node, veh_table, bus_table, nodes_with_packet,
+                delivered_packets, link_cap ,packet, time, configs):
+    """
+    This function is designed for passing packets of the chs leaving the area to the best candidates
+    :param current_node:
+    :param veh_table:
+    :param bus_table:
+    :param nodes_with_packet:
+    :param delivered_packets:
+    :param link_cap:
+    :param packet:
+    :param time:
+    :param configs:
+    :return:
+    """
+    table = veh_table if 'veh' in current_node else bus_table
+    all_pot_next_nodes = table.values(current_node)['cluster_members']\
+            .union(table.values(current_node)['other_chs'].union(table.values(current_node)['other_vehs']))
+    next_node = all_pot_next_nodes.pop()
+    eval_next_node = inter_ch_eval(current_node, next_node, packet['dest'], veh_table, bus_table, configs)
+    for node in all_pot_next_nodes:
+        # we use inter_ch_eval for even other_vehs
+        if inter_ch_eval(current_node, node, packet['dest'], veh_table, bus_table, configs) > eval_next_node:
+            eval_next_node = inter_ch_eval(current_node, node, packet['dest'], veh_table, bus_table, configs)
+            next_node = node
+
+
+    if ('veh' in current_node) and ('veh' in next_node):
+
+        packet['hops'].append(next_node)
+        packet['current_node'] = next_node
+        if next_node == packet['dest']:
+            packet['del_check'] = True
+            packet['d_time'] = time
+            if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
+                veh_table.values(next_node)['packets_received'][packet['message_id']] = list()
+            veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
+            delivered_packets.append(packet)
+        else:
+            veh_table.values(next_node)['packets_to_pass'].append(packet)
+            nodes_with_packet.add(next_node)
+
+        veh_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(veh_table.values(current_node)['packets_to_pass']) == 0:
+            nodes_with_packet.remove(current_node)
+
+
+
+    if ('veh' in current_node) and ('bus' in next_node):
+        packet['hops'].append(next_node)
+        packet['current_node'] = next_node
+        if next_node == packet['dest']:
+            packet['del_check'] = True
+            packet['d_time'] = time
+            if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
+                bus_table.values(next_node)['packets_received'][packet['message_id']] = list()
+            bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
+            delivered_packets.append(packet)
+        else:
+            bus_table.values(next_node)['packets_to_pass'].append(packet)
+            nodes_with_packet.add(next_node)
+
+        veh_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(veh_table.values(current_node)['packets_to_pass']) == 0:
+            nodes_with_packet.remove(current_node)
+
+    if ('bus' in current_node) and ('veh' in next_node):
+        packet['hops'].append(next_node)
+        packet['current_node'] = next_node
+        if next_node == packet['dest']:
+            packet['del_check'] = True
+            packet['d_time'] = time
+            if packet['message_id'] not in veh_table.values(next_node)['packets_received'].keys():
+                veh_table.values(next_node)['packets_received'][packet['message_id']] = list()
+            veh_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
+            delivered_packets.append(packet)
+        else:
+            veh_table.values(next_node)['packets_to_pass'].append(packet)
+            nodes_with_packet.add(next_node)
+
+        bus_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(bus_table.values(current_node)['packets_to_pass']) == 0:
+            nodes_with_packet.remove(current_node)
+
+    if ('bus' in current_node) and ('bus' in next_node):
+        packet['hops'].append(next_node)
+        packet['current_node'] = next_node
+        if next_node == packet['dest']:
+            packet['del_check'] = True
+            packet['d_time'] = time
+            if packet['message_id'] not in bus_table.values(next_node)['packets_received'].keys():
+                bus_table.values(next_node)['packets_received'][packet['message_id']] = list()
+            bus_table.values(next_node)['packets_received'][packet['message_id']].append(packet)
+            delivered_packets.append(packet)
+        else:
+            bus_table.values(next_node)['packets_to_pass'].append(packet)
+            nodes_with_packet.add(next_node)
+
+        bus_table.values(current_node)['packets_to_pass'].remove(packet)
+        if len(bus_table.values(current_node)['packets_to_pass']) == 0:
+            nodes_with_packet.remove(current_node)
+
+    link_cap[tuple(sorted((current_node, next_node)))] -= packet['size']
+    any_pck_transmitted = True
+
+    return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap
+
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
 
     dist = util.det_dist(current_node, veh_table, ch_id, table)
@@ -204,5 +311,3 @@ def eval_routing(cluster):
         delay_pck += pck['d_time'] - pck['s_time']
 
     return hops_pck/len(cluster.delivered_packets), delay_pck/len(cluster.delivered_packets)
-
-
