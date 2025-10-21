@@ -161,20 +161,36 @@ class DataTable:
         temp_left_buses = self.bus_table.ids() - bus_ids
         for k in temp_left_buses:
             ##pass packets:
-            if len(self.bus_table.values(k)['cluster_members'].union(
-                    self.bus_table.values(k)['other_vehs'].union(self.bus_table.values(k)['other_chs']))) != 0:
+            pot_next_node = None
+            if len(self.bus_table.values(k)['other_chs']) > 0:
+                pot_next_node = list(self.bus_table.values(k)['other_chs'])[0]
+            elif len(self.bus_table.values(k)['cluster_members']) > 0:
+                pot_next_node = list(self.bus_table.values(k)['cluster_members'])[0]
+            elif len(self.bus_table.values(k)['other_vehs']) > 0:
+                pot_next_node = list(self.bus_table.values(k)['other_vehs'])[0]
+            if pot_next_node is None:
+                for drop in self.veh_table.values(k)['packets_to_pass']:
+                    self.drops.append(drop)
+            else:
                 for pck in self.bus_table.values(k)['packets_to_pass']:
                     if pck['dest'] in veh_ids:
+                        any_pck_transmitted = False
                         (self.veh_table, self.bus_table,
                          self.nodes_with_pack,
                          self.delivered_packets,
-                         self.link_cap) = util_routing.packet_pass_left_ch(k, self.veh_table, self.bus_table,
-                                                                   self.nodes_with_pack, self.delivered_packets,
-                                                                   self.link_cap, pck, self.time, config)
+                         self.link_cap, any_pck_transmitted) = util_routing.pass_packet(k, pot_next_node,
+                                                                                        self.veh_table,
+                                                                                        self.bus_table,
+                                                                                        self.nodes_with_pack,
+                                                                                        self.delivered_packets,
+                                                                                        self.link_cap,
+                                                                                        any_pck_transmitted,
+                                                                                        pck, self.time)
                     else:
                         self.bus_table.values(k)['packets_to_pass'].remove(pck)
                         pck['dest'] = pck['dest'] + 'has left'
                         self.drops.append(pck)
+
             cm_temp = self.bus_table.values(k)['cluster_members'].copy()
             for m in cm_temp:
                 if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
@@ -198,8 +214,8 @@ class DataTable:
             self.bus_table.values(k)['depart_time'] = self.time - 1
             self.left_bus[k] = self.bus_table.values(k)
 
-            for drop in self.bus_table.values(k)['packets_to_pass']:
-                self.drops.append(drop)
+            # for drop in self.bus_table.values(k)['packets_to_pass']:
+            #     self.drops.append(drop)
             self.bus_table.remove(k)
             self.net_graph.remove_node(k)
 
@@ -208,20 +224,33 @@ class DataTable:
         for k in temp_left_vehs:
             if self.veh_table.values(k)['cluster_head'] is True:
                 ##pass packets:
-                if len(self.veh_table.values(k)['cluster_members'].
-                               union(self.veh_table.values(k)['other_vehs'].
-                                                                    union(self.veh_table.values(k)['other_chs']))) != 0:
+                pot_next_node = None
+                if len(self.veh_table.values(k)['other_chs']) > 0:
+                    pot_next_node = list(self.veh_table.values(k)['other_chs'])[0]
+                elif len(self.veh_table.values(k)['cluster_members']) > 0:
+                    pot_next_node = list(self.veh_table.values(k)['cluster_members'])[0]
+                elif len(self.veh_table.values(k)['other_vehs']) > 0:
+                    pot_next_node = list(self.veh_table.values(k)['other_vehs'])[0]
+                if pot_next_node is None:
+                    for drop in self.veh_table.values(k)['packets_to_pass']:
+                        self.drops.append(drop)
+                else:
                     for pck in self.veh_table.values(k)['packets_to_pass']:
                         if pck['dest'] in veh_ids:
+                            any_pck_transmitted = False
                             (self.veh_table, self.bus_table,
                              self.nodes_with_pack,
                              self.delivered_packets,
-                             self.link_cap) = util_routing.packet_pass_left_ch(k, self.veh_table, self.bus_table,
-                                                                       self.nodes_with_pack,self.delivered_packets,
-                                                                       self.link_cap, pck, self.time, config)
+                             self.link_cap, any_pck_transmitted) = util_routing.pass_packet(k, pot_next_node,
+                                                                                            self.veh_table,
+                                                                                            self.bus_table,
+                                                                                            self.nodes_with_pack,
+                                                                                            self.delivered_packets,
+                                                                                            self.link_cap,
+                                                                                            any_pck_transmitted,
+                                                                                            pck, self.time)
                         else:
-                            self.veh_table.values(k)['packets_to_pass'].remove(pck)
-                            pck['dest'] = pck['dest'] + 'has left'
+                            pck['dest'] = pck['dest'] + ' has left'
                             self.drops.append(pck)
 
                 temp_cluster_members = self.veh_table.values(k)['cluster_members'].copy()
@@ -243,8 +272,8 @@ class DataTable:
 
             elif self.veh_table.values(k)['primary_ch'] is not None:
                 k_ch = self.veh_table.values(k)['primary_ch']
-                ## pass packets
                 if (k_ch in bus_ids) or (k_ch in veh_ids):
+                    ## pass packets
                     for pck in self.veh_table.values(k)['packets_to_pass']:
                         if pck['dest'] in veh_ids:
                             (self.veh_table, self.bus_table,
@@ -259,26 +288,25 @@ class DataTable:
                                                                                         True,
                                                                                             pck, self.time)
                         else:
-                            self.veh_table.values(k)['packets_to_pass'].remove(pck)
-                            pck['dest'] = pck['dest'] + 'has left'
+                            pck['dest'] = pck['dest'] + ' has left'
                             self.drops.append(pck)
 
-                (self.veh_table, self.bus_table,
-                 self.stand_alone, self.zone_stand_alone) = util.remove_member(k, k_ch, self.veh_table,
-                                                                               self.bus_table, config,
-                                                                               self.stand_alone,
-                                                                               self.zone_stand_alone,
-                                                                               mem_stays=False)
+                    (self.veh_table, self.bus_table,
+                     self.stand_alone, self.zone_stand_alone) = util.remove_member(k, k_ch, self.veh_table,
+                                                                                   self.bus_table, config,
+                                                                                   self.stand_alone,
+                                                                                   self.zone_stand_alone,
+                                                                                   mem_stays=False)
 
             elif k in self.stand_alone:
                 self.stand_alone.remove(k)
                 self.zone_stand_alone[self.veh_table.values(k)['zone']].remove(k)
+                for drop in self.veh_table.values(k)['packets_to_pass']:
+                    self.drops.append(drop)
 
             self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
             self.veh_table.values(k)['depart_time'] = self.time - 1
             self.left_veh[k] = self.veh_table.values(k)
-            for drop in self.veh_table.values(k)['packets_to_pass']:
-                self.drops.append(drop)
 
             self.veh_table.remove(k)
             self.net_graph.remove_node(k)
@@ -904,83 +932,73 @@ class DataTable:
                 if table.values(node)['cluster_head'] is True:
 
                     for packet in table.values(node)['packets_to_pass']:
-                        if packet['dest'] in self.veh_table.ids():
-                            if packet['dest'] in table.values(node)['cluster_members']:
-                                member = packet['dest']
-                                if self.link_cap[tuple(sorted((node, member)))] >= packet['size']:
-                                    (self.veh_table, self.bus_table,
-                                     self.nodes_with_pack,
-                                     self.delivered_packets,
-                                     self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, member,
-                                                                                                    self.veh_table,
-                                                                                                    self.bus_table,
-                                                                                                    self.nodes_with_pack,
-                                                                                                    self.delivered_packets,
-                                                                                                    self.link_cap,
-                                                                                                    any_pck_transmitted,
-                                                                                                    packet, self.time)
+                        # if packet['dest'] in self.veh_table.ids():
+                        if packet['dest'] in table.values(node)['cluster_members']:
+                            member = packet['dest']
+                            if self.link_cap[tuple(sorted((node, member)))] >= packet['size']:
+                                (self.veh_table, self.bus_table,
+                                 self.nodes_with_pack,
+                                 self.delivered_packets,
+                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, member,
+                                                                                                self.veh_table,
+                                                                                                self.bus_table,
+                                                                                                self.nodes_with_pack,
+                                                                                                self.delivered_packets,
+                                                                                                self.link_cap,
+                                                                                                any_pck_transmitted,
+                                                                                                packet, self.time)
 
-                            elif table.values(node)['other_chs'].difference({node}) is False:
-                                table.values(node)['packets_to_pass'][packet]['drop_count'] -= 1
-                                continue
+                        elif table.values(node)['other_chs'].difference({node}) is False:
+                            table.values(node)['packets_to_pass'][packet]['drop_count'] -= 1
+                            continue
 
-                            elif table.values(node)['other_chs'].difference({node}) is True:
-                                if len(table.values(node)['other_chs'].difference({node})) >= 1:
-                                    temp_i = 0
-                                    temp_control = False
-                                    inter_link_q = 0
-                                    while temp_control is False:
-                                        pot_next_ch = table.values(node)['other_chs'].difference({node})[temp_i]
-                                        if (self.link_cap[tuple(sorted((node, pot_next_ch)))]
-                                                >= packet['size']):
-                                            temp_ch = pot_next_ch
-                                            inter_link_q = util_routing.inter_ch_eval(node, temp_ch, packet['dest'],
-                                                                                      self.veh_table,
-                                                                                      self.bus_table,
-                                                                                      configs)
-                                            temp_control = True
+                        elif table.values(node)['other_chs'].difference({node}) is True:
+                            if len(table.values(node)['other_chs'].difference({node})) >= 1:
+                                temp_i = 0
+                                temp_control = False
+                                inter_link_q = 0
+                                while temp_control is False:
+                                    pot_next_ch = table.values(node)['other_chs'].difference({node})[temp_i]
+                                    if (self.link_cap[tuple(sorted((node, pot_next_ch)))]
+                                            >= packet['size']):
+                                        temp_ch = pot_next_ch
+                                        inter_link_q = util_routing.inter_ch_eval(node, temp_ch, packet['dest'],
+                                                                                  self.veh_table,
+                                                                                  self.bus_table,
+                                                                                  configs)
+                                        temp_control = True
+                                    else:
+                                        if len(table.values(node)['other_chs'].difference({node})) > temp_i + 2:
+                                            temp_i += 1
                                         else:
-                                            if len(table.values(node)['other_chs'].difference({node})) > temp_i + 2:
-                                                temp_i += 1
-                                            else:
-                                                break
-                                    for ch in table.values(node)['other_chs'].difference({node}):
-                                        temp_ch_table = self.veh_table if 'veh' in ch else self.bus_table
-                                        if ((((ch == packet['dest']) or
-                                                (packet['dest'] in temp_ch_table.values(ch)['cluster_members'])))
-                                                and self.link_cap[tuple(sorted((node, ch)))] >= packet['size']):
-                                            temp_ch = ch
                                             break
-                                        elif self.link_cap[tuple(sorted((node, ch)))] >= packet['size']:
-                                            temp_ling_q = util_routing.inter_ch_eval(node, ch, packet['dest'],
-                                                                                     self.veh_table,
-                                                                                     self.bus_table, configs)
+                                for ch in table.values(node)['other_chs'].difference({node}):
+                                    temp_ch_table = self.veh_table if 'veh' in ch else self.bus_table
+                                    if ((((ch == packet['dest']) or
+                                            (packet['dest'] in temp_ch_table.values(ch)['cluster_members'])))
+                                            and self.link_cap[tuple(sorted((node, ch)))] >= packet['size']):
+                                        temp_ch = ch
+                                        break
+                                    elif self.link_cap[tuple(sorted((node, ch)))] >= packet['size']:
+                                        temp_ling_q = util_routing.inter_ch_eval(node, ch, packet['dest'],
+                                                                                 self.veh_table,
+                                                                                 self.bus_table, configs)
 
-                                            if temp_ling_q < inter_link_q:
-                                                temp_ch = ch
-                                                inter_link_q = temp_ling_q
+                                        if temp_ling_q < inter_link_q:
+                                            temp_ch = ch
+                                            inter_link_q = temp_ling_q
 
-                                    (self.veh_table, self.bus_table,
-                                     self.nodes_with_pack,
-                                     self.delivered_packets,
-                                     self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, temp_ch,
-                                                                                                    self.veh_table,
-                                                                                                    self.bus_table,
-                                                                                                    self.nodes_with_pack,
-                                                                                                    self.delivered_packets,
-                                                                                                    self.link_cap,
-                                                                                                    any_pck_transmitted,
-                                                                                                    packet, self.time)
-
-                        else:
-
-                            if 'veh' in node:
-                                self.veh_table.values(node)['packets_to_pass'].remove(packet)
-                            else:
-                                self.bus_table.values(node)['packets_to_pass'].remove(packet)
-                            packet['dest'] = packet['dest'] + 'has left'
-                            self.drops.append(packet)
-
+                                (self.veh_table, self.bus_table,
+                                 self.nodes_with_pack,
+                                 self.delivered_packets,
+                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, temp_ch,
+                                                                                                self.veh_table,
+                                                                                                self.bus_table,
+                                                                                                self.nodes_with_pack,
+                                                                                                self.delivered_packets,
+                                                                                                self.link_cap,
+                                                                                                any_pck_transmitted,
+                                                                                                packet, self.time)
 
             if any_pck_transmitted is False:
                 break
