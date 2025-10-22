@@ -169,7 +169,7 @@ class DataTable:
             elif len(self.bus_table.values(k)['other_vehs']) > 0:
                 pot_next_node = list(self.bus_table.values(k)['other_vehs'])[0]
             if pot_next_node is None:
-                for drop in self.veh_table.values(k)['packets_to_pass']:
+                for drop in self.bus_table.values(k)['packets_to_pass']:
                     self.drops.append(drop)
             else:
                 for pck in self.bus_table.values(k)['packets_to_pass']:
