@@ -173,7 +173,7 @@ class DataTable:
                     self.drops.append(drop)
             else:
                 for pck in self.bus_table.values(k)['packets_to_pass']:
-                    if pck['dest'] in veh_ids:
+                    if pck['dest'] not in self.veh_table.ids().difference(veh_ids):
                         any_pck_transmitted = False
                         (self.veh_table, self.bus_table,
                          self.nodes_with_pack,
@@ -187,7 +187,7 @@ class DataTable:
                                                                                         any_pck_transmitted,
                                                                                         pck, self.time)
                     else:
-                        self.bus_table.values(k)['packets_to_pass'].remove(pck)
+                        # self.bus_table.values(k)['packets_to_pass'].remove(pck)
                         pck['dest'] = pck['dest'] + 'has left'
                         self.drops.append(pck)
 
@@ -225,8 +225,8 @@ class DataTable:
             if self.veh_table.values(k)['cluster_head'] is True:
                 ##pass packets:
                 pot_next_node = None
-                if len(self.veh_table.values(k)['other_chs']) > 0:
-                    pot_next_node = list(self.veh_table.values(k)['other_chs'])[0]
+                if len(self.veh_table.values(k)['other_chs']) > 1:      #>1 because in self.veh_table, the k itself is in other_chs too
+                    pot_next_node = list(self.veh_table.values(k)['other_chs'].difference({k}))[0]
                 elif len(self.veh_table.values(k)['cluster_members']) > 0:
                     pot_next_node = list(self.veh_table.values(k)['cluster_members'])[0]
                 elif len(self.veh_table.values(k)['other_vehs']) > 0:
@@ -236,7 +236,7 @@ class DataTable:
                         self.drops.append(drop)
                 else:
                     for pck in self.veh_table.values(k)['packets_to_pass']:
-                        if pck['dest'] in veh_ids:
+                        if pck['dest'] not in self.veh_table.ids().difference(veh_ids):
                             any_pck_transmitted = False
                             (self.veh_table, self.bus_table,
                              self.nodes_with_pack,
