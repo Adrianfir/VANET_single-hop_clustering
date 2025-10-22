@@ -14,11 +14,11 @@ class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'sumoTrace.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm_bbox.osm.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -38,7 +38,7 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.5, 0.5, 0.0])      # direction's angle, speed, distance
+        weights = np.array([0.9, 0.0, 0.1])      # direction's angle, speed, distance
 
 
 

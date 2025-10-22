@@ -173,12 +173,6 @@ class DataTable:
                         if v in veh_ids:
                             pot_next_node = v
                             break
-                else:
-                    if len(self.bus_table.values(k)['other_vehs']) > 0:
-                        for v in self.bus_table.values(k)['other_vehs']:
-                            if v in veh_ids:
-                                pot_next_node = v
-                                break
 
             if (pot_next_node is None) or (pot_next_node not in bus_ids):
                 for drop in self.bus_table.values(k)['packets_to_pass']:
