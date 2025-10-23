@@ -326,12 +326,12 @@ class DataTable:
                                                                                                 any_pck_transmitted,
                                                                                                 pck, self.time)
 
-                    (self.veh_table, self.bus_table,
-                     self.stand_alone, self.zone_stand_alone) = util.remove_member(k, k_ch, self.veh_table,
-                                                                                   self.bus_table, config,
-                                                                                   self.stand_alone,
-                                                                                   self.zone_stand_alone,
-                                                                                   mem_stays=False)
+                (self.veh_table, self.bus_table,
+                 self.stand_alone, self.zone_stand_alone) = util.remove_member(k, k_ch, self.veh_table,
+                                                                               self.bus_table, config,
+                                                                               self.stand_alone,
+                                                                               self.zone_stand_alone,
+                                                                               mem_stays=False)
 
             elif k in self.stand_alone:
                 self.stand_alone.remove(k)

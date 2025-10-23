@@ -39,7 +39,7 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (configs.iter/10)) and (cluster.time > configs.start_time + 10):
+        if (cluster.time < configs.start_time + (configs.iter/2)) and (cluster.time > configs.start_time + 10):
             cluster.gen_message(configs)
         cluster.route(configs)
     #     cluster.show_graph(configs)

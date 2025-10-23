@@ -194,6 +194,7 @@ def remove_member(mem, ch_id, veh_table, bus_table, config,
     :param mem_stays:
     :return:
     """
+    print(mem, ch_id, True if mem in veh_table.ids() else False, True if ch_id in veh_table.ids() else False, True if ch_id in bus_table.ids() else False )
     veh_table.values(mem)['counter'] = config.counter
     if ch_stays is True:
         veh_table.values(mem)['priority_ch'] = ch_id
@@ -213,6 +214,26 @@ def remove_member(mem, ch_id, veh_table, bus_table, config,
 
     return (veh_table, bus_table,
             stand_alone, zone_stand_alone)
+
+    # veh_table.values(mem)['counter'] = config.counter
+    # if ch_stays is True:
+    #     veh_table.values(mem)['priority_ch'] = ch_id
+    # else:
+    #     veh_table.values(mem)['priority_ch'] = None
+    # veh_table.values(mem)['priority_counter'] = config.priority_counter
+    # if 'bus' in ch_id:
+    #     bus_table.values(ch_id)['cluster_members'].remove(mem)
+    # else:
+    #     veh_table.values(ch_id)['cluster_members'].remove(mem)
+    # if mem_stays is True:
+    #     stand_alone.add(mem)
+    #     zone_stand_alone[veh_table.values(mem)['zone']].add(mem)
+    # veh_table.values(mem)['primary_ch'] = None
+    # veh_table.values(mem)['cluster_record'].append(None, {'is_ch': False, 'start_time': None,
+    #                                                       'ef': None, 'timer': None})
+    #
+    # return (veh_table, bus_table,
+    #         stand_alone, zone_stand_alone)
 
 def set_ch(veh_id, veh_table, all_chs, stand_alone,
            zone_stand_alone, zone_ch, config, its_sa_clustering=False):
