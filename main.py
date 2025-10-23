@@ -65,11 +65,19 @@ if __name__ == "__main__":
     # print(f'delivered_packets are: {cluster.delivered_packets}')
     print(f'number of generated packets: {cluster.pck_queue}')
     print(f'number of delivered packets: {len(cluster.delivered_packets)}')
-    non_delivered_packets = 0
+    non_delivered_packets = list()
+    left_dest_packets = list()
     for i in cluster.veh_table.ids().union(cluster.bus_table.ids()):
         table = cluster.veh_table if 'veh' in i else cluster.bus_table
-        non_delivered_packets += len(table.values(i)['packets_to_pass'])
-    print(f'number of non-delivered packets: {non_delivered_packets}')
+        non_delivered_packets = non_delivered_packets + table.values(i)['packets_to_pass']
+
+    for pck in non_delivered_packets:
+        if pck['dest'] in cluster.veh_table.ids():
+            continue
+        else:
+            left_dest_packets.append(pck)
+    print(f'number of non-delivered packets: {len(non_delivered_packets) - len(left_dest_packets)}')
+    print(f'number of left-dest packets: {len(left_dest_packets)}')
     print(f'number of dropped packets: {len(cluster.drops)}')
     print(f'average_hops: {avg_hops}')
     print(f'average delay: {avg_delay}')

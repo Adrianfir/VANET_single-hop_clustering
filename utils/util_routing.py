@@ -203,4 +203,4 @@ def eval_routing(cluster):
         hops_pck += len(pck['hops'])
         delay_pck += pck['d_time'] - pck['s_time']
 
-    return hops_pck/len(cluster.delivered_packets), delay_pck/len(cluster.delivered_packets)
+    return hops_pck/(len(cluster.delivered_packets) + 0.000001), delay_pck/(len(cluster.delivered_packets) + 0.000001)
