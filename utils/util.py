@@ -194,7 +194,6 @@ def remove_member(mem, ch_id, veh_table, bus_table, config,
     :param mem_stays:
     :return:
     """
-
     veh_table.values(mem)['counter'] = config.counter
     if ch_stays is True:
         veh_table.values(mem)['priority_ch'] = ch_id

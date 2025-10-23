@@ -967,7 +967,7 @@ class DataTable:
                 if table.values(node)['cluster_head'] is True:
 
                     for packet in table.values(node)['packets_to_pass']:
-                        # if packet['dest'] in self.veh_table.ids():
+
                         if packet['dest'] in table.values(node)['cluster_members']:
                             member = packet['dest']
                             if self.link_cap[tuple(sorted((node, member)))] >= packet['size']:
