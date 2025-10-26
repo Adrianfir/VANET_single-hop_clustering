@@ -875,22 +875,21 @@ class DataTable:
         :return:
         """
         available_vehs = list(self.veh_table.ids())
-        for mess_gen_repeat in range(configs.mess_gen_repeat):
-            n_messages = random.randint(0, int(len(self.veh_table.ids()) / 10))
-            for s_id in random.sample(available_vehs, n_messages):
-                if s_id in self.stand_alone:
-                    continue
-                d_id = None
-                d_control = False
-                while d_control is False:
-                    d_id = random.choice(available_vehs)
-                    d_control = True if d_id != s_id else 0
+        n_messages = random.randint(0, int(len(self.veh_table.ids()) / 20))
+        for s_id in random.sample(available_vehs, n_messages):
+            if s_id in self.stand_alone:
+                continue
+            d_id = None
+            d_control = False
+            while d_control is False:
+                d_id = random.choice(available_vehs)
+                d_control = True if d_id != s_id else 0
 
-                (self.veh_table, self.sent_messages,
-                 self.message_id, self.nodes_with_pack,
-                 self.pck_queue) = util_routing.gen_message(s_id, d_id, self.veh_table,self.sent_messages,
-                                                            self.message_id, self.nodes_with_pack, self.pck_queue,
-                                                            self.time, configs)
+            (self.veh_table, self.sent_messages,
+             self.message_id, self.nodes_with_pack,
+             self.pck_queue) = util_routing.gen_message(s_id, d_id, self.veh_table,self.sent_messages,
+                                                        self.message_id, self.nodes_with_pack, self.pck_queue,
+                                                        self.time, configs)
 
     def route(self, configs):
         """

@@ -39,7 +39,7 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (configs.iter/2)) and (cluster.time > configs.start_time + 10):
+        if (cluster.time < configs.start_time + (2*configs.iter/3)) and (cluster.time > configs.start_time + 10):
             cluster.gen_message(configs)
         cluster.route(configs)
     #     cluster.show_graph(configs)
@@ -49,8 +49,8 @@ if __name__ == "__main__":
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
 
-    cluster.print_table()
-    nx.draw(cluster.ch_net, with_labels=False)
+    # cluster.print_table()
+    # nx.draw(cluster.ch_net, with_labels=False)
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
     print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
     print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
     print(f'execution time: {end_time - start_time}')
     # print(f'all the edges: \n{cluster.net_graph.edges()}')
-    print(f'dropped_packers are: {cluster.drops}')
+    # print(f'dropped_packers are: {cluster.drops}')
     # print(f'delivered_packets are: {cluster.delivered_packets}')
     print(f'number of generated packets: {cluster.pck_queue}')
     print(f'number of delivered packets: {len(cluster.delivered_packets)}')
