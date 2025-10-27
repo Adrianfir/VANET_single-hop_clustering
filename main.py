@@ -5,8 +5,6 @@ This project is related to clustering and routing problem in VANET
 
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-import os
-print("PYTHONHASHSEED =", os.environ.get("PYTHONHASHSEED"))
 import time
 from data_cluster import DataTable
 from configs.config import Configs
