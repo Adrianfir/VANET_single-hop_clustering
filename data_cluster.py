@@ -352,7 +352,7 @@ class DataTable:
         This method is designed for finding a cluster for veh_id
         :return: cluster heads and connection between them including through the gate_chs
         """
-        for veh_id in util.sort_shuffle(veh_ids):
+        for veh_id in veh_ids:
             self.veh_table.values(veh_id)['other_chs'] = set()
             self.veh_table.values(veh_id)['gates'] = dict()
             self.veh_table.values(veh_id)['gate_chs'] = set()
@@ -383,7 +383,7 @@ class DataTable:
                     (self.veh_table.values(veh_id)['cluster_head'] is True):
 
                 temp_mem = self.veh_table.values(veh_id)['cluster_members'].copy()
-                for m in util.sort_shuffle(temp_mem):
+                for m in temp_mem:
                     dist = util.det_dist(veh_id, self.veh_table, m, self.veh_table)
 
                     if dist > min(self.veh_table.values(veh_id)['trans_range'],
@@ -441,7 +441,7 @@ class DataTable:
                     self.update_cluster([veh_id, ], config, zones)
 
             temp_stand_alone = self.stand_alone.copy()
-            for veh_id in util.sort_shuffle(temp_stand_alone):
+            for veh_id in temp_stand_alone:
                 self.veh_table.values(veh_id)['other_chs'] = set()
                 self.veh_table.values(veh_id)['gates'] = dict()
                 self.veh_table.values(veh_id)['gate_chs'] = set()
@@ -492,7 +492,7 @@ class DataTable:
                                                )
             n_near_sa[veh_id] = len(near_sa[veh_id])
 
-        for veh_id in util.sort_shuffle(near_sa.keys()):
+        for veh_id in near_sa.keys():
             if n_near_sa[veh_id] > 0:
                 pot_ch[veh_id] = util.det_pot_ch(veh_id, near_sa, n_near_sa)
             else:
@@ -503,7 +503,10 @@ class DataTable:
         mem_control = set()  # after a vehicle become a member, add it to this and at the beginning of the
         # for-loop, check if veh_id is in it to not do anything new and ruin it
         temp = self.stand_alone.copy()
-        for veh_id in util.sort_shuffle(temp):
+        temp = list(temp)
+        temp.sort()
+        temp.reverse()
+        for veh_id in temp:
             if (self.veh_table.values(veh_id)['cluster_head'] is True) or \
                     (self.veh_table.values(veh_id)['primary_ch'] is not None) or \
                     (veh_id in mem_control) or (veh_id in selected_chs):
@@ -871,7 +874,7 @@ class DataTable:
         :param configs:
         :return:
         """
-        available_vehs = util.sort_shuffle(self.veh_table.ids())
+        available_vehs = list(self.veh_table.ids())
         n_messages = random.randint(0, int(len(self.veh_table.ids()) / 20))
         for s_id in random.sample(available_vehs, n_messages):
             if s_id in self.stand_alone:
@@ -906,7 +909,7 @@ class DataTable:
         for h in range(configs.max_hop):
             any_pck_transmitted = False    # this is a control parameter to break from the hop-loop if no packet transmitted
             nodes_with_pack = self.nodes_with_pack.difference(self.stand_alone).copy()
-            for node in util.sort_shuffle(nodes_with_pack):
+            for node in sorted(list(nodes_with_pack)):
                 table = self.bus_table if 'bus' in node else self.veh_table
 
                 if len(table.values(node)['packets_to_pass']) == 0:

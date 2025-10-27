@@ -5,21 +5,20 @@ This project is related to clustering and routing problem in VANET
 
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
+
+import os
+import random
+import numpy as np
 import time
 from data_cluster import DataTable
 from configs.config import Configs
 from zonex import ZoneID
-import utils.util as util
 import utils.util_routing as util_routing
-import re
-import networkx as nx
 import matplotlib.pyplot as plt
-import random
+
 
 if __name__ == "__main__":
-    random.seed(42)
     configs = Configs().config
-
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
     cluster = DataTable(configs, area_zones)
@@ -62,6 +61,7 @@ if __name__ == "__main__":
     # print(f'all the edges: \n{cluster.net_graph.edges()}')
     # print(f'dropped_packers are: {cluster.drops}')
     # print(f'delivered_packets are: {cluster.delivered_packets}')
+    print(f'number of generated messages: {cluster.message_id}')
     print(f'number of generated packets: {cluster.pck_queue}')
     print(f'number of delivered packets: {len(cluster.delivered_packets)}')
     non_delivered_packets = list()

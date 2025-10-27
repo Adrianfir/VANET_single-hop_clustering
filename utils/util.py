@@ -1016,11 +1016,3 @@ def other_connections_update(veh_table, bus_table, zone_ch,
         bus_table.values(bus)['other_chs'] = det_buses_other_ch(bus, veh_table,bus_table, zone_buses, zone_ch)
 
     return veh_table, bus_table
-
-def sort_shuffle(the_one):
-
-    if type(the_one) is not list:
-        the_one = list(the_one)
-    random.shuffle(the_one)
-
-    return the_one
