@@ -5,7 +5,8 @@ This project is related to clustering and routing problem in VANET
 
 """
 __author__: str = "Pouya 'Adrian' Firouzmakan"
-
+import os
+print("PYTHONHASHSEED =", os.environ.get("PYTHONHASHSEED"))
 import time
 from data_cluster import DataTable
 from configs.config import Configs
@@ -39,7 +40,7 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (2*configs.iter/3)) and (cluster.time > configs.start_time + 10):
+        if (cluster.time < configs.start_time + (configs.iter/2)) and (cluster.time > configs.start_time + 20):
             cluster.gen_message(configs)
         cluster.route(configs)
     #     cluster.show_graph(configs)
