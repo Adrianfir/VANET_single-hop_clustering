@@ -44,18 +44,25 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
     len_message = random.randint(3, 10)
     message = ['packet' + str(pck) for pck in range(len_message)]
     veh_table.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
-                                                                      s_time=time, d_time=None, hops=0,
-                                                                      length=len_message)
+                                                                 s_time=time, d_time=None, hops=0,
+                                                                 length=len_message,
+                                                                 d_loc = dict(lat=veh_table.values(d_id)['lat'],
+                                                                              long=veh_table.values(d_id)['long'])
+                                                                 )
 
     sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=time,
-                                            d_time=None, hops=0, length=len_message)
+                                       d_time=None, hops=0, length=len_message,
+                                       d_loc = dict(lat=veh_table.values(d_id)['lat'],
+                                                    long=veh_table.values(d_id)['long'])
+                                       )
 
     message_id += 1
     pck_dict = dict()
     for pck in message:
         pck_dict = dict(pck=pck, message_id=message_id, source=s_id, dest=d_id, current_node=s_id,
-                           s_time=time, d_time=None, del_check=False, drop_count=configs.drop_count, hops=list(),
-                           )
+                        s_time=time, d_time=None, del_check=False, drop_count=configs.drop_count, hops=list(),
+                        d_loc = dict(lat=veh_table.values(d_id)['lat'], long=veh_table.values(d_id)['long'])
+                        )
         pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == message[-1] \
             else configs.mtu  # the last packet of the message can have a size
         # between configs.header_size+1 and configs.mtu

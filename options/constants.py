@@ -28,11 +28,11 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        alpha = 1
+        alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1200
-        iter = 400
+        start_time = 1300
+        iter = 200
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
