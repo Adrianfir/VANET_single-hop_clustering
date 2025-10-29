@@ -111,6 +111,7 @@ class DataTable:
         # self.delivered_messages = list()
         self.link_cap = dict()
         self.nodes_with_pack = set()
+        self.left_dest_pack = list()
 
     def update(self, config, zones):
         """
@@ -919,7 +920,20 @@ class DataTable:
                 if (table.values(node)['cluster_head'] is False) and (table.values(node)['primary_ch'] is not None):
                     # This means that the source is the node itself, and we need to pass the packet to it CH
 
+                    noed_packets = self.veh_table.values(node)['packets_to_pass'].copy()
                     for packet in self.veh_table.values(node)['packets_to_pass']:
+                        if packet['dest'] not in self.veh_table.ids():
+                            self.left_dest_pack.append(packet)
+                            if 'veh' in node:
+                                self.veh_table.values(node)['packets_to_pass'].remove(packet)
+                                if len(self.veh_table.values(node)['packets_to_pass']) == 0:
+                                    self.nodes_with_pack.remove(node)
+                                continue
+                            else:
+                                self.bus_table.values(node)['packets_to_pass'].remove(packet)
+                                if len(self.bus_table.values(node)['packets_to_pass']) == 0:
+                                    self.nodes_with_pack.remove(node)
+                                continue
 
                         if (self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))]
                                 >= packet['size']):
@@ -1038,7 +1052,7 @@ class DataTable:
                 break
 
 
-    def rout_gpsr(self, configs):
+    def route_gpsr(self, configs):
         for edge in range(len(list(self.net_graph.edges()))):
             self.link_cap[tuple(sorted(self.net_graph.edges())[edge])] = configs.link_limit
 
@@ -1065,6 +1079,13 @@ class DataTable:
                     continue
 
                 for pck in self.veh_table.values(node)['packets_to_pass']:
+                    if pck['dest'] not in self.veh_table.ids():
+                        self.left_dest_pack.append(pck)
+                        self.veh_table.values(node)['packets_to_pass'].remove(pck)
+                        if len(self.veh_table.values(node)['packets_to_pass']) == 0:
+                            self.nodes_with_pack.remove(node)
+                            continue
+
                     if pck['dest'] in ne_nodes:
                         if self.link_cap[tuple(sorted((node, pck['dest'])))] >= pck['size']:
                             (self.veh_table, self.bus_table,
@@ -1081,7 +1102,6 @@ class DataTable:
                             continue
                         else:
                             continue
-
 
                     next_node = None
                     next_node = util_routing.greedy_gpsr(node, self.veh_table, pck, ne_nodes)
@@ -1101,8 +1121,3 @@ class DataTable:
                                                                                         self.link_cap,
                                                                                         any_pck_transmitted,
                                                                                         pck, self.time)
-
-
-
-
-

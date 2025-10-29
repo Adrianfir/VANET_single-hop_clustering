@@ -39,8 +39,8 @@ if __name__ == "__main__":
         n_savs.append(len(cluster.stand_alone))
         if (cluster.time < configs.start_time + (configs.iter/2)) and (cluster.time > configs.start_time + 20):
             cluster.gen_message(configs)
-        # cluster.route_ntlcrp(configs)
-        cluster.rout_gpsr(configs)
+        cluster.route_ntlcrp(configs)
+        # cluster.route_gpsr(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
@@ -66,18 +66,12 @@ if __name__ == "__main__":
     print(f'number of generated packets: {cluster.pck_queue}')
     print(f'number of delivered packets: {len(cluster.delivered_packets)}')
     non_delivered_packets = list()
-    left_dest_packets = list()
     for i in cluster.veh_table.ids().union(cluster.bus_table.ids()):
         table = cluster.veh_table if 'veh' in i else cluster.bus_table
         non_delivered_packets = non_delivered_packets + table.values(i)['packets_to_pass']
 
-    for pck in non_delivered_packets:
-        if pck['dest'] in cluster.veh_table.ids():
-            continue
-        else:
-            left_dest_packets.append(pck)
-    print(f'number of non-delivered packets: {len(non_delivered_packets) - len(left_dest_packets)}')
-    print(f'number of left-dest packets: {len(left_dest_packets)}')
+    print(f'number of non-delivered packets: {len(non_delivered_packets)}')
+    print(f'number of left-dest packets: {len(cluster.left_dest_pack)}')
     print(f'number of dropped packets: {len(cluster.drops)}')
     print(f'average_hops: {avg_hops}')
     print(f'average delay: {avg_delay}')

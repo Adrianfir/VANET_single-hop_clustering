@@ -215,7 +215,6 @@ def eval_routing(cluster):
 
 def greedy_gpsr(node, veh_table, packet, ne_nodes):
     next_node = None
-    print(node, node in veh_table.ids(), packet['dest'], packet['dest'] in veh_table.ids())
     dist_to_dest = util.det_dist(node, veh_table, packet['dest'], veh_table)
     for n in ne_nodes:
         new_dist_to_dest = util.det_dist(n, veh_table, packet['dest'], veh_table)
