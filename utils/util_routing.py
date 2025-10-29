@@ -9,6 +9,7 @@ __all__ = ['gen_message', 'intra_q_link', 'pass_packet']
 #
 # import numpy as np
 import random
+import math
 # import haversine as hs
 # from debugpy.common.timestamp import current
 #
@@ -211,3 +212,81 @@ def eval_routing(cluster):
         delay_pck += pck['d_time'] - pck['s_time']
 
     return hops_pck/(len(cluster.delivered_packets) + 0.000001), delay_pck/(len(cluster.delivered_packets) + 0.000001)
+
+def greedy_gpsr(node, veh_table, packet, ne_nodes):
+    next_node = None
+    print(node, node in veh_table.ids(), packet['dest'], packet['dest'] in veh_table.ids())
+    dist_to_dest = util.det_dist(node, veh_table, packet['dest'], veh_table)
+    for n in ne_nodes:
+        new_dist_to_dest = util.det_dist(n, veh_table, packet['dest'], veh_table)
+        if new_dist_to_dest < dist_to_dest:
+            next_node = n
+            dist_to_dest = new_dist_to_dest
+    return next_node
+
+
+def perimeter_gpsr(current_node_id, dest_node_id, neighbors, veh_table, prev_node_id=None):
+    """
+    Perimeter-phase GPSR forwarding (Gabriel Graph + right-hand rule).
+    Always returns a valid neighbor if at least one exists.
+    """
+
+    def angle_between(v1, v2):
+        ang = math.atan2(v2[1], v2[0]) - math.atan2(v1[1], v1[0])
+        if ang < 0:
+            ang += 2 * math.pi
+        return ang
+
+    # --- Coordinates
+    cur_lat = veh_table.values(current_node_id)['lat']
+    cur_lon = veh_table.values(current_node_id)['long']
+    dest_lat = veh_table.values(dest_node_id)['lat']
+    dest_lon = veh_table.values(dest_node_id)['long']
+
+    # --- If only one neighbor, return it directly
+    if len(neighbors) == 1:
+        return next(iter(neighbors))
+
+    # --- Build Gabriel Graph (GG)
+    GG_neighbors = []
+    for nid in neighbors:
+        n_lat = veh_table.values(nid)['lat']
+        n_lon = veh_table.values(nid)['long']
+        mid = ((cur_lat + n_lat) / 2, (cur_lon + n_lon) / 2)
+        radius = util.det_dist(current_node_id, veh_table, nid, veh_table) / 2
+        keep_edge = True
+
+        # Check circle rule
+        for oid in neighbors:
+            if oid == nid:
+                continue
+            o_lat = veh_table.values(oid)['lat']
+            o_lon = veh_table.values(oid)['long']
+            d_mid_o = math.sqrt((mid[0] - o_lat)**2 + (mid[1] - o_lon)**2)
+            if d_mid_o < radius:
+                keep_edge = False
+                break
+
+        if keep_edge:
+            GG_neighbors.append(nid)
+
+    # If GG filtering removed all, keep all neighbors instead
+    if not GG_neighbors:
+        GG_neighbors = list(neighbors)
+
+    # --- Compute destination vector
+    dest_vec = (dest_lat - cur_lat, dest_lon - cur_lon)
+
+    # --- Apply right-hand rule (always pick smallest positive angle)
+    best_node, best_angle = None, float('inf')
+    for nid in GG_neighbors:
+        n_lat = veh_table.values(nid)['lat']
+        n_lon = veh_table.values(nid)['long']
+        nbr_vec = (n_lat - cur_lat, n_lon - cur_lon)
+        ang = angle_between(dest_vec, nbr_vec)
+        if ang < best_angle:
+            best_angle = ang
+            best_node = nid
+
+    # Always return a neighbor if any exist
+    return best_node

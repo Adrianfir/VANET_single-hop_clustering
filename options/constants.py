@@ -14,7 +14,7 @@ class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
                          joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
@@ -31,7 +31,7 @@ class Inputs:
         alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1300
+        start_time = 1600
         iter = 200
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm

@@ -891,7 +891,7 @@ class DataTable:
                                                         self.message_id, self.nodes_with_pack, self.pck_queue,
                                                         self.time, configs)
 
-    def route(self, configs):
+    def route_ntlcrp(self, configs):
         """
         This routing approach is a basic approach that is proposed in https://ieeexplore.ieee.org/abstract/document/8588189.
         In this routing approach, the packets would be passed from one CH to another CH and the only communication
@@ -1036,3 +1036,73 @@ class DataTable:
 
             if any_pck_transmitted is False:
                 break
+
+
+    def rout_gpsr(self, configs):
+        for edge in range(len(list(self.net_graph.edges()))):
+            self.link_cap[tuple(sorted(self.net_graph.edges())[edge])] = configs.link_limit
+
+        self.nodes_with_pack = self.nodes_with_pack.intersection(self.veh_table.ids().union(self.bus_table.ids()))
+        for h in range(configs.max_hop):
+            any_pck_transmitted = False    # this is a control parameter to break from the hop-loop if no packet transmitted
+            nodes_with_pack = self.nodes_with_pack
+
+            for node in sorted(list(nodes_with_pack)):
+
+                if len(self.veh_table.values(node)['packets_to_pass']) == 0:
+                    self.nodes_with_pack.remove(node)
+                    continue
+
+                ne_nodes = set()    #neighbor nodes
+                ne_nodes = self.veh_table.values(node)['other_vehs'].union(self.veh_table.values(node)['other_chs'])
+                if self.veh_table.values(node)['primary_ch'] is not None:
+                    ne_nodes.add(self.veh_table.values(node)['primary_ch'])
+                if self.veh_table.values(node)['primary_ch'] is not True:
+                    ne_nodes = ne_nodes.difference({node})
+                    ne_nodes.union(self.veh_table.values(node)['cluster_members'])
+
+                if len(ne_nodes) == 0:
+                    continue
+
+                for pck in self.veh_table.values(node)['packets_to_pass']:
+                    if pck['dest'] in ne_nodes:
+                        if self.link_cap[tuple(sorted((node, pck['dest'])))] >= pck['size']:
+                            (self.veh_table, self.bus_table,
+                             self.nodes_with_pack,
+                             self.delivered_packets,
+                             self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, pck['dest'],
+                                                                                            self.veh_table,
+                                                                                            self.bus_table,
+                                                                                            self.nodes_with_pack,
+                                                                                            self.delivered_packets,
+                                                                                            self.link_cap,
+                                                                                            any_pck_transmitted,
+                                                                                            pck, self.time)
+                            continue
+                        else:
+                            continue
+
+
+                    next_node = None
+                    next_node = util_routing.greedy_gpsr(node, self.veh_table, pck, ne_nodes)
+                    if next_node is None:
+                        next_node = util_routing.perimeter_gpsr(node, pck['dest'], ne_nodes, self.veh_table)
+
+                    if self.link_cap[tuple(sorted((node, next_node)))] >= pck['size']:
+
+                        (self.veh_table, self.bus_table,
+                         self.nodes_with_pack,
+                         self.delivered_packets,
+                         self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
+                                                                                        self.veh_table,
+                                                                                        self.bus_table,
+                                                                                        self.nodes_with_pack,
+                                                                                        self.delivered_packets,
+                                                                                        self.link_cap,
+                                                                                        any_pck_transmitted,
+                                                                                        pck, self.time)
+
+
+
+
+
