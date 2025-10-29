@@ -1084,7 +1084,7 @@ class DataTable:
                         self.veh_table.values(node)['packets_to_pass'].remove(pck)
                         if len(self.veh_table.values(node)['packets_to_pass']) == 0:
                             self.nodes_with_pack.remove(node)
-                            continue
+                        continue
 
                     if pck['dest'] in ne_nodes:
                         if self.link_cap[tuple(sorted((node, pck['dest'])))] >= pck['size']:

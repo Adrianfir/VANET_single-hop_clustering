@@ -37,10 +37,10 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (configs.iter/2)) and (cluster.time > configs.start_time + 20):
+        if (cluster.time < configs.start_time + (configs.iter/3)) and (cluster.time > configs.start_time + 20):
             cluster.gen_message(configs)
-        cluster.route_ntlcrp(configs)
-        # cluster.route_gpsr(configs)
+        # cluster.route_ntlcrp(configs)
+        cluster.route_gpsr(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
