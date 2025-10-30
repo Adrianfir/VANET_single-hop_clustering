@@ -18,6 +18,13 @@ import matplotlib.pyplot as plt
 
 
 if __name__ == "__main__":
+    # Select clustering and routing algorithms
+    clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
+    routing = input('please enter 1 for NTLCRP, 2 for GPSR, or 3 for Cluster-based GPSR: ')
+    clustering_name = 'SMZCA' if clustering == 1 else 'DCSA'
+    routing_name = 'NTLCRP'
+    routing_name = 'GPSR' if clustering_name == 2 else routing_name
+    routing_name = 'cluster-based GSPR' if clustering_name == 3 else routing_name
     configs = Configs().config
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
@@ -30,7 +37,10 @@ if __name__ == "__main__":
         cluster.update(configs, area_zones)
         print(cluster.time)
         cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
-        cluster.stand_alones_cluster(configs, area_zones)
+        if clustering == '1':
+            cluster.stand_alones_cluster(configs, area_zones)
+        if clustering == '2':
+            cluster.dsca_clustering(configs, area_zones)
         cluster.update_other_connections()
         cluster.form_net_graph()
         connection_evaluation = cluster.connected_components()
@@ -39,18 +49,24 @@ if __name__ == "__main__":
         n_savs.append(len(cluster.stand_alone))
         if (cluster.time < configs.start_time + (configs.iter/3)) and (cluster.time >= configs.start_time + 5):
             cluster.gen_message(configs)
-        # cluster.route_ntlcrp(configs)
-        # cluster.route_gpsr(configs)
-        cluster.route_cluster_gpsr(configs)
+
+        if routing == '1':
+            cluster.route_ntlcrp(configs)
+        if routing == '2':
+            cluster.route_gpsr(configs)
+        if routing == '3':
+            cluster.route_cluster_gpsr(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
     end_time = time.time()
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
-
-    cluster.print_table()
+    print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
+    print('################################################################################')
+    # cluster.print_table()
     # nx.draw(cluster.ch_net, with_labels=False)
+    print(f'delivered_packets are: {cluster.delivered_packets}')
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
     print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
     print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')

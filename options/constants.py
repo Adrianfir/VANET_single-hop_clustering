@@ -31,8 +31,8 @@ class Inputs:
         alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1300
-        iter = 60
+        start_time = 1600
+        iter = 100
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
@@ -51,7 +51,8 @@ class Inputs:
         header_size = 70    # the header_size of each packet can be around 58-70 bytes
         beacon_size = 160   # it should be considered for the beacons related to the clustering
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
-        max_hop = 18        # maximum number of hops that a packet can travel per tick
+        max_hop = 4         # maximum number of hops that a packet can travel per tick. this number is because if there
+        # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
 
 
 

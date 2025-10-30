@@ -252,6 +252,7 @@ class DataTable:
                         self.drops.append(drop)
                 else:
                     packets_to_pass = self.veh_table.values(k)['packets_to_pass'].copy()
+
                     for pck in packets_to_pass:
                         any_pck_transmitted = False
                         (self.veh_table, self.bus_table,
@@ -1232,8 +1233,14 @@ class DataTable:
                     continue
 
                 if (table.values(node)['cluster_head'] is False) and (table.values(node)['primary_ch'] is None): # when the primary_ch has left
-                    for pack in range(len(table.values(node)['packets_to_pass'])):
-                        table.values(node)['packets_to_pass'][pack]['drop_count'] -= 1
+                    for packet in range(len(table.values(node)['packets_to_pass'])):
+                        if packet['dest'] not in self.veh_table.ids():
+                            (self.left_dest_pack, self.nodes_with_pack,
+                             self.veh_table, self.bus_table) = util_routing.left_dest(node, packet, self.left_dest_pack,
+                                                                                      self.nodes_with_pack,
+                                                                                      self.veh_table, self.bus_table)
+                            continue
+                        table.values(node)['packets_to_pass'][packet]['drop_count'] -= 1
                     continue
 
                 if table.values(node)['cluster_head'] is True:
