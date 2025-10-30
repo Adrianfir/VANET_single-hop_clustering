@@ -37,10 +37,11 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (configs.iter/3)) and (cluster.time > configs.start_time + 20):
+        if (cluster.time < configs.start_time + (configs.iter/3)) and (cluster.time >= configs.start_time + 5):
             cluster.gen_message(configs)
         # cluster.route_ntlcrp(configs)
-        cluster.route_gpsr(configs)
+        # cluster.route_gpsr(configs)
+        cluster.route_cluster_gpsr(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
 
-    # cluster.print_table()
+    cluster.print_table()
     # nx.draw(cluster.ch_net, with_labels=False)
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
     print(f'stability_evaluation: {cluster.eval_cluster(configs)}')

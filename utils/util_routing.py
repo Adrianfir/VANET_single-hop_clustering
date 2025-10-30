@@ -10,6 +10,7 @@ __all__ = ['gen_message', 'intra_q_link', 'pass_packet']
 # import numpy as np
 import random
 import math
+import networkx as nx
 # import haversine as hs
 # from debugpy.common.timestamp import current
 #
@@ -60,8 +61,8 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
     message_id += 1
     pck_dict = dict()
     for pck in message:
-        pck_dict = dict(pck=pck, message_id=message_id, source=s_id, dest=d_id, current_node=s_id,
-                        s_time=time, d_time=None, del_check=False, drop_count=configs.drop_count, hops=list(),
+        pck_dict = dict(pck=pck, message_id=message_id, source=s_id, dest=d_id, current_node=s_id,s_time=time,
+                        d_time=None, del_check=False, drop_count=configs.drop_count, hops=list(), gate_path=list(),
                         d_loc = dict(lat=veh_table.values(d_id)['lat'], long=veh_table.values(d_id)['long'])
                         )
         pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == message[-1] \
@@ -201,7 +202,7 @@ def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
          max(node_table.values(node)['speed'], next_ch_table.values(ch)['speed']))
 
 
-    return (0.5 * v) + (0.5 * d)
+    return (0 * v) + (1 * d_dest)
 
 def eval_routing(cluster):
     hops_pck = 0
@@ -289,3 +290,56 @@ def perimeter_gpsr(current_node_id, dest_node_id, neighbors, veh_table, prev_nod
 
     # Always return a neighbor if any exist
     return best_node
+
+def gate_chs_mem(node, veh_table, bus_table):
+    gate_chs_members = set()
+    gate_gate_chs = set()
+    table = veh_table if 'veh' in node else bus_table
+    for gc in table.values(node)['gate_chs']:
+        if gc not in table.values(node)['other_chs']:
+            gate_chs_members = gate_chs_members.union(veh_table.values(gc)['cluster_members'])
+
+    for mem in table.values(node)['cluster_members']:
+        for ov in veh_table.values(mem)['other_vehs']:
+            if ((veh_table.values(ov)['primary_ch'] is not None) and
+                    (veh_table.values(ov)['primary_ch'] not in
+                     table.values(node)['gate_chs'].union(table.values(node)['other_chs']))):
+                gate_gate_chs.add(veh_table.values(ov)['primary_ch'])
+                if 'veh' in veh_table.values(ov)['primary_ch']:
+                    gate_chs_members.union(veh_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
+                else:
+                    gate_chs_members.union(bus_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
+
+    return gate_gate_chs, gate_chs_members
+
+def other_chs_mem(node, table):
+    other_chs_members = set()
+    for oc in table.values(node)['other_chs']:
+        other_chs_members = other_chs_members.union(table.values(oc)['cluster_members'])
+    return other_chs_members
+
+def find_gate_path(node, gate_chs_members, veh_table,
+                   packet, net_graph):
+    if veh_table.values(packet['dest'])['cluster_head'] is True:
+        dest_ch = packet['dest']
+    else:
+        dest_ch = veh_table.values(packet['dest'])['primary_ch']
+    if len(nx.shortest_path(net_graph, source=node, target=dest_ch)) > 4:
+        print("the shortest path does not working efficiently")
+    path = nx.shortest_path(net_graph, source=node, target=dest_ch)
+    path.reverse()
+    return path[:-1]
+
+
+def left_dest(node, packet, left_dest_pack, nodes_with_pack, veh_table, bus_table):
+    left_dest_pack.append(packet)
+    if 'veh' in node:
+        veh_table.values(node)['packets_to_pass'].remove(packet)
+        if len(veh_table.values(node)['packets_to_pass']) == 0:
+            nodes_with_pack.remove(node)
+    else:
+        bus_table.values(node)['packets_to_pass'].remove(packet)
+        if len(bus_table.values(node)['packets_to_pass']) == 0:
+            nodes_with_pack.remove(node)
+
+    return left_dest_pack, nodes_with_pack, veh_table, bus_table
