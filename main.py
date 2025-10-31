@@ -21,10 +21,10 @@ if __name__ == "__main__":
     # Select clustering and routing algorithms
     clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
     routing = input('please enter 1 for NTLCRP, 2 for GPSR, or 3 for Cluster-based GPSR: ')
-    clustering_name = 'SMZCA' if clustering == 1 else 'DCSA'
+    clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
     routing_name = 'NTLCRP'
-    routing_name = 'GPSR' if clustering_name == 2 else routing_name
-    routing_name = 'cluster-based GSPR' if clustering_name == 3 else routing_name
+    routing_name = 'GPSR' if routing == '2' else routing_name
+    routing_name = 'cluster-based GSPR' if routing == '3' else routing_name
     configs = Configs().config
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
@@ -62,11 +62,9 @@ if __name__ == "__main__":
     end_time = time.time()
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
-    print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
-    print('################################################################################')
     # cluster.print_table()
     # nx.draw(cluster.ch_net, with_labels=False)
-    print(f'delivered_packets are: {cluster.delivered_packets}')
+    # print(f'delivered_packets are: {cluster.delivered_packets}')
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
     print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
     print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
@@ -90,6 +88,9 @@ if __name__ == "__main__":
     print(f'number of non-delivered packets: {len(non_delivered_packets)}')
     print(f'number of left-dest packets: {len(cluster.left_dest_pack)}')
     print(f'number of dropped packets: {len(cluster.drops)}')
+    print(f'delivery ratio: {len(cluster.delivered_packets)/cluster.pck_queue}')
     print(f'average_hops: {avg_hops}')
     print(f'average delay: {avg_delay}')
+    print('################################################################################')
+    print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
     plt.show()

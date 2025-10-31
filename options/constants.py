@@ -14,11 +14,11 @@ class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm_bbox.osm.xml'))
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -31,8 +31,8 @@ class Inputs:
         alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1400
-        iter = 400
+        start_time = 1600
+        iter = 100
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
@@ -51,7 +51,7 @@ class Inputs:
         header_size = 70    # the header_size of each packet can be around 58-70 bytes
         beacon_size = 160   # it should be considered for the beacons related to the clustering
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
-        max_hop = 1         # maximum number of hops that a packet can travel per tick. this number is because if there
+        max_hop = 4         # maximum number of hops that a packet can travel per tick. this number is because if there
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
 
 

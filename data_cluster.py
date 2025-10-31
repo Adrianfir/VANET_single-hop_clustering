@@ -840,6 +840,7 @@ class DataTable:
                     ef = 0
                 else:
                     ch = list(unique_pot_ch.intersection(near_sa[veh_id]))[0]
+                    ef = 0
                     for ch_i in unique_pot_ch.intersection(near_sa[veh_id]):
                         if sf_factor[ch_i] > sf_factor[ch]:
                             ch = ch_i
@@ -1342,7 +1343,7 @@ class DataTable:
                             continue
 
                         if len(table.values(node)['other_chs'].union(other_chs_members, gate_gate_chs)) != 0:
-                            ne_nodes = table.values(node)['other_chs'].union(other_chs_members, gate_gate_chs)
+                            ne_nodes = table.values(node)['other_chs'].union(other_chs_members, gate_gate_chs, gate_chs_members)
                             next_node = None
                             next_node = util_routing.greedy_gpsr(node, self.veh_table, packet, ne_nodes)
                             if next_node is None:

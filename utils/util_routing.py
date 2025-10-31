@@ -224,7 +224,6 @@ def greedy_gpsr(node, veh_table, packet, ne_nodes):
             dist_to_dest = new_dist_to_dest
     return next_node
 
-
 def perimeter_gpsr(current_node_id, dest_node_id, neighbors, veh_table, prev_node_id=None):
     """
     Perimeter-phase GPSR forwarding (Gabriel Graph + right-hand rule).
