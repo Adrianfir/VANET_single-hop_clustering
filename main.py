@@ -47,7 +47,7 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (configs.iter/3)) and (cluster.time >= configs.start_time + 5):
+        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
             cluster.gen_message(configs)
 
         if routing == '1':

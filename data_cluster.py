@@ -1181,19 +1181,24 @@ class DataTable:
 
                         if len(packet['gate_path']) != 0:
                             next_node = packet['gate_path'].pop()
-                            if self.link_cap[tuple(sorted((node, next_node)))] >= packet['size']:
-                                (self.veh_table, self.bus_table,
-                                 self.nodes_with_pack,
-                                 self.delivered_packets,
-                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
-                                                                                                self.veh_table,
-                                                                                                self.bus_table,
-                                                                                                self.nodes_with_pack,
-                                                                                                self.delivered_packets,
-                                                                                                self.link_cap,
-                                                                                                any_pck_transmitted,
-                                                                                                packet, self.time)
-                            continue
+                            if (next_node in self.veh_table.ids()) and (tuple(sorted((node, next_node))) in self.link_cap.keys()):
+                                if self.link_cap[tuple(sorted((node, next_node)))] >= packet['size']:
+                                    (self.veh_table, self.bus_table,
+                                     self.nodes_with_pack,
+                                     self.delivered_packets,
+                                     self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
+                                                                                                    self.veh_table,
+                                                                                                    self.bus_table,
+                                                                                                    self.nodes_with_pack,
+                                                                                                    self.delivered_packets,
+                                                                                                    self.link_cap,
+                                                                                                    any_pck_transmitted,
+                                                                                                    packet, self.time)
+                                    continue
+                                else:
+                                    packet['gate_path'].append(next_node)
+                            else:
+                                packet['gate_path'] = list()
 
                         if (self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))]
                                 >= packet['size']):
@@ -1258,22 +1263,26 @@ class DataTable:
                             continue
                         if len(packet['gate_path']) != 0:
                             next_node = packet['gate_path'].pop()
-                            if self.link_cap[tuple(sorted((node, next_node)))] >= packet['size']:
-                                (self.veh_table, self.bus_table,
-                                 self.nodes_with_pack,
-                                 self.delivered_packets,
-                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
-                                                                                                self.veh_table,
-                                                                                                self.bus_table,
-                                                                                                self.nodes_with_pack,
-                                                                                                self.delivered_packets,
-                                                                                                self.link_cap,
-                                                                                                any_pck_transmitted,
-                                                                                                packet, self.time)
-                            else:
-                                packet['gate_path'].append(next_node)
+                            if (next_node in self.veh_table.ids()) and (
+                                    tuple(sorted((node, next_node))) in self.link_cap.keys()):
+                                if self.link_cap[tuple(sorted((node, next_node)))] >= packet['size']:
+                                    (self.veh_table, self.bus_table,
+                                     self.nodes_with_pack,
+                                     self.delivered_packets,
+                                     self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
+                                                                                                    self.veh_table,
+                                                                                                    self.bus_table,
+                                                                                                    self.nodes_with_pack,
+                                                                                                    self.delivered_packets,
+                                                                                                    self.link_cap,
+                                                                                                    any_pck_transmitted,
+                                                                                                    packet, self.time)
+                                    continue
+                                else:
+                                    packet['gate_path'].append(next_node)
 
-                            continue
+                            else:
+                                packet['gate_path'] = list()
 
                         if packet['dest'] in table.values(node)['cluster_members']:
                             member = packet['dest']
