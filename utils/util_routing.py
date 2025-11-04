@@ -28,7 +28,7 @@ import utils.util as util
 # import re
 
 
-def gen_message(s_id, d_id, veh_table,sent_messages, iter_messages,  iter_packets, message_id,
+def gen_message(s_id, d_id, veh_table,sent_messages, iter_messages, message_id,
                 nodes_with_pack, pck_queue, time, configs):
     """
 
@@ -57,7 +57,7 @@ def gen_message(s_id, d_id, veh_table,sent_messages, iter_messages,  iter_packet
                                        d_loc = dict(lat=veh_table.values(d_id)['lat'],
                                                     long=veh_table.values(d_id)['long'])
                                        )
-    iter_messages.append(sent_messages[message_id])
+    iter_messages[message_id] = sent_messages[message_id]
     message_id += 1
     pck_dict = dict()
     for pck in message:
@@ -69,11 +69,9 @@ def gen_message(s_id, d_id, veh_table,sent_messages, iter_messages,  iter_packet
             else configs.mtu  # the last packet of the message can have a size
         # between configs.header_size+1 and configs.mtu
 
-        veh_table.values(s_id)['packets_to_pass'].append(pck_dict)
         nodes_with_pack.add(s_id)
         pck_queue += 1
-        iter_packets.append(pck_dict)
-    return veh_table,sent_messages, iter_messages, iter_packets, message_id, nodes_with_pack, pck_queue
+    return veh_table,sent_messages, iter_messages, message_id, nodes_with_pack, pck_queue
 
 def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
                 delivered_packets, link_cap, any_pck_transmitted ,packet, time):

@@ -61,11 +61,8 @@ if __name__ == "__main__":
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
     end_time = time.time()
-    with open('messages_smallsize.yaml', 'w') as f:
-        yaml.dump(cluster.iter_messages, f)
-
-    with open('packets_smallsize.yaml', 'w') as f:
-        yaml.dump(cluster.iter_packets, f)
+    with open('messages_largesize.yaml', 'w') as f:
+        yaml.dump(cluster.iter_messages, f, default_flow_style=False)
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
     # cluster.print_table()
@@ -84,8 +81,8 @@ if __name__ == "__main__":
     # # print(f'all the edges: \n{cluster.net_graph.edges()}')
     # # print(f'dropped_packers are: {cluster.drops}')
     # # print(f'delivered_packets are: {cluster.delivered_packets}')
-    # print(f'number of generated messages: {cluster.message_id}')
-    # print(f'number of generated packets: {cluster.pck_queue}')
+    print(f'number of generated messages: {cluster.message_id}')
+    print(f'number of generated packets: {cluster.pck_queue}')
     # print(f'number of delivered packets: {len(cluster.delivered_packets)}')
     # non_delivered_packets = list()
     # for i in cluster.veh_table.ids().union(cluster.bus_table.ids()):

@@ -880,9 +880,8 @@ class DataTable:
         :return:
         """
         available_vehs = list(self.veh_table.ids())
-        n_messages = random.randint(0, int(len(self.veh_table.ids()) / 20))
-        self.iter_messages[self.time] = list()
-        self.iter_packets[self.time] = list()
+        n_messages = random.randint(int(len(self.veh_table.ids())/10), int(len(self.veh_table.ids())/3))
+        self.iter_messages[self.time] = dict()
         for s_id in random.sample(available_vehs, n_messages):
             # if s_id in self.stand_alone:
             #     continue
@@ -894,11 +893,10 @@ class DataTable:
 
             (self.veh_table, self.sent_messages,
              self.iter_messages[self.time],
-             self.iter_packets[self.time],
              self.message_id, self.nodes_with_pack,
              self.pck_queue) = util_routing.gen_message(s_id, d_id, self.veh_table,self.sent_messages,
-                                                        self.iter_messages[self.time], self.iter_packets[self.time],
-                                                        self.message_id, self.nodes_with_pack, self.pck_queue, self.time,
+                                                        self.iter_messages[self.time], self.message_id,
+                                                        self.nodes_with_pack, self.pck_queue, self.time,
                                                         configs)
 
     def route_ntlcrp(self, configs):
