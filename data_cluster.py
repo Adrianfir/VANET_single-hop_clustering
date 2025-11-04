@@ -105,6 +105,8 @@ class DataTable:
         # initiation for routing part
         self.drops = list()
         self.sent_messages = dict()
+        self.iter_messages = dict()
+        self.iter_packets = dict()
         self.message_id = 0
         self.pck_queue = 0
         self.delivered_packets = list()
@@ -879,20 +881,25 @@ class DataTable:
         """
         available_vehs = list(self.veh_table.ids())
         n_messages = random.randint(0, int(len(self.veh_table.ids()) / 20))
+        self.iter_messages[self.time] = list()
+        self.iter_packets[self.time] = list()
         for s_id in random.sample(available_vehs, n_messages):
-            if s_id in self.stand_alone:
-                continue
+            # if s_id in self.stand_alone:
+            #     continue
             d_id = None
             d_control = False
             while d_control is False:
                 d_id = random.choice(available_vehs)
-                d_control = True if d_id != s_id else 0
+                d_control = True if d_id != s_id else False
 
             (self.veh_table, self.sent_messages,
+             self.iter_messages[self.time],
+             self.iter_packets[self.time],
              self.message_id, self.nodes_with_pack,
              self.pck_queue) = util_routing.gen_message(s_id, d_id, self.veh_table,self.sent_messages,
-                                                        self.message_id, self.nodes_with_pack, self.pck_queue,
-                                                        self.time, configs)
+                                                        self.iter_messages[self.time], self.iter_packets[self.time],
+                                                        self.message_id, self.nodes_with_pack, self.pck_queue, self.time,
+                                                        configs)
 
     def route_ntlcrp(self, configs):
         """

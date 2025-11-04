@@ -28,7 +28,7 @@ import utils.util as util
 # import re
 
 
-def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
+def gen_message(s_id, d_id, veh_table,sent_messages, iter_messages,  iter_packets, message_id,
                 nodes_with_pack, pck_queue, time, configs):
     """
 
@@ -52,12 +52,12 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
                                                                               long=veh_table.values(d_id)['long'])
                                                                  )
 
-    sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=time,
+    sent_messages[message_id] = dict(mess=message, source=s_id, dest=d_id, s_time=time,
                                        d_time=None, hops=0, length=len_message,
                                        d_loc = dict(lat=veh_table.values(d_id)['lat'],
                                                     long=veh_table.values(d_id)['long'])
                                        )
-
+    iter_messages.append(sent_messages[message_id])
     message_id += 1
     pck_dict = dict()
     for pck in message:
@@ -72,7 +72,8 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
         veh_table.values(s_id)['packets_to_pass'].append(pck_dict)
         nodes_with_pack.add(s_id)
         pck_queue += 1
-    return veh_table,sent_messages, message_id, nodes_with_pack, pck_queue
+        iter_packets.append(pck_dict)
+    return veh_table,sent_messages, iter_messages, iter_packets, message_id, nodes_with_pack, pck_queue
 
 def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
                 delivered_packets, link_cap, any_pck_transmitted ,packet, time):

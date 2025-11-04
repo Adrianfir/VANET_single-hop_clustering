@@ -15,6 +15,7 @@ from configs.config import Configs
 from zonex import ZoneID
 import utils.util_routing as util_routing
 import matplotlib.pyplot as plt
+import yaml
 
 
 if __name__ == "__main__":
@@ -36,62 +37,67 @@ if __name__ == "__main__":
     for i in range(configs.iter):
         cluster.update(configs, area_zones)
         print(cluster.time)
-        cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
-        if clustering == '1':
-            cluster.stand_alones_cluster(configs, area_zones)
-        if clustering == '2':
-            cluster.dsca_clustering(configs, area_zones)
-        cluster.update_other_connections()
-        cluster.form_net_graph()
-        connection_evaluation = cluster.connected_components()
-        connections.append(connection_evaluation)
-        n_chs.append(len(cluster.all_chs))
-        n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
-            cluster.gen_message(configs)
-
-        if routing == '1':
-            cluster.route_ntlcrp(configs)
-        if routing == '2':
-            cluster.route_gpsr(configs)
-        if routing == '3':
-            cluster.route_cluster_gpsr(configs)
+        # cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
+        # if clustering == '1':
+        #     cluster.stand_alones_cluster(configs, area_zones)
+        # if clustering == '2':
+        #     cluster.dsca_clustering(configs, area_zones)
+        # cluster.update_other_connections()
+        # cluster.form_net_graph()
+        # connection_evaluation = cluster.connected_components()
+        # connections.append(connection_evaluation)
+        # n_chs.append(len(cluster.all_chs))
+        # n_savs.append(len(cluster.stand_alone))
+        # if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
+        cluster.gen_message(configs)
+        #
+        # if routing == '1':
+        #     cluster.route_ntlcrp(configs)
+        # if routing == '2':
+        #     cluster.route_gpsr(configs)
+        # if routing == '3':
+        #     cluster.route_cluster_gpsr(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
     end_time = time.time()
+    with open('messages_smallsize.yaml', 'w') as f:
+        yaml.dump(cluster.iter_messages, f)
+
+    with open('packets_smallsize.yaml', 'w') as f:
+        yaml.dump(cluster.iter_packets, f)
     # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
     #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
     # cluster.print_table()
     # nx.draw(cluster.ch_net, with_labels=False)
     # print(f'delivered_packets are: {cluster.delivered_packets}')
-    
-    avg_hops, avg_delay = util_routing.eval_routing(cluster)
-    print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
-    print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
-    print('\n')
-    print(f'n_vehs: {len(cluster.veh_table.ids())}')
-    print(f'n_buses: {len(cluster.bus_table.ids())}')
-    print(f'avg_chs: {sum(n_chs)/len(n_chs)}')
-    print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
-    print(f'execution time: {end_time - start_time}')
-    # print(f'all the edges: \n{cluster.net_graph.edges()}')
-    # print(f'dropped_packers are: {cluster.drops}')
-    # print(f'delivered_packets are: {cluster.delivered_packets}')
-    print(f'number of generated messages: {cluster.message_id}')
-    print(f'number of generated packets: {cluster.pck_queue}')
-    print(f'number of delivered packets: {len(cluster.delivered_packets)}')
-    non_delivered_packets = list()
-    for i in cluster.veh_table.ids().union(cluster.bus_table.ids()):
-        table = cluster.veh_table if 'veh' in i else cluster.bus_table
-        non_delivered_packets = non_delivered_packets + table.values(i)['packets_to_pass']
 
-    print(f'number of non-delivered packets: {len(non_delivered_packets)}')
-    print(f'number of left-dest packets: {len(cluster.left_dest_pack)}')
-    print(f'number of dropped packets: {len(cluster.drops)}')
-    print(f'delivery ratio: {len(cluster.delivered_packets)/cluster.pck_queue}')
-    print(f'average_hops: {avg_hops}')
-    print(f'average delay: {avg_delay}')
-    print('################################################################################')
-    print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
-    plt.show()
+    # avg_hops, avg_delay = util_routing.eval_routing(cluster)
+    # print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
+    # print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
+    # print('\n')
+    # print(f'n_vehs: {len(cluster.veh_table.ids())}')
+    # print(f'n_buses: {len(cluster.bus_table.ids())}')
+    # print(f'avg_chs: {sum(n_chs)/len(n_chs)}')
+    # print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
+    # print(f'execution time: {end_time - start_time}')
+    # # print(f'all the edges: \n{cluster.net_graph.edges()}')
+    # # print(f'dropped_packers are: {cluster.drops}')
+    # # print(f'delivered_packets are: {cluster.delivered_packets}')
+    # print(f'number of generated messages: {cluster.message_id}')
+    # print(f'number of generated packets: {cluster.pck_queue}')
+    # print(f'number of delivered packets: {len(cluster.delivered_packets)}')
+    # non_delivered_packets = list()
+    # for i in cluster.veh_table.ids().union(cluster.bus_table.ids()):
+    #     table = cluster.veh_table if 'veh' in i else cluster.bus_table
+    #     non_delivered_packets = non_delivered_packets + table.values(i)['packets_to_pass']
+    #
+    # print(f'number of non-delivered packets: {len(non_delivered_packets)}')
+    # print(f'number of left-dest packets: {len(cluster.left_dest_pack)}')
+    # print(f'number of dropped packets: {len(cluster.drops)}')
+    # print(f'delivery ratio: {len(cluster.delivered_packets)/cluster.pck_queue}')
+    # print(f'average_hops: {avg_hops}')
+    # print(f'average delay: {avg_delay}')
+    # print('################################################################################')
+    # print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
+    # plt.show()
