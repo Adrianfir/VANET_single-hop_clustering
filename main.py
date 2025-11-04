@@ -65,6 +65,7 @@ if __name__ == "__main__":
     # cluster.print_table()
     # nx.draw(cluster.ch_net, with_labels=False)
     # print(f'delivered_packets are: {cluster.delivered_packets}')
+    
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
     print(f'stability_evaluation: {cluster.eval_cluster(configs)}')
     print(f'connection_evaluation: {sum(connections)/len(connections)}->{connections}')
