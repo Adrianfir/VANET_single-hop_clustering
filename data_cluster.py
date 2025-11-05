@@ -105,7 +105,7 @@ class DataTable:
         # initiation for routing part
         self.drops = list()
         self.sent_messages = dict()
-        self.message_id = 0
+        self.message_count = 0
         self.pck_queue = 0
         self.delivered_packets = list()
         # self.delivered_messages = list()
@@ -870,29 +870,20 @@ class DataTable:
 
         self.update_cluster(self.veh_table.ids(), configs, zones)
 
-    def gen_message(self, configs):
+    def read_message(self, configs):
         """
         here we assumed that each message contains 3-10 packets. the last packet would have a size more than 50-70 bytes
         (which is the size dedicated to header size) and configs.mtu which is the maximum size of a packet.
         :param configs:
         :return:
         """
-        available_vehs = list(self.veh_table.ids())
-        n_messages = random.randint(0, int(len(self.veh_table.ids()) / 20))
-        for s_id in random.sample(available_vehs, n_messages):
-            if s_id in self.stand_alone:
-                continue
-            d_id = None
-            d_control = False
-            while d_control is False:
-                d_id = random.choice(available_vehs)
-                d_control = True if d_id != s_id else 0
 
-            (self.veh_table, self.sent_messages,
-             self.message_id, self.nodes_with_pack,
-             self.pck_queue) = util_routing.gen_message(s_id, d_id, self.veh_table,self.sent_messages,
-                                                        self.message_id, self.nodes_with_pack, self.pck_queue,
-                                                        self.time, configs)
+
+        (self.veh_table, self.sent_messages,
+         self.message_id, self.nodes_with_pack,
+         self.pck_queue) = util_routing.gen_message(self.veh_table, self.sent_messages,
+                                                    self.message_count, self.nodes_with_pack, self.pck_queue,
+                                                    self.time, configs)
 
     def route_ntlcrp(self, configs):
         """
@@ -1343,17 +1334,17 @@ class DataTable:
                             continue
 
                         if len(table.values(node)['other_chs'].union(other_chs_members, gate_gate_chs)) != 0:
-                            ne_nodes = table.values(node)['other_chs'].union(other_chs_members, gate_gate_chs, gate_chs_members)
+                            # ne_nodes = table.values(node)['other_chs'].union(other_chs_members, gate_gate_chs, gate_chs_members)
                             next_node = None
-                            next_node = util_routing.greedy_gpsr(node, self.veh_table, packet, ne_nodes)
+                            next_node = util_routing.greedy_gpsr(node, self.veh_table, packet, table.values(node)['other_chs'].union(table.values(node)['gate_chs'], other_chs_members, gate_gate_chs, gate_chs_members))
                             if next_node is None:
-                                next_node = util_routing.perimeter_gpsr(node, packet['dest'], ne_nodes, self.veh_table)
+                                next_node = util_routing.perimeter_gpsr(node, packet['dest'], table.values(node)['other_chs'].union(table.values(node)['gate_chs'], other_chs_members, gate_gate_chs, gate_chs_members), self.veh_table)
+                            if self.veh_table.values(next_node)['primary_ch'] is not None:
+                                next_node = self.veh_table.values(next_node)['primary_ch']
 
-                            if next_node not in table.values(node)['other_chs']:
-                                packet['gate_path'] = nx.shortest_path(self.net_graph, source=node, target=next_node)
-                                packet['gate_path'].reverse()
-                                packet['gate_path'] = packet['gate_path'][:-1]
-
+                            packet['gate_path'] = nx.shortest_path(self.net_graph, source=node, target=next_node)
+                            packet['gate_path'].reverse()
+                            packet['gate_path'] = packet['gate_path'][:-1]
                             next_node = next_node if len(packet['gate_path']) == 0 else packet['gate_path'].pop()
                             if self.link_cap[tuple(sorted((node, next_node)))] >= packet['size']:
                                 (self.veh_table, self.bus_table,

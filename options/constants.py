@@ -8,17 +8,20 @@ import numpy as np
 import argparse
 import pathlib
 import xml.dom.minidom
+import yaml
 
 
 class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
+
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/messages_smallsize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -53,6 +56,8 @@ class Inputs:
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
         max_hop = 4         # maximum number of hops that a packet can travel per tick. this number is because if there
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
+        with open(messages_path, 'r') as f:
+            messages = yaml.safe_load(f)
 
 
 
@@ -62,6 +67,8 @@ class Inputs:
                             help='this argument is the latitudes and longitudes of the understudied area')
         parser.add_argument('--n_cars', type=int, default=8000,
                             help='this is an assumption regarding the number of cars in order to create a HashTabel')
+        parser.add_argument('--messages', type=str, default=messages,
+                            help='generated messages')
         parser.add_argument('--sumo_trace', type=xml.dom.minidom.Document, default=sumo_trace,
                             help='This is the sumo_trace file that includes all the data we need from the traffic')
         parser.add_argument('--sumo_edge', type=xml.dom.minidom.Document, default=sumo_edge,

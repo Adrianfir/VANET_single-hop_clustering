@@ -28,12 +28,9 @@ import utils.util as util
 # import re
 
 
-def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
+def gen_message(veh_table,sent_messages, message_count,
                 nodes_with_pack, pck_queue, time, configs):
     """
-
-    :param s_id:
-    :param d_id:
     :param veh_table:
     :param sent_messages:
     :param message_id:
@@ -43,36 +40,27 @@ def gen_message(s_id, d_id, veh_table,sent_messages, message_id,
     :param configs:
     :return:
     """
-    len_message = random.randint(3, 10)
-    message = ['packet' + str(pck) for pck in range(len_message)]
-    veh_table.values(s_id)['messages_sent']['message_id'] = dict(mess=message, source=s_id, dest=d_id,
-                                                                 s_time=time, d_time=None, hops=0,
-                                                                 length=len_message,
-                                                                 d_loc = dict(lat=veh_table.values(d_id)['lat'],
-                                                                              long=veh_table.values(d_id)['long'])
-                                                                 )
 
-    sent_messages['message_id'] = dict(mess=message, source=s_id, dest=d_id, s_time=time,
-                                       d_time=None, hops=0, length=len_message,
-                                       d_loc = dict(lat=veh_table.values(d_id)['lat'],
-                                                    long=veh_table.values(d_id)['long'])
-                                       )
-
-    message_id += 1
     pck_dict = dict()
-    for pck in message:
-        pck_dict = dict(pck=pck, message_id=message_id, source=s_id, dest=d_id, current_node=s_id,s_time=time,
-                        d_time=None, del_check=False, drop_count=configs.drop_count, hops=list(), gate_path=list(),
-                        d_loc = dict(lat=veh_table.values(d_id)['lat'], long=veh_table.values(d_id)['long'])
-                        )
-        pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == message[-1] \
-            else configs.mtu  # the last packet of the message can have a size
-        # between configs.header_size+1 and configs.mtu
+    for i in configs.messages[time]:
+        message = configs.messages[time][i]
+        message_count += 1
+        for pck in configs.messages[time][i]['mess']:
+            pck_dict = dict(pck=pck, message_id=i, source=message['source'], dest=message['dest'],
+                            current_node=message['source'],s_time=time,  d_time=None, del_check=False,
+                            drop_count=configs.drop_count, hops=list(), gate_path=list(),
+                            d_loc = dict(lat=veh_table.values(message['dest'])['lat'],
+                                         long=veh_table.values(message['dest'])['long'])
+                            )
+            pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == configs.messages[time][i]['mess'][-1] \
+                else configs.mtu  # the last packet of the message can have a size
+            # between configs.header_size+1 and configs.mtu
 
-        veh_table.values(s_id)['packets_to_pass'].append(pck_dict)
-        nodes_with_pack.add(s_id)
-        pck_queue += 1
-    return veh_table,sent_messages, message_id, nodes_with_pack, pck_queue
+            veh_table.values(message['source'])['packets_to_pass'].append(pck_dict)
+            nodes_with_pack.add(message['source'])
+            pck_queue += 1
+
+    return veh_table,sent_messages, message_count, nodes_with_pack, pck_queue
 
 def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet,
                 delivered_packets, link_cap, any_pck_transmitted ,packet, time):

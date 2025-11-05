@@ -15,6 +15,7 @@ from configs.config import Configs
 from zonex import ZoneID
 import utils.util_routing as util_routing
 import matplotlib.pyplot as plt
+import yaml
 
 
 if __name__ == "__main__":
@@ -26,6 +27,7 @@ if __name__ == "__main__":
     routing_name = 'GPSR' if routing == '2' else routing_name
     routing_name = 'cluster-based GSPR' if routing == '3' else routing_name
     configs = Configs().config
+
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
     cluster = DataTable(configs, area_zones)
@@ -48,7 +50,7 @@ if __name__ == "__main__":
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
         if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
-            cluster.gen_message(configs)
+            cluster.read_message(configs)
 
         if routing == '1':
             cluster.route_ntlcrp(configs)
@@ -78,7 +80,7 @@ if __name__ == "__main__":
     # print(f'all the edges: \n{cluster.net_graph.edges()}')
     # print(f'dropped_packers are: {cluster.drops}')
     # print(f'delivered_packets are: {cluster.delivered_packets}')
-    print(f'number of generated messages: {cluster.message_id}')
+    print(f'number of generated messages: {cluster.message_count}')
     print(f'number of generated packets: {cluster.pck_queue}')
     print(f'number of delivered packets: {len(cluster.delivered_packets)}')
     non_delivered_packets = list()
