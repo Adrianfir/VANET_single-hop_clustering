@@ -954,8 +954,6 @@ class DataTable:
                                     (util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
                                                              self.nodes_with_pack, self.delivered_packets,
                                                              self.link_cap, any_pck_transmitted, packet, self.time))
-
-
                     continue
 
                 if (table.values(node)['cluster_head'] is False) and (table.values(node)['primary_ch'] is None): # when the primary_ch has left
@@ -1082,7 +1080,7 @@ class DataTable:
                 ne_nodes = self.veh_table.values(node)['other_vehs'].union(self.veh_table.values(node)['other_chs'])
                 if self.veh_table.values(node)['primary_ch'] is not None:
                     ne_nodes.add(self.veh_table.values(node)['primary_ch'])
-                if self.veh_table.values(node)['primary_ch'] is not True:
+                if self.veh_table.values(node)['cluster_head'] is not True:
                     ne_nodes = ne_nodes.difference({node})
                     ne_nodes.union(self.veh_table.values(node)['cluster_members'])
 
@@ -1237,9 +1235,16 @@ class DataTable:
                                                                                       self.nodes_with_pack,
                                                                                       self.veh_table, self.bus_table)
                             continue
-                        table.values(node)['packets_to_pass'][packet]['drop_count'] -= 1
-                    continue
-
+                        if len(table.values(node)['other_vehs']) == 0:
+                            continue
+                        else:
+                            next_node = None
+                            next_node = util_routing.greedy_gpsr(node, self.veh_table, packet,
+                                                                 table.values(node)['other_vehs'])
+                            if next_node is None:
+                                next_node = util_routing.perimeter_gpsr(node, packet['dest'],
+                                                                        table.values(node)['other_vehs'], self.veh_table)
+                            print(next_node)
                 if table.values(node)['cluster_head'] is True:
                     other_chs_members = util_routing.other_chs_mem(node, table)
                     gate_gate_chs, gate_chs_members = util_routing.gate_chs_mem(node, self.veh_table, self.bus_table)
