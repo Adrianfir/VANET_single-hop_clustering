@@ -1061,6 +1061,71 @@ class DataTable:
             if any_pck_transmitted is False:
                 break
 
+    def route_pdvr(self, configs):
+        """
+        This routing approach is a basic approach that is proposed based on
+        a paper titled "Position-based Directional Vehicular Routing" a
+        :param configs:
+        :return:
+        """
+        for edge in range(len(list(self.net_graph.edges()))):
+            self.link_cap[tuple(sorted(list(self.net_graph.edges())[edge]))] = configs.link_limit
+
+        self.nodes_with_pack = self.nodes_with_pack.intersection(self.veh_table.ids().union(self.bus_table.ids()))
+        for h in range(configs.max_hop):
+            any_pck_transmitted = False  # this is a control parameter to break from the hop-loop if no packet transmitted
+            nodes_with_pack = self.nodes_with_pack.difference(self.stand_alone).copy()
+            for node in nodes_with_pack:
+                table = self.bus_table if 'bus' in node else self.veh_table
+
+                if len(table.values(node)['packets_to_pass']) == 0:
+                    self.nodes_with_pack.remove(node)
+                    continue
+
+                neighbor_nodes = table.values(node)['other_vehs'].union(table.values(node)['other_chs'])
+                if table.values(node)['cluster_head'] is True:
+                    neighbor_nodes = neighbor_nodes.union(table.values(node)['cluster_members']).difference({node})
+                if table.values(node)['primary_ch'] is not None:
+                    neighbor_nodes = neighbor_nodes.union({table.values(node)['primary_ch']})
+
+                if len(neighbor_nodes) == 0:
+                    continue
+                for packet in table.values(node)['packets_to_pass']:
+                    if packet['dest'] not in self.veh_table.ids():
+                        (self.left_dest_pack, self.nodes_with_pack,
+                         self.veh_table, self.bus_table) = util_routing.left_dest(node, packet, self.left_dest_pack,
+                                                                                  self.nodes_with_pack,
+                                                                                  self.veh_table, self.bus_table)
+                        continue
+                    next_node = None
+                    critic = -1000
+                    for n in neighbor_nodes:
+                        if self.link_cap[tuple(sorted((node, n)))] >= packet['size']:
+
+                            next_node_table = self.veh_table if 'veh' in n else self.bus_table
+                            temp_critic = util_routing.pdvr_criteria(node, table, n, next_node_table,
+                                                          packet['dest'], self.veh_table)
+                            if temp_critic >= 0:
+                                if temp_critic > critic:
+                                    critic = temp_critic
+                                    next_node = n
+
+                    if next_node is None:
+                        continue
+
+                    (self.veh_table, self.bus_table,
+                     self.nodes_with_pack,
+                     self.delivered_packets,
+                     self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
+                                                                                    self.veh_table,
+                                                                                    self.bus_table,
+                                                                                    self.nodes_with_pack,
+                                                                                    self.delivered_packets,
+                                                                                    self.link_cap,
+                                                                                    any_pck_transmitted,
+                                                                                    packet, self.time)
+
+
     def route_gpsr(self, configs):
         for edge in range(len(list(self.net_graph.edges()))):
             self.link_cap[tuple(sorted(self.net_graph.edges())[edge])] = configs.link_limit
@@ -1131,7 +1196,6 @@ class DataTable:
                                                                                         any_pck_transmitted,
                                                                                         pck, self.time)
 
-
     def route_cluster_gpsr(self, configs):
         """
         This routing approach is a basic approach that is proposed based on
@@ -1193,36 +1257,36 @@ class DataTable:
                         if (self.link_cap[tuple(sorted((node, self.veh_table.values(node)['primary_ch'])))]
                                 >= packet['size']):
                             ch_id = self.veh_table.values(node)['primary_ch']
-                            ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
+                            # ch_table = self.veh_table if 'veh' in ch_id else self.bus_table
 
-                            q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
-                            temp_gates = (self.veh_table.values(node)['other_vehs'].
-                                          intersection(ch_table.values(ch_id)['cluster_members']))
+                            # q_link = util_routing.intra_q_link(node, ch_id, self.veh_table, ch_table, configs)
+                            # temp_gates = (self.veh_table.values(node)['other_vehs'].
+                            #               intersection(ch_table.values(ch_id)['cluster_members']))
+                            #
+                            # if (((q_link > configs.qol_thresh) or (len(temp_gates) == 0))
+                            #         and (self.link_cap[tuple(sorted((node, ch_id)))] >= packet['size'])):
+                            (self.veh_table, self.bus_table, self.nodes_with_pack , self.delivered_packets,
+                             self.link_cap, any_pck_transmitted) = (
+                                util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
+                                                         self.nodes_with_pack, self.delivered_packets,
+                                                         self.link_cap, any_pck_transmitted, packet,
+                                                         self.time))
 
-                            if (((q_link > configs.qol_thresh) or (len(temp_gates) == 0))
-                                    and (self.link_cap[tuple(sorted((node, ch_id)))] >= packet['size'])):
-                                (self.veh_table, self.bus_table, self.nodes_with_pack , self.delivered_packets,
-                                 self.link_cap, any_pck_transmitted) = (
-                                    util_routing.pass_packet(node, ch_id, self.veh_table,self.bus_table,
-                                                             self.nodes_with_pack, self.delivered_packets,
-                                                             self.link_cap, any_pck_transmitted, packet,
-                                                             self.time))
-
-                            else:
-                                next_node = ch_id
-                                for n in temp_gates:
-                                    if self.link_cap[tuple(sorted((node, ch_id)))] >= packet['size']:
-                                        if (util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs) >
-                                                q_link):
-                                            next_node = n
-                                            q_link =  util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table,
-                                                                                configs)
-
-                                (self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets,
-                                 self.link_cap, any_pck_transmitted) = \
-                                    (util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
-                                                             self.nodes_with_pack, self.delivered_packets,
-                                                             self.link_cap, any_pck_transmitted, packet, self.time))
+                            # else:
+                            #     next_node = ch_id
+                            #     for n in temp_gates:
+                            #         if self.link_cap[tuple(sorted((node, ch_id)))] >= packet['size']:
+                            #             if (util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table, configs) >
+                            #                     q_link):
+                            #                 next_node = n
+                            #                 q_link =  util_routing.intra_q_link(n, ch_id, self.veh_table, ch_table,
+                            #                                                     configs)
+                            #
+                            #     (self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets,
+                            #      self.link_cap, any_pck_transmitted) = \
+                            #         (util_routing.pass_packet(node, next_node, self.veh_table, self.bus_table,
+                            #                                  self.nodes_with_pack, self.delivered_packets,
+                            #                                  self.link_cap, any_pck_transmitted, packet, self.time))
 
 
                     continue
@@ -1245,6 +1309,7 @@ class DataTable:
                                 next_node = util_routing.perimeter_gpsr(node, packet['dest'],
                                                                         table.values(node)['other_vehs'], self.veh_table)
                             print(next_node)
+
                 if table.values(node)['cluster_head'] is True:
                     other_chs_members = util_routing.other_chs_mem(node, table)
                     gate_gate_chs, gate_chs_members = util_routing.gate_chs_mem(node, self.veh_table, self.bus_table)

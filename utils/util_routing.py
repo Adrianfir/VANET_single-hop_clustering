@@ -7,7 +7,7 @@ __all__ = ['gen_message', 'intra_q_link', 'pass_packet']
 
 # from distutils.command.config import config
 #
-# import numpy as np
+import numpy as np
 import random
 import math
 import networkx as nx
@@ -168,6 +168,15 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
+    """
+
+    :param current_node:
+    :param ch_id:
+    :param veh_table:
+    :param table:
+    :param configs:
+    :return:
+    """
 
     dist = util.det_dist(current_node, veh_table, ch_id, table)
     q_link = ((1 - dist / configs.veh_trans_range) * (1 - abs((veh_table.values(current_node)['speed'] -
@@ -176,6 +185,16 @@ def intra_q_link(current_node, ch_id, veh_table, table, configs):
     return q_link
 
 def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
+    """
+
+    :param node:
+    :param ch:
+    :param dest:
+    :param veh_table:
+    :param bus_table:
+    :param configs:
+    :return:
+    """
     node_table = veh_table if 'veh' in node else bus_table
     next_ch_table = veh_table if 'veh' in node else bus_table
     dest_table = veh_table if 'veh' in dest else bus_table
@@ -193,6 +212,11 @@ def inter_ch_eval(node, ch, dest, veh_table, bus_table, configs):
     return (0 * v) + (1 * d_dest)
 
 def eval_routing(cluster):
+    """
+
+    :param cluster:
+    :return:
+    """
     hops_pck = 0
     delay_pck = 0
 
@@ -203,6 +227,14 @@ def eval_routing(cluster):
     return hops_pck/(len(cluster.delivered_packets) + 0.000001), delay_pck/(len(cluster.delivered_packets) + 0.000001)
 
 def greedy_gpsr(node, veh_table, packet, ne_nodes):
+    """
+
+    :param node:
+    :param veh_table:
+    :param packet:
+    :param ne_nodes:
+    :return:
+    """
     next_node = None
     dist_to_dest = util.det_dist(node, veh_table, packet['dest'], veh_table)
     for n in ne_nodes:
@@ -279,6 +311,13 @@ def perimeter_gpsr(current_node_id, dest_node_id, neighbors, veh_table, prev_nod
     return best_node
 
 def gate_chs_mem(node, veh_table, bus_table):
+    """
+
+    :param node:
+    :param veh_table:
+    :param bus_table:
+    :return:
+    """
     gate_chs_members = set()
     gate_gate_chs = set()
     table = veh_table if 'veh' in node else bus_table
@@ -300,6 +339,12 @@ def gate_chs_mem(node, veh_table, bus_table):
     return gate_gate_chs, gate_chs_members
 
 def other_chs_mem(node, table):
+    """
+
+    :param node:
+    :param table:
+    :return:
+    """
     other_chs_members = set()
     for oc in table.values(node)['other_chs']:
         other_chs_members = other_chs_members.union(table.values(oc)['cluster_members'])
@@ -307,6 +352,15 @@ def other_chs_mem(node, table):
 
 def find_gate_path(node, gate_chs_members, veh_table,
                    packet, net_graph):
+    """
+
+    :param node:
+    :param gate_chs_members:
+    :param veh_table:
+    :param packet:
+    :param net_graph:
+    :return:
+    """
     if veh_table.values(packet['dest'])['cluster_head'] is True:
         dest_ch = packet['dest']
     else:
@@ -319,6 +373,16 @@ def find_gate_path(node, gate_chs_members, veh_table,
 
 
 def left_dest(node, packet, left_dest_pack, nodes_with_pack, veh_table, bus_table):
+    """
+
+    :param node:
+    :param packet:
+    :param left_dest_pack:
+    :param nodes_with_pack:
+    :param veh_table:
+    :param bus_table:
+    :return:
+    """
     left_dest_pack.append(packet)
     if 'veh' in node:
         veh_table.values(node)['packets_to_pass'].remove(packet)
@@ -330,3 +394,39 @@ def left_dest(node, packet, left_dest_pack, nodes_with_pack, veh_table, bus_tabl
             nodes_with_pack.remove(node)
 
     return left_dest_pack, nodes_with_pack, veh_table, bus_table
+
+def pdvr_criteria(veh0, table0, veh_ne, table_ne, veh_dest, table_dest):
+    """
+
+    :param veh0: current_node
+    :param table0:
+    :param veh_ne: neighbor node
+    :param table_ne:
+    :param veh_dest: destination node
+    :param table_dest:
+    :return:
+    """
+    vec_0ne = (table_ne.values(veh_ne)['lat'] - table0.values(veh0)['lat'],
+               table_ne.values(veh_ne)['long'] - table0.values(veh0)['long'])
+
+    data_ne = table_ne.values(veh_ne)['lat']
+    if data_ne is None:
+        raise ValueError(f"No data found for neighbor vehicle {veh_ne}")
+
+    vec_0dest = (table_dest.values(veh_dest)['lat'] - table0.values(veh0)['lat'],
+                 table_dest.values(veh_dest)['long'] - table0.values(veh0)['long'])
+
+
+    angle_deg_0 = table_dest.values(veh_dest)['angle']  # from SUMO
+    angle_rad_0 = math.radians(angle_deg_0)
+
+    # Road direction vector R
+    rx0 = math.cos(angle_rad_0)
+    ry0 = math.sin(angle_rad_0)
+    r_0 = (rx0, ry0)  # current node moving vector
+
+    cos_sd = np.dot(r_0, vec_0dest)/ (np.linalg.norm(r_0) * np.linalg.norm(vec_0dest) + 0.00001)
+
+    cos_sn = np.dot(r_0, vec_0ne)/ (np.linalg.norm(r_0) * np.linalg.norm(vec_0ne) + 0.00001)
+
+    return cos_sd * cos_sn

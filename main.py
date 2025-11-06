@@ -21,11 +21,12 @@ import yaml
 if __name__ == "__main__":
     # Select clustering and routing algorithms
     clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
-    routing = input('please enter 1 for NTLCRP, 2 for GPSR, or 3 for Cluster-based GPSR: ')
+    routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for Cluster-based GPSR, 4 for PDVR: ')
     clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
     routing_name = 'NTLCRP'
     routing_name = 'GPSR' if routing == '2' else routing_name
     routing_name = 'cluster-based GSPR' if routing == '3' else routing_name
+    routing_name = 'PDVR' if routing == '4' else routing_name
     configs = Configs().config
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
@@ -58,6 +59,8 @@ if __name__ == "__main__":
             cluster.route_gpsr(configs)
         if routing == '3':
             cluster.route_cluster_gpsr(configs)
+        if routing == '4':
+            cluster.route_pdvr(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #

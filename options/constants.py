@@ -21,7 +21,7 @@ class Inputs:
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
                          joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
 
-        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages//test/messages_smallsize.yaml"
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/test/messages_smallsize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -54,7 +54,7 @@ class Inputs:
         header_size = 70    # the header_size of each packet can be around 58-70 bytes
         beacon_size = 160   # it should be considered for the beacons related to the clustering
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
-        max_hop = 4         # maximum number of hops that a packet can travel per tick. this number is because if there
+        max_hop = 5         # maximum number of hops that a packet can travel per tick. this number is because if there
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
         with open(messages_path, 'r') as f:
             messages = yaml.safe_load(f)
