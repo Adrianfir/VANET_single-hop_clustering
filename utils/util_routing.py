@@ -86,6 +86,9 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     #     q_link = intra_q_link(current_node, ch_id, veh_table, veh_table, configs)
     #
     # return True
+    if next_node in packet['hops'][-3:]:
+        return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
+
     if ('veh' in current_node) and ('veh' in next_node):
 
         packet['hops'].append(next_node)
@@ -104,8 +107,6 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
         veh_table.values(current_node)['packets_to_pass'].remove(packet)
         if len(veh_table.values(current_node)['packets_to_pass']) == 0:
             nodes_with_packet.remove(current_node)
-
-
 
     if ('veh' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
