@@ -99,4 +99,5 @@ if __name__ == "__main__":
     print(f'average delay: {avg_delay}')
     print('################################################################################')
     print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
+    print(f'number of premiter mode: {cluster.n_perimeter}')
     plt.show()

@@ -112,6 +112,7 @@ class DataTable:
         self.link_cap = dict()
         self.nodes_with_pack = set()
         self.left_dest_pack = list()
+        self.n_perimeter = 0
 
     def update(self, config, zones):
         """
@@ -1181,6 +1182,7 @@ class DataTable:
                     next_node = util_routing.greedy_gpsr(node, self.veh_table, pck, ne_nodes)
                     if next_node is None:
                         next_node = util_routing.perimeter_gpsr(node, pck['dest'], ne_nodes, self.veh_table)
+                        self.n_perimeter += 1
 
                     if self.link_cap[tuple(sorted((node, next_node)))] >= pck['size']:
 

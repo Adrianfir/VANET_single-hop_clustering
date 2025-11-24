@@ -78,14 +78,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     :param bus_table:
     :return:
     """
-    # ch_id = veh_table.values(current_node)['primary_ch']
-    # if 'bus' in ch_id:
-    #
-    #     q_link = intra_q_link(current_node, ch_id, veh_table, bus_table, configs)
-    # else:
-    #     q_link = intra_q_link(current_node, ch_id, veh_table, veh_table, configs)
-    #
-    # return True
+
     if next_node in packet['hops'][-3:]:
         return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
 
