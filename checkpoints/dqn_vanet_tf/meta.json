@@ -1,0 +1,6 @@
+{
+  "epsilon": 0.050000000000000044,
+  "total_steps": 69849,
+  "state_dim": 13,
+  "action_dim": 8
+}

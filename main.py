@@ -29,6 +29,7 @@ if __name__ == "__main__":
     routing_name = 'GPSR' if routing == '2' else routing_name
     routing_name = 'cluster-based GSPR' if routing == '3' else routing_name
     routing_name = 'PDVR' if routing == '4' else routing_name
+    routing_name = 'RL-based GPSR' if routing == '5' else routing_name
     configs = Configs().config
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
@@ -54,7 +55,7 @@ if __name__ == "__main__":
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
 
-        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 2):
+        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
             cluster.read_message(configs)
 
         if routing == '1':

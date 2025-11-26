@@ -122,8 +122,8 @@ class DQNAgentTF:
     def save(self, directory: str):
         os.makedirs(directory, exist_ok=True)
         # weights
-        self.model.save_weights(os.path.join(directory, "q_net_weights.h5"))
-        self.target_model.save_weights(os.path.join(directory, "target_q_net_weights.h5"))
+        self.model.save_weights(os.path.join(directory, "q_net_weights.weights.h5"))
+        self.target_model.save_weights(os.path.join(directory, "target_q_net_weights.weights.h5"))
 
         # meta (epsilon, steps)
         meta = {
