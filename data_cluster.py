@@ -21,6 +21,9 @@ import utils.util as util
 import utils.util_graph as util_graph
 import utils.util_routing as util_routing
 import hash
+from qlearning_state import QRoutingHelper
+from dqn_agent import DQNAgentTF
+
 
 
 class DataTable:
@@ -54,6 +57,8 @@ class DataTable:
                                          [set() for j in range(len(zones.zone_hash.ids()))]
                                          )
                                      )
+        self.n_zone_cols = zones.n_cols
+        self.n_zone_rows = zones.n_rows
         self.stand_alone = set()
         self.all_chs = set()
         self.left_veh = dict()
@@ -113,6 +118,22 @@ class DataTable:
         self.nodes_with_pack = set()
         self.left_dest_pack = list()
         self.n_perimeter = 0
+
+
+        # RL part
+        self.helper = QRoutingHelper(
+            veh_table=self.veh_table,
+            bus_table=self.bus_table,
+            zones_dict={key: self.zone_vehicles[key] | self.zone_buses[key] for key in self.zone_vehicles},
+            configs=config,
+            n_cols=zones.n_cols,
+            max_dist=3000.0,
+            max_zone_count_cap=50,
+            loop_window_zones=4,
+            delay_threshold_ticks=6,
+            )
+
+        self.agent = DQNAgentTF(config)
 
     def update(self, config, zones):
         """
@@ -1435,3 +1456,106 @@ class DataTable:
 
             if any_pck_transmitted is False:
                 break
+
+    def route_gpsr_rl(self, configs):
+
+        self.helper = QRoutingHelper(
+            veh_table=self.veh_table,
+            bus_table=self.bus_table,
+            zones_dict={key: self.zone_vehicles[key] | self.zone_buses[key] for key in self.zone_vehicles},
+            configs=configs,
+            n_cols=self.n_zone_cols,
+            max_dist=3000.0,
+            max_zone_count_cap=50,
+            loop_window_zones=4,
+            delay_threshold_ticks=6,
+        )
+
+        for edge in range(len(list(self.net_graph.edges()))):
+            self.link_cap[tuple(sorted(self.net_graph.edges())[edge])] = configs.link_limit
+
+        self.nodes_with_pack = self.nodes_with_pack.intersection(self.veh_table.ids().union(self.bus_table.ids()))
+        for h in range(configs.max_hop):
+            any_pck_transmitted = False    # this is a control parameter to break from the hop-loop if no packet transmitted
+            nodes_with_pack = self.nodes_with_pack
+
+            for node in sorted(list(nodes_with_pack)):
+
+                if len(self.veh_table.values(node)['packets_to_pass']) == 0:
+                    self.nodes_with_pack.remove(node)
+                    continue
+
+                ne_nodes = set()    #neighbor nodes
+                ne_nodes = self.veh_table.values(node)['other_vehs'].union(self.veh_table.values(node)['other_chs'])
+                if self.veh_table.values(node)['primary_ch'] is not None:
+                    ne_nodes.add(self.veh_table.values(node)['primary_ch'])
+                if self.veh_table.values(node)['cluster_head'] is not True:
+                    ne_nodes = ne_nodes.difference({node})
+                    ne_nodes.union(self.veh_table.values(node)['cluster_members'])
+
+                if len(ne_nodes) == 0:
+                    continue
+
+                for pck in self.veh_table.values(node)['packets_to_pass']:
+                    if pck['dest'] not in self.veh_table.ids():
+                        self.left_dest_pack.append(pck)
+                        self.veh_table.values(node)['packets_to_pass'].remove(pck)
+                        if len(self.veh_table.values(node)['packets_to_pass']) == 0:
+                            self.nodes_with_pack.remove(node)
+                        continue
+
+                    if pck['dest'] in ne_nodes:
+                        if self.link_cap[tuple(sorted((node, pck['dest'])))] >= pck['size']:
+                            (self.veh_table, self.bus_table,
+                             self.nodes_with_pack,
+                             self.delivered_packets,
+                             self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, pck['dest'],
+                                                                                            self.veh_table,
+                                                                                            self.bus_table,
+                                                                                            self.nodes_with_pack,
+                                                                                            self.delivered_packets,
+                                                                                            self.link_cap,
+                                                                                            any_pck_transmitted,
+                                                                                            pck, self.time)
+                            continue
+                        else:
+                            continue
+
+                    next_node = None
+                    next_node = util_routing.greedy_gpsr(node, self.veh_table, pck, ne_nodes)
+                    if next_node is not None:
+                        if self.link_cap[tuple(sorted((node, next_node)))] >= pck['size']:
+                            (self.veh_table, self.bus_table,
+                             self.nodes_with_pack,
+                             self.delivered_packets,
+                             self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
+                                                                                            self.veh_table,
+                                                                                            self.bus_table,
+                                                                                            self.nodes_with_pack,
+                                                                                            self.delivered_packets,
+                                                                                            self.link_cap,
+                                                                                            any_pck_transmitted,
+                                                                                            pck, self.time)
+                    else:
+                        self.n_perimeter += 1
+                        self.agent, action, next_node  = util_routing.rl_perimeter_mode(self.agent, node, pck,
+                                                                               self.helper, self.time,
+                                                                               self.veh_table,
+                                                                               self.bus_table, configs,
+                                                                               self.n_zone_cols)
+
+                        if next_node is None:
+                            continue
+                        else:
+                            if self.link_cap[tuple(sorted((node, next_node)))] >= pck['size']:
+                                (self.veh_table, self.bus_table,
+                                 self.nodes_with_pack,
+                                 self.delivered_packets,
+                                 self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
+                                                                                                self.veh_table,
+                                                                                                self.bus_table,
+                                                                                                self.nodes_with_pack,
+                                                                                                self.delivered_packets,
+                                                                                                self.link_cap,
+                                                                                                any_pck_transmitted,
+                                                                                                pck, self.time)

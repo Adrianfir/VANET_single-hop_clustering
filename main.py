@@ -15,13 +15,15 @@ from configs.config import Configs
 from zonex import ZoneID
 import utils.util_routing as util_routing
 import matplotlib.pyplot as plt
+from qlearning_state import QRoutingHelper
 import yaml
 
 
 if __name__ == "__main__":
     # Select clustering and routing algorithms
     clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
-    routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for Cluster-based GPSR, 4 for PDVR: ')
+    routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for Cluster-based GPSR, 4 for PDVR, '
+                    'and 5 for training RL-based GPSR: ')
     clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
     routing_name = 'NTLCRP'
     routing_name = 'GPSR' if routing == '2' else routing_name
@@ -36,6 +38,7 @@ if __name__ == "__main__":
     n_chs = list()
     n_savs = list()
     start_time = time.time()
+
     for i in range(configs.iter):
         cluster.update(configs, area_zones)
         print(cluster.time)
@@ -50,7 +53,8 @@ if __name__ == "__main__":
         connections.append(connection_evaluation)
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
-        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
+
+        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 2):
             cluster.read_message(configs)
 
         if routing == '1':
@@ -61,6 +65,8 @@ if __name__ == "__main__":
             cluster.route_cluster_gpsr(configs)
         if routing == '4':
             cluster.route_pdvr(configs)
+        if routing == '5':
+            cluster.route_gpsr_rl(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
@@ -100,4 +106,5 @@ if __name__ == "__main__":
     print('################################################################################')
     print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
     print(f'number of premiter mode: {cluster.n_perimeter}')
+    cluster.agent.save("checkpoints/dqn_vanet_tf")
     plt.show()

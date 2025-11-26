@@ -9,7 +9,7 @@ import argparse
 import pathlib
 import xml.dom.minidom
 import yaml
-
+import math
 
 class Inputs:
     def __init__(self):
@@ -31,7 +31,7 @@ class Inputs:
                     min_long=-79.540771,
                     max_lat=44.012923,
                     max_long=-79.238069)
-        alpha = 1
+        alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
         start_time = 1600
@@ -58,6 +58,42 @@ class Inputs:
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
         with open(messages_path, 'r') as f:
             messages = yaml.safe_load(f)
+
+        ######## Q-Learning Routing Constants that we need to pass as arguments
+
+        zone_order = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        zone_to_idx = {z: i for i, z in enumerate(zone_order)}
+        idx_to_zone = {i: z for i, z in enumerate(zone_order)}
+        state_dim = 13
+        action_dim = 8
+        gamma = 0.99
+        lr = 0.001
+        buffer_capacity = 100000
+        batch_size = 128
+        epsilon_start = 1.0
+        epsilon_end = 0.05
+        epsilon_decay_steps = 50000
+        target_update_freq = 1000
+
+        # reward parameters – tweak these
+        # ----- REWARD PARAMETERS (TUNABLE) -----
+
+        # Base cost per perimeter hop
+        hop_penalty = -0.5
+        # Reward for getting closer to dest (per hop)
+        # r_dist = distance_weight * (prev_dist_norm - new_dist_norm)
+        distance_weight = 3.0
+        # Extra penalty when packet returns to a previously visited zone
+        loop_penalty = -8.0  # in zone-space, not node-space
+        # Delay shaping: after this many ticks, undelivered packets are "too slow"
+        delay_threshold_ticks = 6
+        # Per-perimeter-decision penalty once age > delay_threshold_ticks
+        delay_penalty_per_tick = -1.0
+        # Big success bonus when packet eventually gets delivered (via greedy)
+        success_bonus = 80.0
+        # No big drop penalty, since drops are random car exits unrelated to perimeter choices
+        drop_penalty = 0.0  # or at most -1.0 if you want a tiny push
+
 
 
 
@@ -120,6 +156,59 @@ class Inputs:
                             help='size of beacons related to clustering per second (kbps)')
         parser.add_argument('--max_hop', type=float, default=max_hop,
                             help='maximum number of hops that a packet can travel per tick')
+
+        ###### RL
+        parser.add_argument('--zone_order', type=float, default=zone_order,
+                            help='ordering neighbor zones for RL to take action')
+        parser.add_argument('--zone_to_idx', type=float, default=zone_to_idx,
+                            help='giving id to neighbor zones based on zone_order')
+        parser.add_argument('--idx_to_zone', type=float, default=idx_to_zone,
+                            help='retrieving the neighbor zone from its idx')
+
+        parser.add_argument('--state_dim', type=float, default=state_dim,
+                            help='number of states which can be calculated in the qlearning_state.pyReturn the '
+                                 'dimensionality of the state vector produced by build_state.')
+        parser.add_argument('--action_dim', type=float, default=action_dim,
+                            help='number of actions that the agent can select.')
+        parser.add_argument('--gamma', type=float, default=gamma,
+                            help='discount factor.')
+        parser.add_argument('--lr', type=float, default=lr,
+                            help='learning rate.')
+        parser.add_argument('--buffer_capacity', type=float, default=buffer_capacity,
+                            help='length of buffer')
+        parser.add_argument('--batch_size', type=float, default=batch_size,
+                            help='batch_size for neural network')
+        parser.add_argument('--epsilon_start', type=float, default=epsilon_start,
+                            help='')
+        parser.add_argument('--epsilon_end', type=float, default=epsilon_end,
+                            help='')
+        parser.add_argument('--epsilon_decay_steps', type=float, default=epsilon_decay_steps,
+                            help='')
+        parser.add_argument('--target_update_freq', type=float, default=target_update_freq,
+                            help='')
+
+
+
+
+        parser.add_argument('--hop_penalty', type=float, default=hop_penalty,
+                            help='penalty for each hop')
+        parser.add_argument('--success_bonus', type=float, default=success_bonus,
+                            help='reward for if packets gets delivered')
+        parser.add_argument('--fail_penalty', type=float, default=drop_penalty,
+                            help='in case the packet gets dropped')
+        parser.add_argument('--loop_penalty', type=float, default=loop_penalty,
+                            help='in case the packet gets dropped')
+        parser.add_argument('--delay_threshold_ticks', type=float, default=delay_threshold_ticks,
+                            help='We have an estimate of the average delay of GPSR in our data. So we can say if the '
+                                 'packet does not gets delivered after a little highr than that, consider a penalty '
+                                 'for it')
+        parser.add_argument('--delay_penalty_per_tick', type=float, default=delay_penalty_per_tick,
+                            help='The penalty if the packet doeas not get delivered after delay_threshold_ticks')
+        parser.add_argument('--distance_weight', type=float, default=distance_weight,
+                            help='Reward for getting closer to dest (per hop) '
+                                 'r_dist = distance_weight * (prev_dist_norm - new_dist_norm)')
+
+
         self.parser = parser
 
     def get_parser(self):

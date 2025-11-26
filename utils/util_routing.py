@@ -48,13 +48,14 @@ def gen_message(veh_table,sent_messages, message_count,
         for pck in configs.messages[time][i]['mess']:
             pck_dict = dict(pck=pck, message_id=i, source=message['source'], dest=message['dest'],
                             current_node=message['source'],s_time=time,  d_time=None, del_check=False,
-                            drop_count=configs.drop_count, hops=list(), gate_path=list(),
+                            drop_count=configs.drop_count, hops=list(), actions=list(), zones=list(), gate_path=list(),
                             d_loc = dict(lat=veh_table.values(message['dest'])['lat'],
                                          long=veh_table.values(message['dest'])['long'])
                             )
             pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == configs.messages[time][i]['mess'][-1] \
                 else configs.mtu  # the last packet of the message can have a size
             # between configs.header_size+1 and configs.mtu
+            pck_dict['zones'].append(veh_table.values(message['source'])['zone'])
 
             veh_table.values(message['source'])['packets_to_pass'].append(pck_dict)
             nodes_with_pack.add(message['source'])
@@ -79,12 +80,13 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     :return:
     """
 
-    if next_node in packet['hops'][-3:]:
-        return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
+    # if next_node in packet['hops'][-3:]:
+    #     return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
 
     if ('veh' in current_node) and ('veh' in next_node):
 
         packet['hops'].append(next_node)
+        packet['zones'].append(veh_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
@@ -103,6 +105,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('veh' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
+        packet['zones'].appned(bus_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
@@ -121,6 +124,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('bus' in current_node) and ('veh' in next_node):
         packet['hops'].append(next_node)
+        packet['zones'].appned(veh_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
@@ -139,6 +143,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('bus' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
+        packet['zones'].appned(bus_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
@@ -424,3 +429,164 @@ def pdvr_criteria(veh0, table0, veh_ne, table_ne, veh_dest, table_dest):
     cos_sn = np.dot(r_0, vec_0ne)/ (np.linalg.norm(r_0) * np.linalg.norm(vec_0ne) + 0.00001)
 
     return cos_sd * cos_sn
+
+def rl_perimeter_mode(agent, node_id, packet, helper, current_tick, veh_table, bus_table, configs, n_zone_cols):
+    # for tick in range(num_ticks):
+    #   for h in range(max_hops_per_tick):
+    #       for node_id in nodes_having_packets:
+    #           for packet in packets_at_node:
+    """
+
+    :param agent:
+    :param node_id:
+    :param packet:
+    :param helper:
+    :param current_tick:
+    :param veh_table:
+    :param bus_table:
+    :param configs:
+    :param n_zone_cols:
+    :return:
+    """
+    current_node_id = node_id
+    dest_id = packet["dest"]
+
+    # # make sure packet has zones & s_tick initialized
+    # if "zones" not in packet:
+    #     node_info = helper._node_info(current_node_id)
+    #     packet["zones"] = [node_info["zone_id"]]  # start history at current zone
+    # if "s_tick" not in packet:
+    #     packet["s_tick"] = current_tick
+
+    # 1) build current state
+    state = helper.build_state(current_node_id, packet, current_tick)
+
+    # 2) select action (zone index 0..7)
+    action = agent.select_action(state)
+
+    # 3) distance BEFORE move (normalized)
+    prev_dist = helper._distance_node_to_dest(current_node_id, dest_id)
+    prev_dist_norm = min(prev_dist / helper.max_dist, 1.0)
+
+    # 4) choose concrete next node for that zone
+    next_node_id = rl_perimeter_choose_next_node(node_id, action, veh_table, bus_table, configs, n_zone_cols, packet)
+
+    if next_node_id is None:
+        # No neighbor in that zone:
+        #   -> treat as bad action, stay at same node, small negative reward.
+        reward = -2.0  # you can tune this (e.g., hop_penalty + extra)
+        next_state = state
+        done = False  # routing not necessarily terminal
+
+        agent.store_transition(state, action, reward, next_state, done)
+        agent.train_step()
+
+        # you might also fall back to standard perimeter or greedy here if you want
+    else:
+        # 5) move packet in your sim (outside the RL code)
+        # update packet['current_node'] & zone history
+        # packet["current_node"] = next_node_id
+        next_node_table = veh_table if 'veh' in next_node_id else bus_table
+        next_info = next_node_table.values(next_node_id)
+        next_zone_id = next_info["zone"]
+
+        # 6) distance AFTER move
+        new_dist = helper._distance_node_to_dest(next_node_id, dest_id)
+        new_dist_norm = min(new_dist / helper.max_dist, 1.0)
+
+        # 7) compute reward using your shaping (hop, distance, loop, delay)
+        reward = helper.compute_reward(prev_dist_norm, new_dist_norm, packet, current_tick)
+
+        # 8) build next state
+        next_state = helper.build_state(next_node_id, packet, current_tick)
+
+        # 9) terminal flag from RL perspective
+        # Typically False here; you can set True if packet delivered/dropped right after.
+        done = False
+
+        agent.store_transition(state, action, reward, next_state, done)
+        agent.train_step()
+
+    return agent, action, next_node_id
+
+            # after this, your normal GPSR logic will decide if you go back to greedy mode
+
+def rl_perimeter_choose_next_node(node_id, action, veh_table, bus_table, configs, n_zone_cols, packet):
+    """
+
+    :param node_id:
+    :param action:
+    :param veh_table:
+    :param bus_table:
+    :param configs:
+    :param n_zone_cols:
+    :param packet:
+    :return:
+    """
+    node_table = veh_table if 'veh' in node_id else bus_table
+    next_zone = configs.idx_to_zone[action]
+    zone_name = zone_name_retrieval(node_id, next_zone, n_zone_cols, configs, node_table, action)
+    candidates = list()
+    neighbor_nodes = node_table.values(node_id)['other_vehs'].union(node_table.values(node_id)['other_vehs'],
+                                                              node_table.values(node_id)['cluster_members'])
+    if node_table.values(node_id)['primary_ch'] is not None:
+        neighbor_nodes.union({node_table.values(node_id)['primary_ch']})
+    for veh in neighbor_nodes:
+        table = veh_table if 'veh' in veh else bus_table
+        if table.values(veh)['zone'] == zone_name:
+            candidates.append(veh)
+            continue
+
+        sub_neighbor_nodes = table.values(veh)['other_vehs'].union(table.values(veh)['other_vehs'],
+                                                                  table.values(veh)['cluster_members'])
+        if table.values(veh)['primary_ch'] is not None:
+            sub_neighbor_nodes.union({table.values(veh)['primary_ch']})
+
+        for sub_veh in sub_neighbor_nodes:
+            sub_table = veh_table if 'veh' in sub_veh else bus_table
+            if sub_table.values(sub_veh)['zone'] == zone_name:
+                candidates.append(veh)
+                break
+
+
+    next_node = None
+    if len(candidates) == 0:
+        return next_node
+    else:
+        dist_to_dest = 100000
+        for veh in candidates:
+            temp_table = veh_table if 'veh' in node_id else bus_table
+            if util.det_dist(veh, temp_table, packet['dest'], veh_table) < dist_to_dest:
+                next_node = veh
+
+        return next_node
+
+
+
+def zone_name_retrieval(node_id, next_zone, n_zone_cols, configs, table, action):
+    """
+    want to retrieve the next node name from "N", "NE", "E", "SE", "S", "SW", "W", or "NW"
+    :param node_id:
+    :param next_zone: zone is either "N", "NE", "E", "SE", "S", "SW", "W", or "NW"
+    :param n_zone_cols:
+    :param configs
+    :param action
+    :return:
+    """
+    current_zone_number = int(table.values(node_id)['zone'][4:])
+    zone_to_name = dict(
+        N='zone' + str(current_zone_number + n_zone_cols),
+        NE='zone' + str(current_zone_number + n_zone_cols + 1),
+        E='zone' + str(current_zone_number + 1),
+        SE='zone' + str(current_zone_number - n_zone_cols + 1),
+        S='zone' + str(current_zone_number - n_zone_cols),
+        SW='zone' + str(current_zone_number - n_zone_cols - 1),
+        W='zone' + str(current_zone_number - 1),
+        NW='zone' + str(current_zone_number + n_zone_cols - 1)
+    )
+
+    return zone_to_name[configs.idx_to_zone[action]]
+
+
+
+
