@@ -34,7 +34,7 @@ class Inputs:
         alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1600
+        start_time = 1700
         iter = 100
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm

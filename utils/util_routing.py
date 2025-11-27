@@ -430,7 +430,8 @@ def pdvr_criteria(veh0, table0, veh_ne, table_ne, veh_dest, table_dest):
 
     return cos_sd * cos_sn
 
-def rl_perimeter_mode(agent, node_id, packet, helper, current_tick, veh_table, bus_table, configs, n_zone_cols):
+def rl_perimeter_mode(agent, node_id, packet, helper, current_tick, veh_table,
+                      bus_table, configs, n_zone_cols, train_reward_log, train):
     # for tick in range(num_ticks):
     #   for h in range(max_hops_per_tick):
     #       for node_id in nodes_having_packets:
@@ -446,6 +447,7 @@ def rl_perimeter_mode(agent, node_id, packet, helper, current_tick, veh_table, b
     :param bus_table:
     :param configs:
     :param n_zone_cols:
+    :param train_reward_log
     :return:
     """
     current_node_id = node_id
@@ -478,8 +480,10 @@ def rl_perimeter_mode(agent, node_id, packet, helper, current_tick, veh_table, b
         next_state = state
         done = False  # routing not necessarily terminal
 
-        agent.store_transition(state, action, reward, next_state, done)
-        agent.train_step()
+        # 🔹 only train if we are in training mode
+        if train:
+            agent.store_transition(state, action, reward, next_state, done)
+            agent.train_step()
 
         # you might also fall back to standard perimeter or greedy here if you want
     else:
@@ -503,11 +507,13 @@ def rl_perimeter_mode(agent, node_id, packet, helper, current_tick, veh_table, b
         # 9) terminal flag from RL perspective
         # Typically False here; you can set True if packet delivered/dropped right after.
         done = False
+        # 🔹 only train if we are in training mode
+        if train:
+            agent.store_transition(state, action, reward, next_state, done)
+            agent.train_step()
 
-        agent.store_transition(state, action, reward, next_state, done)
-        agent.train_step()
-
-    return agent, action, next_node_id
+    train_reward_log.append(reward)
+    return agent, train_reward_log, action, next_node_id
 
             # after this, your normal GPSR logic will decide if you go back to greedy mode
 

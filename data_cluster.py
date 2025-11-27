@@ -134,6 +134,7 @@ class DataTable:
             )
 
         self.agent = DQNAgentTF(config)
+        self.train_reward_log = list()
 
     def update(self, config, zones):
         """
@@ -1457,7 +1458,7 @@ class DataTable:
             if any_pck_transmitted is False:
                 break
 
-    def route_gpsr_rl(self, configs):
+    def route_gpsr_rl(self, configs, train):
 
         self.helper = QRoutingHelper(
             veh_table=self.veh_table,
@@ -1538,11 +1539,16 @@ class DataTable:
                                                                                             pck, self.time)
                     else:
                         self.n_perimeter += 1
-                        self.agent, action, next_node  = util_routing.rl_perimeter_mode(self.agent, node, pck,
-                                                                               self.helper, self.time,
-                                                                               self.veh_table,
-                                                                               self.bus_table, configs,
-                                                                               self.n_zone_cols)
+                        if train is False:
+                            # force pure greedy policy (no exploration)
+                            self.agent.epsilon_start = 0.0
+                            self.agent.epsilon_end = 0.0
+                            self.agent.epsilon = 0.0
+                        (self.agent, self.train_reward_log,
+                         action, next_node)  = util_routing.rl_perimeter_mode(self.agent, node, pck, self.helper,
+                                                                              self.time, self.veh_table, self.bus_table,
+                                                                              configs, self.n_zone_cols, self.train_reward_log,
+                                                                              train)
 
                         if next_node is None:
                             continue

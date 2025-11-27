@@ -67,7 +67,7 @@ if __name__ == "__main__":
         if routing == '4':
             cluster.route_pdvr(configs)
         if routing == '5':
-            cluster.route_gpsr_rl(configs)
+            cluster.route_gpsr_rl(configs, train=False)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
@@ -108,4 +108,5 @@ if __name__ == "__main__":
     print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
     print(f'number of premiter mode: {cluster.n_perimeter}')
     cluster.agent.save("checkpoints/dqn_vanet_tf")
+    plt.plot([sum(cluster.train_reward_log[0:i]) for i in range(len(cluster.train_reward_log))])
     plt.show()
