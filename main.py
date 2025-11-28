@@ -108,5 +108,6 @@ if __name__ == "__main__":
     print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
     print(f'number of premiter mode: {cluster.n_perimeter}')
     cluster.agent.save("checkpoints/dqn_vanet_tf")
+    print(cluster.actions_review)
     plt.plot([sum(cluster.train_reward_log[0:i]) for i in range(len(cluster.train_reward_log))])
     plt.show()

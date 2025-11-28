@@ -531,7 +531,7 @@ def rl_perimeter_choose_next_node(node_id, action, veh_table, bus_table, configs
     """
     node_table = veh_table if 'veh' in node_id else bus_table
     next_zone = configs.idx_to_zone[action]
-    zone_name = zone_name_retrieval(node_id, next_zone, n_zone_cols, configs, node_table, action)
+    zone_name = zone_name_retrieval(node_id, n_zone_cols, configs, node_table, action)
     candidates = list()
     neighbor_nodes = node_table.values(node_id)['other_vehs'].union(node_table.values(node_id)['other_vehs'],
                                                               node_table.values(node_id)['cluster_members'])
@@ -569,11 +569,10 @@ def rl_perimeter_choose_next_node(node_id, action, veh_table, bus_table, configs
 
 
 
-def zone_name_retrieval(node_id, next_zone, n_zone_cols, configs, table, action):
+def zone_name_retrieval(node_id, n_zone_cols, configs, table, action):
     """
     want to retrieve the next node name from "N", "NE", "E", "SE", "S", "SW", "W", or "NW"
     :param node_id:
-    :param next_zone: zone is either "N", "NE", "E", "SE", "S", "SW", "W", or "NW"
     :param n_zone_cols:
     :param configs
     :param action

@@ -16,6 +16,8 @@ from folium.plugins import MarkerCluster
 import webbrowser
 import sys
 
+from matplotlib.table import table
+
 # from graph import Graph
 import utils.util as util
 import utils.util_graph as util_graph
@@ -69,6 +71,7 @@ class DataTable:
         self.edge_color = ''
         self.sumo_edges, self.sumo_nodes = util.sumo_net_info(config.sumo_edge, config.sumo_node)
         self.ch_net = None
+        self.actions_review = list()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             self.init_count += 1
@@ -1486,7 +1489,6 @@ class DataTable:
                     self.nodes_with_pack.remove(node)
                     continue
 
-                ne_nodes = set()    #neighbor nodes
                 ne_nodes = self.veh_table.values(node)['other_vehs'].union(self.veh_table.values(node)['other_chs'])
                 if self.veh_table.values(node)['primary_ch'] is not None:
                     ne_nodes.add(self.veh_table.values(node)['primary_ch'])
@@ -1549,6 +1551,10 @@ class DataTable:
                                                                               self.time, self.veh_table, self.bus_table,
                                                                               configs, self.n_zone_cols, self.train_reward_log,
                                                                               train)
+
+                        # tuple(action, current_zone, _next_zone by taking the action)
+                        self.actions_review.append((configs.idx_to_zone[action], self.veh_table.values(node)['zone'] if 'veh' in node else self.bus_table.values(node)['zone'],
+                                                   util_routing.zone_name_retrieval(node, self.n_zone_cols, configs, self.veh_table if 'veh' in node else self.bus_table, action)))
 
                         if next_node is None:
                             continue
