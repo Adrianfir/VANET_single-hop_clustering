@@ -32,7 +32,7 @@ class DataTable:
     # This class is determined for defining the hash_table, updating data, routing messages,
     # and defining ip addresses by using trace (which is sumo_trace)
 
-    def __init__(self, config, zones):
+    def __init__(self, config, zones, train_mode):
         """
 
         :param config: look at options.py and config.py
@@ -71,7 +71,7 @@ class DataTable:
         self.edge_color = ''
         self.sumo_edges, self.sumo_nodes = util.sumo_net_info(config.sumo_edge, config.sumo_node)
         self.ch_net = None
-        self.actions_review = list()
+        self.actions_review = dict()
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
                    1::2]:
             self.init_count += 1
@@ -124,6 +124,7 @@ class DataTable:
 
 
         # RL part
+        self.train_mode = train_mode
         self.helper = QRoutingHelper(
             veh_table=self.veh_table,
             bus_table=self.bus_table,
@@ -137,6 +138,8 @@ class DataTable:
             )
 
         self.agent = DQNAgentTF(config)
+        if self.train_mode is False:
+            self.agent.load(config.trained_agent_path)
         self.train_reward_log = list()
 
     def update(self, config, zones):
@@ -1461,7 +1464,7 @@ class DataTable:
             if any_pck_transmitted is False:
                 break
 
-    def route_gpsr_rl(self, configs, train):
+    def route_gpsr_rl(self, configs):
 
         self.helper = QRoutingHelper(
             veh_table=self.veh_table,
@@ -1541,7 +1544,7 @@ class DataTable:
                                                                                             pck, self.time)
                     else:
                         self.n_perimeter += 1
-                        if train is False:
+                        if self.train_mode is False:
                             # force pure greedy policy (no exploration)
                             self.agent.epsilon_start = 0.0
                             self.agent.epsilon_end = 0.0
@@ -1550,10 +1553,11 @@ class DataTable:
                          action, next_node)  = util_routing.rl_perimeter_mode(self.agent, node, pck, self.helper,
                                                                               self.time, self.veh_table, self.bus_table,
                                                                               configs, self.n_zone_cols, self.train_reward_log,
-                                                                              train)
+                                                                              self.train_mode)
 
-                        # tuple(action, current_zone, _next_zone by taking the action)
-                        self.actions_review.append((configs.idx_to_zone[action], self.veh_table.values(node)['zone'] if 'veh' in node else self.bus_table.values(node)['zone'],
+                        # self.actions_review['current_zone']=[(action, next_zone by taking the action)]
+                        self.actions_review[self.veh_table.values(node)['zone']] = list() if self.veh_table.values(node)['zone'] not in self.actions_review.keys() else self.actions_review[self.veh_table.values(node)['zone']]
+                        self.actions_review[self.veh_table.values(node)['zone'] if 'veh' in node else self.bus_table.values(node)['zone']].append((configs.idx_to_zone[action],
                                                    util_routing.zone_name_retrieval(node, self.n_zone_cols, configs, self.veh_table if 'veh' in node else self.bus_table, action)))
 
                         if next_node is None:

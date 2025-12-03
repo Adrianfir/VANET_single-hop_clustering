@@ -27,10 +27,10 @@ class Inputs:
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
         fcd = sumo_trace.documentElement
         times = fcd.getElementsByTagName('timestep')
-        area = dict(min_lat=43.586568,
-                    min_long=-79.540771,
-                    max_lat=44.012923,
-                    max_long=-79.238069)
+        area = dict(min_lat=43.850130,
+                    min_long=-79.472871,
+                    max_lat=43.8895,
+                    max_long=-79.422551)
         alpha = 0.5
         veh_trans_range = 300
         bus_trans_range = 800
@@ -93,6 +93,7 @@ class Inputs:
         success_bonus = 80.0
         # No big drop penalty, since drops are random car exits unrelated to perimeter choices
         drop_penalty = 0.0  # or at most -1.0 if you want a tiny push
+        trained_agent_path = 'checkpoints/dqn_vanet_tr300_alpha0.5_tick1400_to_tick1600'
 
 
 
@@ -158,6 +159,7 @@ class Inputs:
                             help='maximum number of hops that a packet can travel per tick')
 
         ###### RL
+
         parser.add_argument('--zone_order', type=float, default=zone_order,
                             help='ordering neighbor zones for RL to take action')
         parser.add_argument('--zone_to_idx', type=float, default=zone_to_idx,
@@ -207,6 +209,8 @@ class Inputs:
         parser.add_argument('--distance_weight', type=float, default=distance_weight,
                             help='Reward for getting closer to dest (per hop) '
                                  'r_dist = distance_weight * (prev_dist_norm - new_dist_norm)')
+        parser.add_argument('--trained_agent_path', type=str, default=trained_agent_path,
+                            help='trained model directory')
 
 
         self.parser = parser

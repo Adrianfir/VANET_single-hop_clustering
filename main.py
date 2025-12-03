@@ -24,6 +24,8 @@ if __name__ == "__main__":
     clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
     routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for Cluster-based GPSR, 4 for PDVR, '
                     'and 5 for training RL-based GPSR: ')
+    training_mode = input('you are up to training the agent: true or false? ')
+    routing_train_mode = True if training_mode=="true" else False
     clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
     routing_name = 'NTLCRP'
     routing_name = 'GPSR' if routing == '2' else routing_name
@@ -34,7 +36,8 @@ if __name__ == "__main__":
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
-    cluster = DataTable(configs, area_zones)
+    routing_train_mode = True
+    cluster = DataTable(configs, area_zones, train_mode=routing_train_mode)
     connections = list()
     n_chs = list()
     n_savs = list()
@@ -67,7 +70,7 @@ if __name__ == "__main__":
         if routing == '4':
             cluster.route_pdvr(configs)
         if routing == '5':
-            cluster.route_gpsr_rl(configs, train=False)
+            cluster.route_gpsr_rl(configs)
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
@@ -107,7 +110,8 @@ if __name__ == "__main__":
     print('################################################################################')
     print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
     print(f'number of premiter mode: {cluster.n_perimeter}')
-    cluster.agent.save("checkpoints/dqn_vanet_tf")
-    print(cluster.actions_review)
+    if routing_train_mode is True:
+        cluster.agent.save("checkpoints/dqn_vanet_tr300_alpha0.5_tick1400_to_tick1600")
+    # print(cluster.actions_review)
     plt.plot([sum(cluster.train_reward_log[0:i]) for i in range(len(cluster.train_reward_log))])
     plt.show()
