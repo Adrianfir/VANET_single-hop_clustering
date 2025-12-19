@@ -11,6 +11,8 @@ import numpy as np
 import random
 import math
 import networkx as nx
+from networkx import nodes
+
 # import haversine as hs
 # from debugpy.common.timestamp import current
 #
@@ -100,7 +102,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             nodes_with_packet.add(next_node)
 
         veh_table.values(current_node)['packets_to_pass'].remove(packet)
-        if len(veh_table.values(current_node)['packets_to_pass']) == 0:
+        if not veh_table.values(current_node)['packets_to_pass']:
             nodes_with_packet.remove(current_node)
 
     if ('veh' in current_node) and ('bus' in next_node):
@@ -119,7 +121,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             nodes_with_packet.add(next_node)
 
         veh_table.values(current_node)['packets_to_pass'].remove(packet)
-        if len(veh_table.values(current_node)['packets_to_pass']) == 0:
+        if not veh_table.values(current_node)['packets_to_pass']:
             nodes_with_packet.remove(current_node)
 
     if ('bus' in current_node) and ('veh' in next_node):
@@ -138,7 +140,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             nodes_with_packet.add(next_node)
 
         bus_table.values(current_node)['packets_to_pass'].remove(packet)
-        if len(bus_table.values(current_node)['packets_to_pass']) == 0:
+        if not bus_table.values(current_node)['packets_to_pass']:
             nodes_with_packet.remove(current_node)
 
     if ('bus' in current_node) and ('bus' in next_node):
@@ -157,7 +159,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
             nodes_with_packet.add(next_node)
 
         bus_table.values(current_node)['packets_to_pass'].remove(packet)
-        if len(bus_table.values(current_node)['packets_to_pass']) == 0:
+        if not bus_table.values(current_node)['packets_to_pass']:
             nodes_with_packet.remove(current_node)
 
     link_cap[tuple(sorted((current_node, next_node)))] -= packet['size']
@@ -165,6 +167,73 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     return veh_table, bus_table, nodes_with_packet, delivered_packets, link_cap, any_pck_transmitted
 
+def removed_nodes_packets(k, k_values, veh_table, bus_table, temp_left_vehs, temp_left_buses,
+                          drops, nodes_with_pack, delivered_packets, config, link_cap, time, node_is_veh=True):
+    pot_next_node = None
+    if node_is_veh:
+        if k_values['primary_ch'] is not None:
+            pot_next_node = k_values['primary_ch']
+
+        elif (k_values['cluster_head']) and (k_values['other_chs'] - {k}):  # >1 because in self.veh_table, the k itself is in other_chs too
+            for v in k_values['other_chs'] - {k}:
+                if (v not in temp_left_vehs) and (v not in temp_left_buses) and (v != k):
+                    pot_next_node = v
+                    break
+
+        elif (k_values['cluster_head']) and (not (k_values['other_chs'] - {k})):
+            if k_values['cluster_members']:
+                for v in k_values['cluster_members']:
+                    if v not in temp_left_vehs:
+                        pot_next_node = v
+                        break
+            else:
+                if k_values['other_vehs']:
+                    for v in k_values['other_vehs']:
+                        if v not in temp_left_vehs:
+                            pot_next_node = v
+                            break
+
+        elif (not k_values['cluster_head']) and (not k_values['primary_ch']) and (not (k_values['other_chs'] - {k})):
+            if k_values['other_vehs']:
+                for v in k_values['other_vehs']:
+                    if v not in temp_left_vehs:
+                        pot_next_node = v
+                        break
+
+    if not node_is_veh:
+        if k_values['other_chs']:
+            for v in k_values['other_chs']:
+                if (v not in temp_left_vehs) and (v not in temp_left_buses) and (v != k):
+                    pot_next_node = v
+                    break
+        else:
+            if k_values['cluster_members']:
+                for v in k_values['cluster_members']:
+                    if v not in temp_left_vehs:
+                        pot_next_node = v
+                        break
+
+    if pot_next_node is None:
+        if k_values['packets_to_pass']:
+            for drop in k_values['packets_to_pass']:
+                drops.append(drop)
+            nodes_with_pack.remove(k)
+    else:
+        packets_to_pass = k_values['packets_to_pass'].copy()
+        for pck in packets_to_pass:
+            any_pck_transmitted = False
+            try:
+                _ = link_cap[tuple(sorted((k, pot_next_node)))]
+            except KeyError:
+                link_cap[tuple(sorted((k, pot_next_node)))] = config.link_limit
+            (veh_table, bus_table,
+             nodes_with_pack,
+             delivered_packets,
+             link_cap, any_pck_transmitted) = pass_packet(k, pot_next_node, veh_table, bus_table, nodes_with_pack,
+                                                          delivered_packets, link_cap, any_pck_transmitted, pck,
+                                                          time)
+
+    return veh_table, bus_table, k_values, nodes_with_pack, delivered_packets, link_cap
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
     """
@@ -566,8 +635,6 @@ def rl_perimeter_choose_next_node(node_id, action, veh_table, bus_table, configs
                 next_node = veh
 
         return next_node
-
-
 
 def zone_name_retrieval(node_id, n_zone_cols, configs, table, action):
     """

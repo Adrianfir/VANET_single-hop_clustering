@@ -21,7 +21,7 @@ class Inputs:
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
                          joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
 
-        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/test/messages_smallsize.yaml"
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/training_RL/messages_smallsize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
