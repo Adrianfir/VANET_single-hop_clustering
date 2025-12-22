@@ -1054,82 +1054,66 @@ class DataTable:
 
 
     def route_gpsr(self, configs):
-        # for edge in range(len(list(self.net_graph.edges()))):
-        #     self.link_cap[tuple(sorted(self.net_graph.edges())[edge])] = configs.link_limit
-        self.link_cap = dict()
+        """
+
+        :param configs:
+        :return:
+        """
+        self.link_cap = {}
+        valid_ids = set(self.veh_table.ids())
+
         for h in range(configs.max_hop):
-            any_pck_transmitted = False    # this is a control parameter to break from the hop-loop if no packet transmitted
-            nodes_with_pack = self.nodes_with_pack.copy()
+            any_pck_transmitted = False
+            for node in list(self.nodes_with_pack):  # safe snapshot
+                v = self.veh_table.values(node)
 
-            for node in nodes_with_pack:
+                ne_nodes = set(v['other_vehs']) | set(v['other_chs'])
+                if v['primary_ch'] is not None:
+                    ne_nodes.add(v['primary_ch'])
 
-
-                ne_nodes = set()    #neighbor nodes
-                if node not in self.veh_table.ids():
-                    print(node)
-                ne_nodes = self.veh_table.values(node)['other_vehs'].union(self.veh_table.values(node)['other_chs'])
-                if self.veh_table.values(node)['primary_ch'] is not None:
-                    ne_nodes.add(self.veh_table.values(node)['primary_ch'])
-                if self.veh_table.values(node)['cluster_head'] is not True:
-                    ne_nodes = ne_nodes.difference({node})
-                    ne_nodes.union(self.veh_table.values(node)['cluster_members'])
+                if v['cluster_head'] is not True:
+                    ne_nodes.discard(node)
+                    ne_nodes.update(v['cluster_members'])
 
                 if not ne_nodes:
                     continue
 
-                for pck in self.veh_table.values(node)['packets_to_pass']:
-                    if pck['dest'] not in self.veh_table.ids():
+                packets = v['packets_to_pass']
+                for pck in packets[:]:  # iterate over copy; safe removal
+                    dest = pck['dest']
+                    size = pck['size']
+
+                    if dest not in valid_ids:
                         self.left_dest_pack.append(pck)
-                        self.veh_table.values(node)['packets_to_pass'].remove(pck)
-                        if not self.veh_table.values(node)['packets_to_pass']:
-                            self.nodes_with_pack.remove(node)
+                        packets.remove(pck)
+                        if not packets:
+                            self.nodes_with_pack.discard(node)  # if set; else remove w/ guard
                         continue
 
-                    if pck['dest'] in ne_nodes:
-                        try:
-                            self.link_cap[tuple(sorted((node, pck['dest'])))] = self.link_cap[tuple(sorted((node, pck['dest'])))]
-                        except KeyError:
-                            self.link_cap[tuple(sorted((node, pck['dest'])))] = configs.link_limit
-                        if self.link_cap[tuple(sorted((node, pck['dest'])))] >= pck['size']:
-                            (self.veh_table, self.bus_table,
-                             self.nodes_with_pack,
-                             self.delivered_packets,
-                             self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, pck['dest'],
-                                                                                            self.veh_table,
-                                                                                            self.bus_table,
-                                                                                            self.nodes_with_pack,
-                                                                                            self.delivered_packets,
-                                                                                            self.link_cap,
-                                                                                            any_pck_transmitted,
-                                                                                            pck, self.time)
-                            continue
-                        else:
-                            continue
+                    # choose next hop
+                    if dest in ne_nodes:
+                        next_node = dest
+                    else:
+                        next_node = util_routing.greedy_gpsr(node, self.veh_table, pck, ne_nodes)
+                        if next_node is None:
+                            next_node = util_routing.perimeter_gpsr(node, dest, ne_nodes, self.veh_table)
+                            self.n_perimeter += 1
+                        if next_node is None:
+                            continue  # no route
 
-                    next_node = None
-                    next_node = util_routing.greedy_gpsr(node, self.veh_table, pck, ne_nodes)
-                    if next_node is None:
-                        next_node = util_routing.perimeter_gpsr(node, pck['dest'], ne_nodes, self.veh_table)
-                        self.n_perimeter += 1
-                    try:
-                        self.link_cap[tuple(sorted((node, next_node)))] = self.link_cap[
-                            tuple(sorted((node, next_node)))]
-                    except KeyError:
-                        self.link_cap[tuple(sorted((node, next_node)))] = configs.link_limit
-                    if self.link_cap[tuple(sorted((node, next_node)))] >= pck['size']:
+                    key = (node, next_node) if node < next_node else (next_node, node)
+                    cap = self.link_cap.setdefault(key, configs.link_limit)
+                    if cap < size:
+                        continue
 
-                        (self.veh_table, self.bus_table,
-                         self.nodes_with_pack,
-                         self.delivered_packets,
-                         self.link_cap, any_pck_transmitted) = util_routing.pass_packet(node, next_node,
-                                                                                        self.veh_table,
-                                                                                        self.bus_table,
-                                                                                        self.nodes_with_pack,
-                                                                                        self.delivered_packets,
-                                                                                        self.link_cap,
-                                                                                        any_pck_transmitted,
-                                                                                        pck, self.time)
-            if any_pck_transmitted is False:
+                    (self.veh_table, self.bus_table,
+                     self.nodes_with_pack,
+                     self.delivered_packets,
+                     self.link_cap, any_pck_transmitted) = util_routing.pass_packet(
+                        node, next_node, self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets,
+                        self.link_cap, any_pck_transmitted, pck, self.time)
+
+            if not any_pck_transmitted:
                 break
 
     def route_cluster_gpsr(self, configs):
