@@ -113,5 +113,5 @@ if __name__ == "__main__":
     if routing_train_mode is True:
         cluster.agent.save("checkpoints/dqn_vanet_tr300_alpha0.5_tick1400_to_tick1600")
     # print(cluster.actions_review)
-    plt.plot([sum(cluster.train_reward_log[0:i]) for i in range(len(cluster.train_reward_log))])
-    plt.show()
+    # plt.plot([sum(cluster.train_reward_log[0:i]) for i in range(len(cluster.train_reward_log))])
+    # plt.show()
