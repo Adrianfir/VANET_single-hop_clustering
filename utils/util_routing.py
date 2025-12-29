@@ -388,6 +388,7 @@ def gate_chs_mem(node, veh_table, bus_table):
     """
     gate_chs_members = set()
     gate_gate_chs = set()
+    other_other_vehs = set()
     table = veh_table if 'veh' in node else bus_table
     for gc in table.values(node)['gate_chs']:
         if gc not in table.values(node)['other_chs']:
@@ -395,6 +396,8 @@ def gate_chs_mem(node, veh_table, bus_table):
 
     for mem in table.values(node)['cluster_members']:
         for ov in veh_table.values(mem)['other_vehs']:
+            if veh_table.values(ov)['primary_ch'] is not None:
+                other_other_vehs.add(mem)
             if ((veh_table.values(ov)['primary_ch'] is not None) and
                     (veh_table.values(ov)['primary_ch'] not in
                      table.values(node)['gate_chs'].union(table.values(node)['other_chs']))):
@@ -404,7 +407,7 @@ def gate_chs_mem(node, veh_table, bus_table):
                 else:
                     gate_chs_members.union(bus_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
 
-    return gate_gate_chs, gate_chs_members
+    return gate_gate_chs, gate_chs_members, other_other_vehs
 
 def other_chs_mem(node, table):
     """

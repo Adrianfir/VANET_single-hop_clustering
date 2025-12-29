@@ -1060,7 +1060,7 @@ class DataTable:
         :return:
         """
         self.link_cap = {}
-        valid_ids = set(self.veh_table.ids())
+        veh_ids = set(self.veh_table.ids())
 
         for h in range(configs.max_hop):
             any_pck_transmitted = False
@@ -1083,7 +1083,7 @@ class DataTable:
                     dest = pck['dest']
                     size = pck['size']
 
-                    if dest not in valid_ids:
+                    if dest not in veh_ids:
                         self.left_dest_pack.append(pck)
                         packets.remove(pck)
                         if not packets:
@@ -1102,7 +1102,11 @@ class DataTable:
                             continue  # no route
 
                     key = (node, next_node) if node < next_node else (next_node, node)
-                    cap = self.link_cap.setdefault(key, configs.link_limit)
+                    try:
+                        cap = self.link_cap[key]
+                    except KeyError:
+                        self.link_cap[key] = configs.link_limit
+                        cap = self.link_cap[key]
                     if cap < size:
                         continue
 
@@ -1125,8 +1129,7 @@ class DataTable:
         :param configs:
         :return:
         """
-        if not hasattr(self, "link_cap") or self.link_cap is None:
-            self.link_cap = {}
+        self.link_cap = {}
 
         for h in range(configs.max_hop):
             any_pck_transmitted = False
@@ -1135,7 +1138,7 @@ class DataTable:
             veh_ids = set(self.veh_table.ids())
 
             # Snapshot nodes safely (avoid concurrent modification during routing)
-            nodes_with_pack = list(self.nodes_with_pack.difference(self.stand_alone))
+            nodes_with_pack = list(self.nodes_with_pack)
 
             # Cache shortest paths within this hop to avoid repeated nx.shortest_path calls
             path_cache = {}
@@ -1147,11 +1150,11 @@ class DataTable:
 
                 # If empty, remove from nodes_with_pack master set
                 if not packets:
-                    if hasattr(self.nodes_with_pack, "discard"):
-                        self.nodes_with_pack.discard(node)
-                    else:
-                        if node in self.nodes_with_pack:
-                            self.nodes_with_pack.remove(node)
+                    # if hasattr(self.nodes_with_pack, "discard"):
+                    #     self.nodes_with_pack.discard(node)
+                    # else:
+                    #     if node in self.nodes_with_pack:
+                    #         self.nodes_with_pack.remove(node)
                     continue
 
                 is_ch = bool(rec.get("cluster_head"))
@@ -1177,7 +1180,11 @@ class DataTable:
                             if next_node in veh_ids:
                                 a, b = (node, next_node) if node < next_node else (next_node, node)
                                 key = (a, b)
-                                cap = self.link_cap.setdefault(key, configs.link_limit)
+                                try:
+                                    cap = self.link_cap[key]
+                                except KeyError:
+                                    self.link_cap[key] = configs.link_limit
+                                    cap = self.link_cap[key]
                                 if cap >= packet["size"]:
                                     (self.veh_table, self.bus_table,
                                      self.nodes_with_pack,
@@ -1199,7 +1206,11 @@ class DataTable:
                         # 2) Fallback: transmit to primary CH
                         a, b = (node, primary_ch) if node < primary_ch else (primary_ch, node)
                         key = (a, b)
-                        cap = self.link_cap.setdefault(key, configs.link_limit)
+                        try:
+                            cap = self.link_cap[key]
+                        except KeyError:
+                            self.link_cap[key] = configs.link_limit
+                            cap = self.link_cap[key]
                         if cap >= packet["size"]:
                             (self.veh_table, self.bus_table, self.nodes_with_pack, self.delivered_packets,
                              self.link_cap, any_pck_transmitted) = util_routing.pass_packet(
@@ -1237,7 +1248,11 @@ class DataTable:
 
                         a, b = (node, next_node) if node < next_node else (next_node, node)
                         key = (a, b)
-                        cap = self.link_cap.setdefault(key, configs.link_limit)
+                        try:
+                            cap = self.link_cap[key]
+                        except KeyError:
+                            self.link_cap[key] = configs.link_limit
+                            cap = self.link_cap[key]
                         if cap >= packet["size"]:
                             (self.veh_table, self.bus_table,
                              self.nodes_with_pack,
@@ -1257,18 +1272,22 @@ class DataTable:
                 # -------------------------
                 if is_ch is True:
                     other_chs_members = util_routing.other_chs_mem(node, table)
-                    gate_gate_chs, gate_chs_members = util_routing.gate_chs_mem(node, self.veh_table, self.bus_table)
+                    gate_gate_chs, gate_chs_members, other_other_vehs = util_routing.gate_chs_mem(node, self.veh_table, self.bus_table)
 
                     cluster_members = rec.get("cluster_members", set())
                     other_chs = rec.get("other_chs", set())
                     gate_chs = rec.get("gate_chs", set())
+                    other_vehs = rec.get("other_vehs", set())
 
                     # Build candidate set once per node (avoid repeated unions per packet)
                     ch_candidates = set(other_chs)
                     ch_candidates.update(gate_chs)
                     ch_candidates.update(other_chs_members)
+                    ch_candidates.update(cluster_members)
+                    ch_candidates.update(other_vehs)
                     ch_candidates.update(gate_gate_chs)
                     ch_candidates.update(gate_chs_members)
+                    # ch_candidates.update(other_other_vehs)
 
                     for packet in packets[:]:
                         dest = packet["dest"]
@@ -1287,7 +1306,11 @@ class DataTable:
                             if next_node in veh_ids:
                                 a, b = (node, next_node) if node < next_node else (next_node, node)
                                 key = (a, b)
-                                cap = self.link_cap.setdefault(key, configs.link_limit)
+                                try:
+                                    cap = self.link_cap[key]
+                                except KeyError:
+                                    self.link_cap[key] = configs.link_limit
+                                    cap = self.link_cap[key]
                                 if cap >= packet["size"]:
                                     (self.veh_table, self.bus_table,
                                      self.nodes_with_pack,
@@ -1309,7 +1332,11 @@ class DataTable:
                         if dest in cluster_members:
                             a, b = (node, dest) if node < dest else (dest, node)
                             key = (a, b)
-                            cap = self.link_cap.setdefault(key, configs.link_limit)
+                            try:
+                                cap = self.link_cap[key]
+                            except KeyError:
+                                self.link_cap[key] = configs.link_limit
+                                cap = self.link_cap[key]
                             if cap >= packet["size"]:
                                 (self.veh_table, self.bus_table,
                                  self.nodes_with_pack,
@@ -1353,7 +1380,11 @@ class DataTable:
                                 next_node = packet["gate_path"].pop()
                                 a, b = (node, next_node) if node < next_node else (next_node, node)
                                 key = (a, b)
-                                cap = self.link_cap.setdefault(key, configs.link_limit)
+                                try:
+                                    cap = self.link_cap[key]
+                                except KeyError:
+                                    self.link_cap[key] = configs.link_limit
+                                    cap = self.link_cap[key]
                                 if cap >= packet["size"]:
                                     (self.veh_table, self.bus_table,
                                      self.nodes_with_pack,
@@ -1374,6 +1405,7 @@ class DataTable:
                             next_node = util_routing.greedy_gpsr(node, self.veh_table, packet, ch_candidates)
                             if next_node is None:
                                 next_node = util_routing.perimeter_gpsr(node, dest, ch_candidates, self.veh_table)
+                                self.n_perimeter += 1
                                 if next_node is None:
                                     continue
 
@@ -1406,7 +1438,11 @@ class DataTable:
 
                             a, b = (node, first_hop) if node < first_hop else (first_hop, node)
                             key = (a, b)
-                            cap = self.link_cap.setdefault(key, configs.link_limit)
+                            try:
+                                cap = self.link_cap[key]
+                            except KeyError:
+                                self.link_cap[key] = configs.link_limit
+                                cap = self.link_cap[key]
                             if cap >= packet["size"]:
                                 (self.veh_table, self.bus_table,
                                  self.nodes_with_pack,
@@ -1510,7 +1546,12 @@ class DataTable:
                     # Direct neighbor delivery
                     if dest in ne_nodes:
                         a, b = (node, dest) if node < dest else (dest, node)
-                        cap = self.link_cap.setdefault((a, b), configs.link_limit)
+                        key = (a, b)
+                        try:
+                            cap = self.link_cap[key]
+                        except KeyError:
+                            self.link_cap[key] = configs.link_limit
+                            cap = self.link_cap[key]
                         if cap >= size:
                             (self.veh_table, self.bus_table,
                              self.nodes_with_pack,
@@ -1529,7 +1570,12 @@ class DataTable:
 
                     if next_node is not None:
                         a, b = (node, next_node) if node < next_node else (next_node, node)
-                        cap = self.link_cap.setdefault((a, b), configs.link_limit)
+                        key=(a,b)
+                        try:
+                            cap = self.link_cap[key]
+                        except KeyError:
+                            self.link_cap[key] = configs.link_limit
+                            cap = self.link_cap[key]
                         if cap >= size:
                             (self.veh_table, self.bus_table,
                              self.nodes_with_pack,
@@ -1576,7 +1622,12 @@ class DataTable:
                         continue
 
                     a, b = (node, next_node) if node < next_node else (next_node, node)
-                    cap = self.link_cap.setdefault((a, b), configs.link_limit)
+                    key = (a,b)
+                    try:
+                        cap = self.link_cap[key]
+                    except KeyError:
+                        self.link_cap[key] = configs.link_limit
+                        cap = self.link_cap[key]
                     if cap >= size:
                         (self.veh_table, self.bus_table,
                          self.nodes_with_pack,
