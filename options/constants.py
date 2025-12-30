@@ -32,7 +32,7 @@ class Inputs:
                     max_lat=43.8895,
                     max_long=-79.422551)
         alpha = 1
-        veh_trans_range = 200
+        veh_trans_range = 300
         bus_trans_range = 800
         start_time = 1700
         iter = 200
@@ -41,7 +41,7 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.5, 0.2, 0.3])      # direction's angle, speed, distance
+        weights = np.array([0.9, 0.0, 0.1])      # direction's angle, speed, distance
 
 
 
