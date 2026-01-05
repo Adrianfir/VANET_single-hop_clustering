@@ -47,7 +47,7 @@ class Inputs:
 
         ####### Routing Constants that we need to pass as arguments
         mess_gen_repeat = 5    # number of times at each interval that we do the message generation
-        link_limit = 500000      # the link capacity based on bps
+        link_limit_bit = 500000      # the link capacity based on bps
         drop_count = 15     # after this amount of iteration, the packet would be dropped
         qol_thresh = 0.7    # threshold for quality of link
         mtu = 1500          # Maximum Transmission Unit which is the maximum size of each packet based on byte
@@ -55,6 +55,7 @@ class Inputs:
         beacon_size = 160   # it should be considered for the beacons related to the clustering
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
         max_hop = 5         # maximum number of hops that a packet can travel per tick. this number is because if there
+        link_limit = link_limit_bit / 8
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
         with open(messages_path, 'r') as f:
             messages = yaml.safe_load(f)
