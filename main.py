@@ -36,7 +36,6 @@ if __name__ == "__main__":
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
-    routing_train_mode = True
     cluster = DataTable(configs, area_zones, train_mode=routing_train_mode)
     connections = list()
     n_chs = list()
@@ -58,7 +57,7 @@ if __name__ == "__main__":
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
 
-        if (cluster.time < configs.start_time + (3*configs.iter/4)) and (cluster.time >= configs.start_time + 10):
+        if (cluster.time < configs.start_time + configs.iter - 5) and (cluster.time >= configs.start_time + 5):
             cluster.read_message(configs)
 
         if routing == '1':

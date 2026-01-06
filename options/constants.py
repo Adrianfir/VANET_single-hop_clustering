@@ -31,17 +31,17 @@ class Inputs:
                     min_long=-79.472871,
                     max_lat=43.8895,
                     max_long=-79.422551)
-        alpha = 1
-        veh_trans_range = 300
+        alpha = 0.5
+        veh_trans_range = 100
         bus_trans_range = 800
-        start_time = 1700
-        iter = 200
+        start_time = 1200
+        iter = 300
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.9, 0.0, 0.1])      # direction's angle, speed, distance
+        weights = np.array([0.5, 0.0, 0.5])      # direction's angle, speed, distance
 
 
 
