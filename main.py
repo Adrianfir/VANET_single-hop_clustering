@@ -22,14 +22,14 @@ import yaml
 if __name__ == "__main__":
     # Select clustering and routing algorithms
     clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
-    routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for Cluster-based GPSR, 4 for PDVR, '
+    routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for CGGR, 4 for PDVR, '
                     'and 5 for training RL-based GPSR: ')
     training_mode = input('you are up to training the agent: true or false? ')
     routing_train_mode = True if training_mode=="true" else False
     clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
     routing_name = 'NTLCRP'
     routing_name = 'GPSR' if routing == '2' else routing_name
-    routing_name = 'cluster-based GSPR' if routing == '3' else routing_name
+    routing_name = 'CGGR' if routing == '3' else routing_name
     routing_name = 'PDVR' if routing == '4' else routing_name
     routing_name = 'RL-based GPSR' if routing == '5' else routing_name
     configs = Configs().config
@@ -65,7 +65,7 @@ if __name__ == "__main__":
         if routing == '2':
             cluster.route_gpsr(configs)
         if routing == '3':
-            cluster.route_cluster_gpsr(configs)
+            cluster.route_cggr(configs, clustering_name)
         if routing == '4':
             cluster.route_pdvr(configs)
         if routing == '5':

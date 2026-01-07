@@ -107,7 +107,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('veh' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
-        packet['zones'].appned(bus_table.values(next_node)['zone'])
+        packet['zones'].append(bus_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
@@ -126,7 +126,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('bus' in current_node) and ('veh' in next_node):
         packet['hops'].append(next_node)
-        packet['zones'].appned(veh_table.values(next_node)['zone'])
+        packet['zones'].append(veh_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True
@@ -145,7 +145,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('bus' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
-        packet['zones'].appned(bus_table.values(next_node)['zone'])
+        packet['zones'].append(bus_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
             packet['del_check'] = True

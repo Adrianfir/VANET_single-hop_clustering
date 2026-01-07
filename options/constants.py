@@ -15,13 +15,13 @@ class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
 
-        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_largesize.yaml"
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_smallsize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -31,17 +31,17 @@ class Inputs:
                     min_long=-79.472871,
                     max_lat=43.8895,
                     max_long=-79.422551)
-        alpha = 0.5
-        veh_trans_range = 100
+        alpha = 1
+        veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1200
-        iter = 300
+        start_time = 1600
+        iter = 200
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.5, 0.0, 0.5])      # direction's angle, speed, distance
+        weights = np.array([0.9, 0.0, 0.1])      # direction's angle, speed, distance
 
 
 

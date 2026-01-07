@@ -1159,7 +1159,7 @@ class DataTable:
             if not any_pck_transmitted:
                 break
 
-    def route_cluster_gpsr(self, configs):
+    def route_cggr(self, configs, clustering_name):
         """
         This routing approach is a basic approach that is proposed based on
         https://ieeexplore.ieee.org/abstract/document/8588189 and GPSR algorithm
@@ -1184,6 +1184,7 @@ class DataTable:
 
             for node in nodes_with_pack:
                 table = self.bus_table if "bus" in node else self.veh_table
+                print(node)
                 rec = table.values(node)
                 packets = rec.get("packets_to_pass", [])
 
@@ -1320,13 +1321,14 @@ class DataTable:
 
                     # Build candidate set once per node (avoid repeated unions per packet)
                     ch_candidates = set(other_chs)
-                    ch_candidates.update(gate_chs)
+                    if clustering_name == 'SMZCA':
+                        ch_candidates.update(gate_chs)
+                        ch_candidates.update(gate_gate_chs)
+                        ch_candidates.update(gate_chs_members)
+                        ch_candidates.update(other_other_vehs)
                     ch_candidates.update(other_chs_members)
                     ch_candidates.update(cluster_members)
                     ch_candidates.update(other_vehs)
-                    ch_candidates.update(gate_gate_chs)
-                    ch_candidates.update(gate_chs_members)
-                    # ch_candidates.update(other_other_vehs)
 
                     for packet in packets[:]:
                         dest = packet["dest"]
