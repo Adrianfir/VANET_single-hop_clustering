@@ -15,7 +15,7 @@ class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
                          joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
@@ -41,7 +41,7 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.9, 0.0, 0.1])      # direction's angle, speed, distance
+        weights = np.array([0.5, 0.2, 0.3])      # direction's angle, speed, distance
 
 
 
@@ -56,6 +56,9 @@ class Inputs:
         # for each interval. (10 beacons/sec * 200 bytes each = 20000 bytes/sec (~160kbps))
         max_hop = 5         # maximum number of hops that a packet can travel per tick. this number is because if there
         link_limit = link_limit_bit / 8
+
+        des_address_update = 5      #for SMZC-RA, there is a counter that the destiation of each packet would be
+        # updateded after this amount of ticks
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
         with open(messages_path, 'r') as f:
             messages = yaml.safe_load(f)
@@ -156,8 +159,10 @@ class Inputs:
                             help='header size of each packet. it can be between 58 to 70 bytes.')
         parser.add_argument('--beacon_size', type=float, default=beacon_size,
                             help='size of beacons related to clustering per second (kbps)')
-        parser.add_argument('--max_hop', type=float, default=max_hop,
+        parser.add_argument('--max_hop', type=int, default=max_hop,
                             help='maximum number of hops that a packet can travel per tick')
+        parser.add_argument('--des_address_update', type=int, default=des_address_update,
+                            help='update the destination of the packet after this amount of time')
 
         ###### RL
 

@@ -10,10 +10,11 @@ __all__ = ['gen_message', 'intra_q_link', 'pass_packet']
 import numpy as np
 import random
 import math
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 import networkx as nx
 from networkx import nodes
 
-# import haversine as hs
+# import haversine as hss
 # from debugpy.common.timestamp import current
 #
 # from linked_list import LinkedList
@@ -43,7 +44,6 @@ def gen_message(veh_table,sent_messages, message_count,
     :return:
     """
 
-    pck_dict = dict()
     for i in configs.messages[time]:
         message = configs.messages[time][i]
         message_count += 1
@@ -52,7 +52,9 @@ def gen_message(veh_table,sent_messages, message_count,
                             current_node=message['source'],s_time=time,  d_time=None, del_check=False,
                             drop_count=configs.drop_count, hops=list(), actions=list(), zones=list(), gate_path=list(),
                             d_loc = dict(lat=veh_table.values(message['dest'])['lat'],
-                                         long=veh_table.values(message['dest'])['long'])
+                                         long=veh_table.values(message['dest'])['long']),
+                            d_zone = veh_table.values(message['dest'])['zone'],
+                            d_update=5, last_dir=None, tabu_dir=None, tabu_zone=None
                             )
             pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == configs.messages[time][i]['mess'][-1] \
                 else configs.mtu  # the last packet of the message can have a size
@@ -662,6 +664,847 @@ def zone_name_retrieval(node_id, n_zone_cols, configs, table, action):
 
     return zone_to_name[configs.idx_to_zone[action]]
 
+def closest_reachable_zones(zc: int, zd: int, zone_table):
+    """
+    Returns a small 'directional cone' of candidate zones:
+      current zone + 3 neighbor zones around the dominant direction to destination.
+
+    Output: set of int zone IDs (validated)
+    """
+    n_cols = zone_table.n_cols
+    n_rows = zone_table.n_rows  # ensure you have this; otherwise compute from total_zones/n_cols
+    n_zones = n_cols * n_rows
+
+    # def in_bounds(z):
+    #     return 0 <= z < n_zones
+
+    # --- centroid of a zone ---
+    def centroid(z):
+        v = zone_table.zone_hash.values(z)
+        lat = 0.5 * (v['min_lat'] + v['max_lat'])
+        lon = 0.5 * (v['min_long'] + v['max_long'])
+        return lat, lon
+
+    lat_c, lon_c = centroid(zc)
+    lat_d, lon_d = centroid(zd)
+
+    dlat = lat_d - lat_c
+    dlon = lon_d - lon_c
+
+    # --- neighbor indices ---
+    zc_int = int(zc[4:])
+    N  = str(zc_int + n_cols)
+    S  = str(zc_int - n_cols)
+    E  = str(zc_int + 1)
+    W  = str(zc_int - 1)
+    NE = str(zc_int + n_cols + 1)
+    NW = str(zc_int + n_cols - 1)
+    SE = str(zc_int - n_cols + 1)
+    SW = str(zc_int - n_cols - 1)
+
+    # Determine dominant direction (8-way)
+    # (lat increases north; lon increases east)
+    if (dlat >= 0) and (dlon >= 0):
+        primary = 'NE' if abs(dlat) > 0 and abs(dlon) > 0 else ('N' if abs(dlat) >= abs(dlon) else 'E')
+    elif (dlat >= 0) and (dlon < 0):
+        primary = 'NW' if abs(dlat) > 0 and abs(dlon) > 0 else ('N' if abs(dlat) >= abs(dlon) else 'W')
+    elif (dlat < 0) and (dlon >= 0):
+        primary = 'SE' if abs(dlat) > 0 and abs(dlon) > 0 else ('S' if abs(dlat) >= abs(dlon) else 'E')
+    else:
+        primary = 'SW' if abs(dlat) > 0 and abs(dlon) > 0 else ('S' if abs(dlat) >= abs(dlon) else 'W')
+
+    cone = {
+        'N':  {zc, N, NE, NW},
+        'S':  {zc, S, SE, SW},
+        'E':  {zc, E, NE, SE},
+        'W':  {zc, W, NW, SW},
+        'NE': {zc, N, NE, E},
+        'NW': {zc, N, NW, W},
+        'SE': {zc, S, SE, E},
+        'SW': {zc, S, SW, W},
+    }[primary]
+
+    # Filter out-of-bounds zones
+    return {z for z in cone}
+
+def zone_dist_fn(z1: int, z2: int, zone_table) -> int:
+    """
+    Chebyshev distance between two zones in a rectangular grid.
+    """
+    n_cols = zone_table.n_cols
+
+    r1, c1 = divmod(z1, n_cols)
+    r2, c2 = divmod(z2, n_cols)
+
+    return max(abs(r1 - r2), abs(c1 - c2))
+
+def greedy_smzcra( node_id, veh_table, bus_table, packet, ne_nodes, candidate_zones, zone_table,
+    allow_regress_ratio=0.00, w_tr=0.15, tr_clip_ratio=3.0, w_bus=0.20, eps=1e-9
+):
+    """
+    ZRHR++ Greedy at CH level, using ONLY ne_nodes.
+
+    Stage 1 (zone-first):
+      - Filter to candidate_zones cone
+      - Require strict zoneDist improvement (Chebyshev grid distance)
+      - Choose best by (zoneDist, geoDist), with bounded bus/TR preference.
+
+    Stage 2 (zone-relaxed):
+      - If Stage 1 fails, do CGGR-style geo greedy/perimeter-like choice on FULL pool
+        to prevent orbit inflation when TR << zone size.
+      - For veh-only neighborhoods, call your greedy_gpsr / perimeter_gpsr.
+      - For mixed/bus cases, use distance-based fallback.
+
+    Returns: next node id or None (caller may call orbit).
+    """
+
+    # ---------- helpers ----------
+    def is_bus(nid):
+        return str(nid).startswith("bus")
+
+    def table_of(nid):
+        return bus_table if is_bus(nid) else veh_table
+
+    def vals_of(nid):
+        return table_of(nid).values(nid)
+
+    def to_zone_str(z):
+        if z is None:
+            return None
+        if isinstance(z, str):
+            return z
+        return "zone" + str(int(z))
+
+    def zone_id_int(zs):
+        return int(str(zs).replace("zone", ""))
+
+    def zone_dist(z1_str, z2_str):
+        n_cols = zone_table.n_cols
+        z1 = zone_id_int(z1_str)
+        z2 = zone_id_int(z2_str)
+        r1, c1 = divmod(z1, n_cols)
+        r2, c2 = divmod(z2, n_cols)
+        return max(abs(r1 - r2), abs(c1 - c2))
+
+    def not_standalone(nid):
+        # buses always valid
+        if is_bus(nid):
+            return True
+        v = veh_table.values(nid)
+        return bool(v.get("cluster_head")) or (v.get("primary_ch") is not None)
+
+    # destination from packet (required)
+    d_zone = to_zone_str(packet.get("d_zone"))
+    d_loc = packet.get("d_loc")
+    if d_zone is None or not d_loc:
+        return None
+    dx, dy = float(d_loc["long"]), float(d_loc["lat"])
+
+    cur_zone = to_zone_str(vals_of(node_id).get("zone"))
+    if cur_zone is None:
+        return None
+    cur_zdist = zone_dist(cur_zone, d_zone)
+
+    # geometric baseline
+    cv = vals_of(node_id)
+    cx, cy = float(cv["long"]), float(cv["lat"])
+    base_d = math.hypot(cx - dx, cy - dy)
+    if base_d <= eps:
+        return None
+
+    # normalize candidate zones
+    cz_set = set()
+    if isinstance(candidate_zones, (set, list, tuple)):
+        for z in candidate_zones:
+            zs = to_zone_str(z)
+            if zs is not None:
+                cz_set.add(zs)
+    else:
+        zs = to_zone_str(candidate_zones)
+        if zs is not None:
+            cz_set.add(zs)
+
+    # tabu zones from packet
+    tabu = packet.get("tabu_zone", None)
+    tabu_set = set()
+    if isinstance(tabu, (set, list, tuple)):
+        tabu_set = {to_zone_str(z) for z in tabu if to_zone_str(z) is not None}
+    else:
+        tz = to_zone_str(tabu)
+        if tz is not None:
+            tabu_set.add(tz)
+
+    # candidate pool from ne_nodes only
+    pool = []
+    for nid in ne_nodes:
+        if nid is None or nid == node_id:
+            continue
+        if not not_standalone(nid):
+            continue
+        pool.append(nid)
+    if not pool:
+        return None
+
+    # -------------------------
+    # Stage 1: zone-first strict macro progress in cone
+    # -------------------------
+    stage1 = []
+    for nid in pool:
+        v = vals_of(nid)
+        z = to_zone_str(v.get("zone"))
+        if z is None:
+            continue
+        if cz_set and (z not in cz_set):
+            continue
+        if z in tabu_set:
+            continue
+
+        zdist = zone_dist(z, d_zone)
+        if zdist >= cur_zdist:
+            continue  # strict zone progress
+
+        nx, ny = float(v["long"]), float(v["lat"])
+        geo_d = math.hypot(nx - dx, ny - dy)
+
+        # geometric guardrail (optional)
+        if geo_d > base_d * (1.0 + allow_regress_ratio):
+            continue
+
+        tr = float(v.get("trans_range", 0.0))
+        bus_term = 1.0 if is_bus(nid) else 0.0
+        stage1.append((zdist, geo_d, -bus_term, -min(tr, tr_clip_ratio), nid))
+
+    if stage1:
+        stage1.sort()
+        return stage1[0][-1]
+
+    # -------------------------
+    # Stage 2: zone-relaxed (CGGR-like) geo progress over full pool
+    # -------------------------
+    dest_id = packet.get("dest")
+
+    # 2A) If pure veh-only neighborhood, use your exact GPSR primitives
+    if (dest_id is not None) and (not is_bus(node_id)) and (not is_bus(dest_id)) and all(not is_bus(n) for n in pool):
+        nxt = greedy_gpsr(node_id, veh_table, packet, pool)
+        if nxt is not None and not_standalone(nxt):
+            return nxt
+
+        # perimeter as a last resort inside Stage 2 (still before orbit)
+        prev_node_id = packet["hops"][-1] if packet.get("hops") else None
+        nxt = perimeter_gpsr(node_id, dest_id, set(pool), veh_table, prev_node_id=prev_node_id)
+        if nxt is not None and not_standalone(nxt):
+            return nxt
+
+        return None
+
+    # 2B) Mixed/bus-safe fallback: choose any node that reduces Euclidean distance most,
+    #     with bounded bus/TR preference.
+    best = None
+    best_score = float("inf")
+
+    # robust TR baseline (median)
+    trs = sorted([float(vals_of(n).get("trans_range", 0.0)) for n in pool])
+    tr_med = trs[len(trs)//2] if trs else 1.0
+    if tr_med <= eps:
+        tr_med = 1.0
+
+    for nid in pool:
+        v = vals_of(nid)
+        nx, ny = float(v["long"]), float(v["lat"])
+        geo_d = math.hypot(nx - dx, ny - dy)
+
+        # require some geometric progress (otherwise orbit should handle)
+        if geo_d >= base_d:
+            continue
+
+        tr = float(v.get("trans_range", 0.0))
+        tr_ratio = min(max(tr / tr_med, 0.0), tr_clip_ratio)
+        tr_term = math.log1p(tr_ratio) / math.log1p(tr_clip_ratio)
+
+        bus_term = 1.0 if is_bus(nid) else 0.0
+
+        # primary: normalized distance-to-dest; secondary: bus/TR (bounded)
+        score = (geo_d / max(base_d, eps)) - w_bus * bus_term - w_tr * tr_term
+
+        if score < best_score:
+            best_score = score
+            best = nid
+
+    return best
+
+def orbit_smzcra(node_id, veh_table, bus_table, packet, ne_nodes,
+                 zone_table, orbit_zone_budget=12, orbit_inzone_budget=6, eps=1e-9):
+    """
+    ORBIT mode for SMZCA-ZRHR++ using ONLY ne_nodes and packet-carried destination zone.
+
+    A) ORBIT_ZONE:
+       - choose a neighbor-zone direction via zone-level right-hand rule around bearing to dest-zone
+       - pick best node within that chosen neighbor zone
+       - set tabu_zone = current_zone and tabu_dir = reverse(chosen_dir) to prevent ping-pong
+
+    B) If no neighbor zone is reachable:
+       - ORBIT_INZONE: GPSR greedy else GPSR perimeter inside current zone (bounded).
+    """
+
+    # -------------------------
+    # Helpers: table access / normalization
+    # -------------------------
+    def is_bus(nid):
+        return str(nid).startswith("bus")
+
+    def table_of(nid):
+        return bus_table if is_bus(nid) else veh_table
+
+    def vals_of(nid):
+        return table_of(nid).values(nid)
+
+    def to_zone_str(z):
+        if z is None:
+            return None
+        if isinstance(z, str):
+            return z
+        return "zone" + str(int(z))
+
+    def zone_id_int(zs: str) -> int:
+        return int(str(zs).replace("zone", ""))
+
+    def zone_rc(zs: str):
+        zid = zone_id_int(zs)
+        r, c = divmod(zid, zone_table.n_cols)
+        return r, c
+
+    def zone_dist(z1: str, z2: str) -> int:
+        r1, c1 = zone_rc(z1)
+        r2, c2 = zone_rc(z2)
+        return max(abs(r1 - r2), abs(c1 - c2))  # Chebyshev
+
+    def not_standalone(nid) -> bool:
+        if is_bus(nid):
+            return True
+        v = veh_table.values(nid)
+        return bool(v.get("cluster_head", False)) or (v.get("primary_ch", None) is not None)
+
+    def centroid_of_zone(zs: str):
+        """
+        Uses your ZoneID interface (same style as your closest_reachable_zones code):
+          zone_table.values("zone343") -> dict(min_lat, max_lat, min_long, max_long)
+        """
+        try:
+            zv = zone_table.values(zs)
+        except Exception:
+            # fallback if ZoneID stores zones differently (only if needed)
+            zv = zone_table.zone_hash.values(zs)
+        cx = 0.5 * (float(zv["min_long"]) + float(zv["max_long"]))
+        cy = 0.5 * (float(zv["min_lat"]) + float(zv["max_lat"]))
+        return cx, cy
+
+    def zone_valid(zs: str) -> bool:
+        try:
+            _ = centroid_of_zone(zs)
+            return True
+        except Exception:
+            return False
+
+    # reverse direction for tabu_dir
+    rev = {"N":"S","S":"N","E":"W","W":"E","NE":"SW","SW":"NE","NW":"SE","SE":"NW"}
+
+    # -------------------------
+    # Packet targets (MUST come from packet)
+    # -------------------------
+    d_zone = to_zone_str(packet.get("d_zone", None))
+    if d_zone is None:
+        return None
+
+    dloc = packet.get("d_loc", None)
+    if not dloc or "lat" not in dloc or "long" not in dloc:
+        return None
+    dx, dy = float(dloc["long"]), float(dloc["lat"])
+
+    cur_zone = to_zone_str(vals_of(node_id).get("zone", None))
+    if cur_zone is None:
+        return None
+
+    # -------------------------
+    # Budgets (count via actions)
+    # -------------------------
+    actions = packet.get("actions", [])
+    n_orbit_zone_used = sum(1 for a in actions if isinstance(a, str) and a.startswith("ORBIT_ZONE"))
+    n_orbit_inzone_used = sum(1 for a in actions if isinstance(a, str) and a.startswith("ORBIT_INZONE"))
+
+    # tabu_zone normalization
+    tabu_zone = packet.get("tabu_zone", None)
+    if tabu_zone is None:
+        tabu_zone_set = set()
+    elif isinstance(tabu_zone, (set, list, tuple)):
+        tabu_zone_set = {to_zone_str(z) for z in tabu_zone if to_zone_str(z) is not None}
+    else:
+        tz = to_zone_str(tabu_zone)
+        tabu_zone_set = {tz} if tz is not None else set()
+
+    # tabu_dir normalization
+    tabu_dir = packet.get("tabu_dir", None)
+    if isinstance(tabu_dir, (set, list, tuple)):
+        tabu_dir_set = set(tabu_dir)
+    elif isinstance(tabu_dir, str):
+        tabu_dir_set = {tabu_dir}
+    else:
+        tabu_dir_set = set()
+
+    # -------------------------
+    # Candidate pool from ne_nodes (not stand-alone only)
+    # -------------------------
+    pool = [nid for nid in ne_nodes if nid is not None and nid != node_id and not_standalone(nid)]
+    if not pool:
+        return None
+
+    # Map pool nodes to zones
+    zone_to_nodes = {}
+    for nid in pool:
+        z = to_zone_str(vals_of(nid).get("zone", None))
+        if z is None:
+            continue
+        zone_to_nodes.setdefault(z, []).append(nid)
+
+    # -------------------------
+    # ORBIT_ZONE (if budget remains)
+    # -------------------------
+    if n_orbit_zone_used < orbit_zone_budget:
+        n_cols = zone_table.n_cols
+        zc_int = zone_id_int(cur_zone)
+
+        dir_to_zone = {
+            "N":  "zone" + str(zc_int + n_cols),
+            "NE": "zone" + str(zc_int + n_cols + 1),
+            "E":  "zone" + str(zc_int + 1),
+            "SE": "zone" + str(zc_int - n_cols + 1),
+            "S":  "zone" + str(zc_int - n_cols),
+            "SW": "zone" + str(zc_int - n_cols - 1),
+            "W":  "zone" + str(zc_int - 1),
+            "NW": "zone" + str(zc_int + n_cols - 1),
+        }
+
+        # bearing from cur-zone centroid to dest-zone centroid
+        cxz, cyz = centroid_of_zone(cur_zone)
+        dxz, dyz = centroid_of_zone(d_zone)
+        base_ang = math.atan2((dyz - cyz), (dxz - cxz))  # atan2(lat, long)
+
+        # direction vectors (lat, long)
+        dir_vec = {
+            "E":  (0.0, 1.0),
+            "NE": (1.0, 1.0),
+            "N":  (1.0, 0.0),
+            "NW": (1.0, -1.0),
+            "W":  (0.0, -1.0),
+            "SW": (-1.0, -1.0),
+            "S":  (-1.0, 0.0),
+            "SE": (-1.0, 1.0),
+        }
+
+        def wrap_0_2pi(a):
+            while a < 0:
+                a += 2 * math.pi
+            while a >= 2 * math.pi:
+                a -= 2 * math.pi
+            return a
+
+        # smallest positive rotation from base direction
+        reachable_dirs = []
+        for d, z in dir_to_zone.items():
+            if not zone_valid(z):
+                continue
+            if z in tabu_zone_set:
+                continue
+            if d in tabu_dir_set:
+                continue
+            if z not in zone_to_nodes:
+                continue
+
+            vlat, vlon = dir_vec[d]
+            ang = math.atan2(vlat, vlon)
+            delta = wrap_0_2pi(ang - base_ang)
+            reachable_dirs.append((delta, d, z))
+
+        if reachable_dirs:
+            reachable_dirs.sort(key=lambda t: t[0])
+            _, chosen_dir, target_zone = reachable_dirs[0]
+
+            # pick best node inside target_zone
+            candidates = []
+            for nid in zone_to_nodes.get(target_zone, []):
+                v = vals_of(nid)
+                z = to_zone_str(v.get("zone", None))
+                if z is None:
+                    continue
+
+                zterm = zone_dist(z, d_zone)
+                nx, ny = float(v["long"]), float(v["lat"])
+                gterm = math.hypot(nx - dx, ny - dy)
+                bus_term = 1 if is_bus(nid) else 0
+                tr = float(v.get("trans_range", 0.0))
+
+                # sort: zone progress, then geometric, then prefer bus, then TR
+                candidates.append((zterm, gterm, -bus_term, -tr, nid))
+
+            if candidates:
+                candidates.sort()
+                nxt = candidates[0][-1]
+
+                packet["last_dir"] = chosen_dir
+                packet["actions"].append(f"ORBIT_ZONE:{chosen_dir}->{target_zone}")
+
+                # prevent immediate ping-pong:
+                packet["tabu_zone"] = cur_zone
+                packet["tabu_dir"] = rev.get(chosen_dir, None)
+
+                return nxt
+
+    # -------------------------
+    # ORBIT_INZONE (bounded micro recovery)
+    # -------------------------
+    if n_orbit_inzone_used >= orbit_inzone_budget:
+        return None
+
+    inzone = [nid for nid in pool if to_zone_str(vals_of(nid).get("zone", None)) == cur_zone]
+    if not inzone:
+        return None
+
+    dest_id = packet.get("dest", None)
+
+    # Only call your GPSR functions when everything is veh_table-based
+    if dest_id is not None and (not is_bus(node_id)) and (not is_bus(dest_id)) and all(not is_bus(n) for n in inzone):
+        nxt = greedy_gpsr(node_id, veh_table, packet, inzone)
+        if nxt is not None and not_standalone(nxt):
+            packet["actions"].append("ORBIT_INZONE:GPSR_GREEDY")
+            return nxt
+
+        prev_node_id = packet["hops"][-1] if packet.get("hops") else None
+        nxt = perimeter_gpsr(node_id, dest_id, set(inzone), veh_table, prev_node_id=prev_node_id)
+        if nxt is not None and not_standalone(nxt):
+            packet["actions"].append("ORBIT_INZONE:GPSR_PERIM")
+            return nxt
+
+    return None
+
+def greedy_zcggr(
+    node_id,
+    veh_table,
+    bus_table,
+    packet,
+    ne_nodes,
+    candidate_zones,     # output of closest_reachable_zones(...)
+    zone_table,          # zones object (must have n_cols and zone_hash.values("zone###") bounds)
+    # weights / knobs
+    alpha_zone=10.0,     # weight for zoneDist
+    beta_cone=2.0,       # bonus for being in candidate cone zones
+    gamma_geo=0.25,      # weight for normalized Euclidean distance term
+    eta_tr=0.15,         # bonus for larger TR
+    w_bus=0.20,          # bonus for buses
+    allow_regress_ratio=0.05,  # allow small geometric regression if needed
+    eps=1e-9,
+):
+    """
+    Zone-assisted greedy for Z-CGGR.
+
+    - Does NOT hard-require zoneDist decrease (zone is preference, not a constraint).
+    - Prefers neighbors in directional cone (candidate_zones).
+    - Uses packet-carried destination zone (packet['d_zone']) and destination loc (packet['d_loc']).
+    - Returns next_node_id or None.
+    """
+
+    def is_bus(nid: str) -> bool:
+        return str(nid).startswith("bus")
+
+    def table_of(nid):
+        return bus_table if is_bus(nid) else veh_table
+
+    def vals_of(nid):
+        return table_of(nid).values(nid)
+
+    def to_zone_str(z):
+        if z is None:
+            return None
+        if isinstance(z, str):
+            return z
+        return "zone" + str(int(z))
+
+    def zone_id_int(zs: str) -> int:
+        # expects "zone343"
+        return int(str(zs).replace("zone", ""))
+
+    def zone_dist(z1: str, z2: str) -> int:
+        # Chebyshev distance on zone grid
+        n_cols = zone_table.n_cols
+        a = zone_id_int(z1)
+        b = zone_id_int(z2)
+        r1, c1 = divmod(a, n_cols)
+        r2, c2 = divmod(b, n_cols)
+        return max(abs(r1 - r2), abs(c1 - c2))
+
+    def not_standalone(nid) -> bool:
+        # valid forwarding target:
+        #   buses always valid
+        #   vehicles valid if cluster_head==True OR primary_ch is not None
+        if is_bus(nid):
+            return True
+        v = veh_table.values(nid)
+        return bool(v.get("cluster_head", False)) or (v.get("primary_ch", None) is not None)
+
+    # --- destination info from packet ---
+    d_zone = to_zone_str(packet.get("d_zone", None))
+    dloc = packet.get("d_loc", None)
+    if d_zone is None or not dloc or "lat" not in dloc or "long" not in dloc:
+        return None
+
+    dx = float(dloc["long"])
+    dy = float(dloc["lat"])
+
+    cur_vals = vals_of(node_id)
+    cx = float(cur_vals["long"])
+    cy = float(cur_vals["lat"])
+    base_d = math.hypot(cx - dx, cy - dy)
+    if base_d <= eps:
+        return None
+
+    cur_zone = to_zone_str(cur_vals.get("zone", None))
+    if cur_zone is None:
+        return None
+
+    # normalize candidate_zones to set of "zone###"
+    if candidate_zones is None:
+        cone_zones = set()
+    elif isinstance(candidate_zones, (set, list, tuple)):
+        cone_zones = set(to_zone_str(z) for z in candidate_zones if to_zone_str(z) is not None)
+    else:
+        z = to_zone_str(candidate_zones)
+        cone_zones = {z} if z is not None else set()
+
+    # normalize tabu_zone
+    tabu_zone = packet.get("tabu_zone", None)
+    if tabu_zone is None:
+        tabu_set = set()
+    elif isinstance(tabu_zone, (set, list, tuple)):
+        tabu_set = set(to_zone_str(z) for z in tabu_zone if to_zone_str(z) is not None)
+    else:
+        z = to_zone_str(tabu_zone)
+        tabu_set = {z} if z is not None else set()
+
+    # --- candidate pool (ne_nodes only) ---
+    pool = []
+    for nid in ne_nodes:
+        if nid is None or nid == node_id:
+            continue
+        if not not_standalone(nid):
+            continue
+        v = vals_of(nid)
+        nz = to_zone_str(v.get("zone", None))
+        if nz is None:
+            continue
+        if nz in tabu_set:
+            continue
+        pool.append(nid)
+
+    if not pool:
+        return None
+
+    # Guardrail: allow small regression only (avoid random wandering)
+    max_allowed = base_d * (1.0 + allow_regress_ratio)
+
+    # Build scored candidates
+    # score = alpha*zoneDist - beta*I(cone) + gamma*(geo/base) - eta*TRbonus - w_bus*bus
+    # lower score is better
+    best_n = None
+    best_score = float("inf")
+
+    # robust TR baseline (median) for normalization
+    trs = []
+    for nid in pool:
+        trs.append(float(vals_of(nid).get("trans_range", 0.0)))
+    trs.sort()
+    tr_med = trs[len(trs)//2] if trs else 1.0
+    if tr_med <= eps:
+        tr_med = 1.0
+
+    for nid in pool:
+        v = vals_of(nid)
+        nz = to_zone_str(v.get("zone", None))
+
+        nx = float(v["long"])
+        ny = float(v["lat"])
+        geo_d = math.hypot(nx - dx, ny - dy)
+        if geo_d > max_allowed:
+            # too much geometric regression
+            continue
+
+        z_term = zone_dist(nz, d_zone)
+        cone_bonus = 1.0 if (cone_zones and nz in cone_zones) else 0.0
+
+        g_term = geo_d / max(base_d, eps)
+
+        tr = float(v.get("trans_range", 0.0))
+        tr_ratio = max(0.0, tr / tr_med)
+        tr_bonus = math.log1p(tr_ratio)  # diminishing returns
+
+        bus_bonus = 1.0 if is_bus(nid) else 0.0
+
+        score = (
+            alpha_zone * z_term
+            - beta_cone * cone_bonus
+            + gamma_geo * g_term
+            - eta_tr * tr_bonus
+            - w_bus * bus_bonus
+        )
+
+        if score < best_score:
+            best_score = score
+            best_n = nid
+
+    # If nothing passes guardrail, relax guardrail once: pick best by geo distance (safe fallback)
+    if best_n is None:
+        best_n = min(pool, key=lambda nid: math.hypot(float(vals_of(nid)["long"]) - dx,
+                                                     float(vals_of(nid)["lat"]) - dy))
+
+    return best_n
 
 
+def perimeter_zcggr(
+    node_id,
+    veh_table,
+    bus_table,
+    packet,
+    ne_nodes,
+    zone_table,
+    candidate_zones=None,
+    eps=1e-9,
+):
+    """
+    Perimeter-style recovery for Z-CGGR.
 
+    Strategy:
+      1) If veh-only context, use your perimeter_gpsr for micro recovery (within ne_nodes).
+      2) Otherwise, do a right-hand rule selection on mixed neighbor set using destination direction,
+         with a zone-aware tie-break (prefer cone zones, then smaller zoneDist, then closer geo).
+
+    Returns next_node_id or None.
+    """
+
+    def is_bus(nid: str) -> bool:
+        return str(nid).startswith("bus")
+
+    def table_of(nid):
+        return bus_table if is_bus(nid) else veh_table
+
+    def vals_of(nid):
+        return table_of(nid).values(nid)
+
+    def to_zone_str(z):
+        if z is None:
+            return None
+        if isinstance(z, str):
+            return z
+        return "zone" + str(int(z))
+
+    def zone_id_int(zs: str) -> int:
+        return int(str(zs).replace("zone", ""))
+
+    def zone_dist(z1: str, z2: str) -> int:
+        n_cols = zone_table.n_cols
+        a = zone_id_int(z1)
+        b = zone_id_int(z2)
+        r1, c1 = divmod(a, n_cols)
+        r2, c2 = divmod(b, n_cols)
+        return max(abs(r1 - r2), abs(c1 - c2))
+
+    def not_standalone(nid) -> bool:
+        if is_bus(nid):
+            return True
+        v = veh_table.values(nid)
+        return bool(v.get("cluster_head", False)) or (v.get("primary_ch", None) is not None)
+
+    # packet-carried destination info
+    d_zone = to_zone_str(packet.get("d_zone", None))
+    dloc = packet.get("d_loc", None)
+    if d_zone is None or not dloc or "lat" not in dloc or "long" not in dloc:
+        return None
+
+    dx = float(dloc["long"])
+    dy = float(dloc["lat"])
+
+    # normalize cone zones
+    if candidate_zones is None:
+        cone_zones = set()
+    elif isinstance(candidate_zones, (set, list, tuple)):
+        cone_zones = set(to_zone_str(z) for z in candidate_zones if to_zone_str(z) is not None)
+    else:
+        z = to_zone_str(candidate_zones)
+        cone_zones = {z} if z is not None else set()
+
+    # candidate pool
+    pool = []
+    for nid in ne_nodes:
+        if nid is None or nid == node_id:
+            continue
+        if not not_standalone(nid):
+            continue
+        nz = to_zone_str(vals_of(nid).get("zone", None))
+        if nz is None:
+            continue
+        pool.append(nid)
+    if not pool:
+        return None
+
+    # ---- Option 1: veh-only perimeter via your GPSR implementation (micro recovery) ----
+    dest_id = packet.get("dest", None)
+    if dest_id is not None and (not is_bus(node_id)) and (not is_bus(dest_id)) and all(not is_bus(n) for n in pool):
+        # NOTE: perimeter_gpsr expects a set/list of neighbors
+        prev_node_id = packet["hops"][-1] if packet.get("hops") else None
+        try:
+            nxt = perimeter_gpsr(node_id, dest_id, set(pool), veh_table, prev_node_id=prev_node_id)
+        except Exception:
+            nxt = None
+        if nxt is not None and not_standalone(nxt):
+            return nxt
+
+    # ---- Option 2: mixed right-hand rule (geometric) with zone-aware tie-break ----
+    cur = vals_of(node_id)
+    cx = float(cur["long"])
+    cy = float(cur["lat"])
+
+    # destination vector (from current to dest)
+    dv = (dy - cy, dx - cx)  # (lat, long) style for atan2
+    base_ang = math.atan2(dv[0], dv[1])
+
+    def cw_angle(from_ang, to_ang):
+        a = to_ang - from_ang
+        if a < 0:
+            a += 2 * math.pi
+        return a
+
+    best = None
+    best_key = None
+
+    for nid in pool:
+        v = vals_of(nid)
+        nx = float(v["long"])
+        ny = float(v["lat"])
+
+        nv = (ny - cy, nx - cx)
+        ang = math.atan2(nv[0], nv[1])
+        rhr = cw_angle(base_ang, ang)  # smaller is more right-hand
+
+        nz = to_zone_str(v.get("zone", None))
+        zterm = zone_dist(nz, d_zone)
+        cone = 1 if (cone_zones and nz in cone_zones) else 0
+        geo = math.hypot(nx - dx, ny - dy)
+
+        # key order:
+        # 1) smallest right-hand angle
+        # 2) prefer cone zones (cone=1 -> sort earlier)
+        # 3) smaller zoneDist
+        # 4) smaller geo distance
+        key = (rhr, -cone, zterm, geo)
+
+        if best_key is None or key < best_key:
+            best_key = key
+            best = nid
+
+    return best

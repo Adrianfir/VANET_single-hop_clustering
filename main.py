@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # Select clustering and routing algorithms
     clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
     routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for CGGR, 4 for PDVR, '
-                    'and 5 for training RL-based GPSR: ')
+                    ' 5 for training RL-based GPSR, and 6 for ZCGGR: ')
     training_mode = input('you are up to training the agent: true or false? ')
     routing_train_mode = True if training_mode=="true" else False
     clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
@@ -32,6 +32,7 @@ if __name__ == "__main__":
     routing_name = 'CGGR' if routing == '3' else routing_name
     routing_name = 'PDVR' if routing == '4' else routing_name
     routing_name = 'RL-based GPSR' if routing == '5' else routing_name
+    routing_name = 'ZCGGR' if routing == '6' else routing_name
     configs = Configs().config
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
@@ -70,6 +71,9 @@ if __name__ == "__main__":
             cluster.route_pdvr(configs)
         if routing == '5':
             cluster.route_gpsr_rl(configs)
+        if routing == '6':
+            cluster.route_zcggr(configs, clustering_name, area_zones)
+
     #     cluster.show_graph(configs)
     #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
     # #
