@@ -1620,6 +1620,7 @@ class DataTable:
                         next_node = util_routing.greedy_gpsr(node, self.veh_table, packet, other_vehs)
                         if next_node is None:
                             next_node = util_routing.perimeter_gpsr(node, packet["dest"], other_vehs, self.veh_table)
+                            self.n_perimeter += 1
                             if next_node is None:
                                 continue
 
