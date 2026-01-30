@@ -394,7 +394,8 @@ def gate_chs_mem(node, veh_table, bus_table):
     table = veh_table if 'veh' in node else bus_table
     for gc in table.values(node)['gate_chs']:
         if gc not in table.values(node)['other_chs']:
-            gate_chs_members = gate_chs_members.union(veh_table.values(gc)['cluster_members'])
+            gc_table = veh_table if 'veh' in gc else bus_table
+            gate_chs_members = gate_chs_members.union(gc_table.values(gc)['cluster_members'])
 
     for mem in table.values(node)['cluster_members']:
         for ov in veh_table.values(mem)['other_vehs']:
@@ -411,7 +412,7 @@ def gate_chs_mem(node, veh_table, bus_table):
 
     return gate_gate_chs, gate_chs_members, other_other_vehs
 
-def other_chs_mem(node, table):
+def other_chs_mem(node, table, veh_table, bus_table):
     """
 
     :param node:
@@ -420,7 +421,8 @@ def other_chs_mem(node, table):
     """
     other_chs_members = set()
     for oc in table.values(node)['other_chs']:
-        other_chs_members = other_chs_members.union(table.values(oc)['cluster_members'])
+        oc_table = veh_table if 'veh' in oc else bus_table
+        other_chs_members = other_chs_members.union(oc_table.values(oc)['cluster_members'])
     return other_chs_members
 
 def find_gate_path(node, gate_chs_members, veh_table,

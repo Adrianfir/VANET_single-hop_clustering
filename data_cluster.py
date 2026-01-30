@@ -199,7 +199,7 @@ class DataTable:
                                                                  temp_left_vehs, temp_left_buses,
                                                                  self.drops, self.nodes_with_pack, self.delivered_packets,
                                                                  config, self.link_cap, self.time, node_is_veh=False)
-            cm_temp = k_values(k)['cluster_members'].copy()
+            cm_temp = k_values['cluster_members'].copy()
             for m in cm_temp:
                 if m not in temp_left_vehs:  # this must be veh_ids not self.veh_table.ids()
                     mem_stays = True
@@ -1307,7 +1307,7 @@ class DataTable:
                 # Case C: Cluster Head
                 # -------------------------
                 if is_ch is True:
-                    other_chs_members = util_routing.other_chs_mem(node, table)
+                    other_chs_members = util_routing.other_chs_mem(node, table, self.veh_table, self.bus_table)
                     gate_gate_chs, gate_chs_members, other_other_vehs = util_routing.gate_chs_mem(node, self.veh_table, self.bus_table)
 
                     cluster_members = rec.get("cluster_members", set())
@@ -1643,7 +1643,7 @@ class DataTable:
                 # Case C: Cluster Head
                 # -------------------------
                 if is_ch is True:
-                    other_chs_members = util_routing.other_chs_mem(node, table)
+                    other_chs_members = util_routing.other_chs_mem(node, table, self.veh_table, self.bus_table)
                     gate_gate_chs, gate_chs_members, other_other_vehs = util_routing.gate_chs_mem(
                         node, self.veh_table, self.bus_table
                     )
@@ -2143,7 +2143,7 @@ class DataTable:
                 # Case C: Cluster Head
                 # -------------------------
                 if is_ch:
-                    other_chs_members = util_routing.other_chs_mem(node, table)
+                    other_chs_members = util_routing.other_chs_mem(node, table, self.veh_table, self.bus_table)
                     gate_gate_chs, gate_chs_members, other_other_vehs = util_routing.gate_chs_mem(
                         node, self.veh_table, self.bus_table
                     )

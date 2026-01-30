@@ -16,7 +16,7 @@ from zonex import ZoneID
 import utils.util_routing as util_routing
 import matplotlib.pyplot as plt
 from qlearning_state import QRoutingHelper
-import yaml
+import xml.dom.minidom
 
 
 if __name__ == "__main__":
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         n_chs.append(len(cluster.all_chs))
         n_savs.append(len(cluster.stand_alone))
 
-        if (cluster.time < configs.start_time + configs.iter - 5) and (cluster.time >= configs.start_time + 5):
+        if (cluster.time < configs.start_time + (5/6)*configs.iter) and (cluster.time >= configs.start_time + 5):
             cluster.read_message(configs)
 
         if routing == '1':
