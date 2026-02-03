@@ -110,9 +110,10 @@ if __name__ == "__main__":
     print(f'delivery ratio: {len(cluster.delivered_packets)/cluster.pck_queue}')
     print(f'average_hops: {avg_hops}')
     print(f'average delay: {avg_delay}')
-    print('################################################################################')
-    print(f'clustering algorithm: {clustering_name} --- routing algorithm: {routing_name}')
-    print(f'number of premiter mode: {cluster.n_perimeter}')
+    print('\n')
+    print(f'clustering algorithm: {clustering_name}')
+    print(f'routing algorithm: {routing_name}')
+    print(f'PeriPerDel: {cluster.n_perimeter/len(cluster.delivered_packets)}')
     if routing_train_mode is True:
         cluster.agent.save("checkpoints/dqn_vanet_tr300_alpha0.5_tick1400_to_tick1600")
     # print(cluster.actions_review)

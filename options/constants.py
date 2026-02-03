@@ -15,13 +15,13 @@ class Inputs:
     def __init__(self):
         ####### Clustering Constants that we need to pass as arguments
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'sumoTrace.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_midsize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
 
-        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_midsize.yaml"
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_smallsize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -31,8 +31,8 @@ class Inputs:
                     min_long=-79.472871,
                     max_lat=43.8895,
                     max_long=-79.422551)
-        alpha = 1
-        veh_trans_range = 300
+        alpha = 1.1
+        veh_trans_range = 100
         bus_trans_range = 800
         start_time = 1500
         iter = 200
@@ -41,7 +41,7 @@ class Inputs:
         map_zoom = 15.3
         center_loc = [43.869846, -79.443523]
         fps = 5
-        weights = np.array([0.5, 0.5, 0.0])      # direction's angle, speed, distance
+        weights = np.array([0.5, 0.0, 0.5])      # direction's angle, speed, distance
 
 
 
@@ -57,7 +57,7 @@ class Inputs:
         max_hop = 5         # maximum number of hops that a packet can travel per tick. this number is because if there
         link_limit = link_limit_bit / 8
 
-        des_address_update = 1      #for SMZC-RA, there is a counter that the destiation of each packet would be
+        des_address_update = 3      #for SMZC-RA, there is a counter that the destiation of each packet would be
         # updateded after this amount of ticks
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
         with open(messages_path, 'r') as f:

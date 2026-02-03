@@ -1317,14 +1317,14 @@ class DataTable:
 
                     # Build candidate set once per node (avoid repeated unions per packet)
                     ch_candidates = set(other_chs)
-                    if clustering_name == 'SMZCA':
-                        ch_candidates.update(gate_chs)
-                        ch_candidates.update(gate_gate_chs)
-                        ch_candidates.update(gate_chs_members)
-                        ch_candidates.update(other_other_vehs)
+                    # if clustering_name == 'SMZCA':
+                    #     ch_candidates.update(gate_chs)
+                    #     ch_candidates.update(gate_gate_chs)
+                    #     ch_candidates.update(gate_chs_members)
+                    #     ch_candidates.update(other_other_vehs)
                     ch_candidates.update(other_chs_members)
                     ch_candidates.update(cluster_members)
-                    ch_candidates.update(other_vehs)
+                    # ch_candidates.update(other_vehs)
 
                     for packet in packets[:]:
                         dest = packet["dest"]

@@ -54,7 +54,7 @@ def gen_message(veh_table,sent_messages, message_count,
                             d_loc = dict(lat=veh_table.values(message['dest'])['lat'],
                                          long=veh_table.values(message['dest'])['long']),
                             d_zone = veh_table.values(message['dest'])['zone'],
-                            d_update=5, last_dir=None, tabu_dir=None, tabu_zone=None
+                            d_update=5, last_dir=None, tabu_dir=None, tabu_zone=list()
                             )
             pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == configs.messages[time][i]['mess'][-1] \
                 else configs.mtu  # the last packet of the message can have a size
@@ -90,6 +90,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
     if ('veh' in current_node) and ('veh' in next_node):
 
         packet['hops'].append(next_node)
+        # packet['tabu_zone'] = packet['zones'][-2:-1]
         packet['zones'].append(veh_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
@@ -109,6 +110,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('veh' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
+        # packet['tabu_zone'] = packet['zones'][-2:-1]
         packet['zones'].append(bus_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
@@ -128,6 +130,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('bus' in current_node) and ('veh' in next_node):
         packet['hops'].append(next_node)
+        # packet['tabu_zone'] = packet['zones'][-2:-1]
         packet['zones'].append(veh_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
@@ -147,6 +150,7 @@ def pass_packet(current_node, next_node, veh_table, bus_table, nodes_with_packet
 
     if ('bus' in current_node) and ('bus' in next_node):
         packet['hops'].append(next_node)
+        # packet['tabu_zone'] = packet['zones'][-2:-1]
         packet['zones'].append(bus_table.values(next_node)['zone'])
         packet['current_node'] = next_node
         if next_node == packet['dest']:
@@ -716,14 +720,14 @@ def closest_reachable_zones(zc: int, zd: int, zone_table):
         primary = 'SW' if abs(dlat) > 0 and abs(dlon) > 0 else ('S' if abs(dlat) >= abs(dlon) else 'W')
 
     cone = {
-        'N':  {zc, N, NE, NW},
-        'S':  {zc, S, SE, SW},
-        'E':  {zc, E, NE, SE},
-        'W':  {zc, W, NW, SW},
-        'NE': {zc, N, NE, E},
-        'NW': {zc, N, NW, W},
-        'SE': {zc, S, SE, E},
-        'SW': {zc, S, SW, W},
+        'N':  {zc, N, NE, NW, W, E},
+        'S':  {zc, S, SE, SW, W, E},
+        'E':  {zc, E, NE, SE, N, S},
+        'W':  {zc, W, NW, SW, N, W},
+        'NE': {zc, N, NE, E, S, NW, SE},
+        'NW': {zc, N, NW, W, S, NE, SW},
+        'SE': {zc, S, SE, N, E, NE, SW},
+        'SW': {zc, S, SW, N, W, SE, NW},
     }[primary]
 
     # Filter out-of-bounds zones
@@ -1196,11 +1200,11 @@ def greedy_zcggr(
     candidate_zones,     # output of closest_reachable_zones(...)
     zone_table,          # zones object (must have n_cols and zone_hash.values("zone###") bounds)
     # weights / knobs
-    alpha_zone=10.0,     # weight for zoneDist
-    beta_cone=2.0,       # bonus for being in candidate cone zones
-    gamma_geo=0.25,      # weight for normalized Euclidean distance term
-    eta_tr=0.15,         # bonus for larger TR
-    w_bus=0.20,          # bonus for buses
+    alpha_zone=10.0,  # weight for zoneDist
+    beta_cone=2.0,  # bonus for being in candidate cone zones
+    gamma_geo=10.0,  # weight for normalized Euclidean distance term
+    eta_tr=0.15,  # bonus for larger TR
+    w_bus=0.20,  # bonus for buses
     allow_regress_ratio=0.05,  # allow small geometric regression if needed
     eps=1e-9,
 ):
