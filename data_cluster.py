@@ -536,7 +536,7 @@ class DataTable:
             total_clusters += one_veh
         return np.divide(total_clusters, len(self.veh_table.ids()) + len(self.left_veh) - n_sav_ch)
 
-    def eval_cluster_new(self, configs):
+    def vcsm(self, configs):
         """
         Evaluates VCSM consistent with the paper:
 

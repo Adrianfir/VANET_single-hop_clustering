@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # print(f'delivered_packets are: {cluster.delivered_packets}')
     
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
-    print(f'stability_evaluation: {cluster.eval_cluster_new(configs)}')
+    print(f'stability_evaluation: {cluster.vcsm(configs)}')
     print(f'connection_evaluation: {sum(connections)/len(connections)}')
     print('\n')
     print(f'n_vehs: {len(cluster.veh_table.ids())}')
