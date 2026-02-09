@@ -536,6 +536,92 @@ class DataTable:
             total_clusters += one_veh
         return np.divide(total_clusters, len(self.veh_table.ids()) + len(self.left_veh) - n_sav_ch)
 
+    def eval_cluster_new(self, configs):
+        """
+        Evaluates VCSM consistent with the paper:
+
+            VCSM = (1/n_vm) * sum_{i in V_m} ( sum_k t_{i,k} / (gamma_i * T_i) )
+
+        where:
+          - V_m: vehicles that were CM at least once (i.e., have at least one record with timer != None)
+          - gamma_i: number of CM-cluster segments joined by vehicle i
+          - T_i: time vehicle i is in the area
+          - t_{i,k}: duration of kth CM-cluster segment (stored as timer)
+
+        Notes:
+          - Vehicles that never become CM (always SA/CH) are excluded from n_vm.
+          - We guard against T_i == 0.
+          - Works for both active vehicles (veh_table) and vehicles that left (left_veh).
+        """
+
+        def _veh_vcsm_one(cluster_record, arrive_time, depart_time):
+            # Time in area
+            T_i = (depart_time - arrive_time)
+            if T_i <= 0:
+                T_i = 1  # avoid division by zero
+
+            # Sum CM durations and count CM segments
+            summing = 0
+            gamma_i = 0
+
+            temp = cluster_record.head
+            while temp:
+                timer = temp.value.get('timer', None) if hasattr(temp, "value") else None
+                if timer is not None:
+                    summing += timer
+                    gamma_i += 1
+                temp = temp.next
+
+            # If never CM, exclude from V_m
+            if gamma_i == 0:
+                return None
+
+            # Per-vehicle stability
+            return summing / (gamma_i * T_i)
+
+        total_vcsm = 0.0
+        n_vm = 0  # vehicles that were CM at least once
+
+        # --- Active vehicles ---
+        for vid in self.veh_table.ids():
+            v = self.veh_table.values(vid)
+
+            # Ensure depart_time exists
+            if v.get('depart_time', None) is None:
+                v['depart_time'] = configs.start_time + configs.iter
+
+            vcsm_i = _veh_vcsm_one(
+                cluster_record=v['cluster_record'],
+                arrive_time=v['arrive_time'],
+                depart_time=v['depart_time']
+            )
+
+            if vcsm_i is None:
+                continue
+
+            total_vcsm += vcsm_i
+            n_vm += 1
+
+        # --- Vehicles that left ---
+        for vid, v in self.left_veh.items():
+            vcsm_i = _veh_vcsm_one(
+                cluster_record=v['cluster_record'],
+                arrive_time=v['arrive_time'],
+                depart_time=v['depart_time']
+            )
+
+            if vcsm_i is None:
+                continue
+
+            total_vcsm += vcsm_i
+            n_vm += 1
+
+        # If nobody was ever CM, define stability as 0 (or 1, but 0 is safer for "no clustering happened")
+        if n_vm == 0:
+            return 0.0
+
+        return total_vcsm / n_vm
+
     def connected_components(self):
         n = 0  # this would return the minimum number of path needed to connect all the clusters
         investigated = set()
