@@ -15,7 +15,7 @@ from zonex import ZoneID
 import utils.util as util
 import re
 
-if name == "__main__":
+if __name__ == "__main__":
     configs = Configs().config
     dif_tr = [100, ]
     ########################### Define different weights
@@ -46,7 +46,7 @@ if name == "__main__":
         out_put = pd.DataFrame(columns=cols)
         for configs.weights in all_weight_lists:
             configs.weights = np.array(configs.weights)
-            cluster = DataTable(configs, area_zones)
+            cluster = DataTable(configs, area_zones, train_mode=False)
             n_chs = list()
             n_sav = list()
             for i in range(configs.iter):
@@ -71,6 +71,6 @@ if name == "__main__":
 
             out_put = pd.concat([out_put, new_row.to_frame().T], ignore_index=True)
 
-        out_put.to_csv('results/' + str(configs.veh_trans_range) + '_RSU.csv')
+        out_put.to_csv('results/' + str(configs.veh_trans_range) + '_DRU.csv')
         end_time = time.time()
         print("execution time: ", end_time - start_time)
