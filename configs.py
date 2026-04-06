@@ -16,7 +16,9 @@ class Config:
     RANDOM_SEED: int = 42
 
     START_TIME = 1600
+    ROUTING_START_AFTER = 5
     END_TIME = 1800
+    ROUTING_ENDS_RATIO = 5/6
 
     # HERO-style weighting
     # Inter-road selection

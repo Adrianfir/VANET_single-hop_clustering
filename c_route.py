@@ -57,8 +57,8 @@ class HeroRouter:
         if not self.vehicles_by_time:
             return self._empty_metrics()
 
-        t_min = self.cfg.START_TIME
-        t_max = self.cfg.END_TIME
+        t_min = self.cfg.START_TIME + self.cfg.ROUTING_START_AFTER
+        t_max = self.cfg.START_TIME + (5/6 * (self.cfg.END_TIME - self.cfg.START_TIME))
 
         for t in range(t_min, t_max + 1):
             vehicles = self.vehicles_by_time.get(t, {})
