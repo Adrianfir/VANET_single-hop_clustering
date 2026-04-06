@@ -16,13 +16,13 @@ class Inputs:
         ####### Clustering Constants that we need to pass as arguments
         # _no_bus_and_rsu
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'osm_bbox.osm.xml'))
 
-        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_smallsize.yaml"
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_largesize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -33,10 +33,10 @@ class Inputs:
                     max_lat=43.8895,
                     max_long=-79.422551)
         alpha = 0.8
-        veh_trans_range = 700
+        veh_trans_range = 300
         bus_trans_range = 800
         start_time = 1600
-        iter = 60
+        iter = 200
         counter = 4
         priority_counter = 100   # this is not used for decision-making to join a cluster in single-hop algorithm
         map_zoom = 15.3
