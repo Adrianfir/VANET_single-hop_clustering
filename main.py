@@ -85,13 +85,21 @@ if __name__ == "__main__":
     # print(f'delivered_packets are: {cluster.delivered_packets}')
     
     avg_hops, avg_delay = util_routing.eval_routing(cluster)
-    print(f'stability_evaluation: {cluster.vcsm(configs)}')
-    print(f'connection_evaluation: {sum(connections)/len(connections)}')
-    print('\n')
+    vcsmr_metrics = cluster.vcsm_r(configs)
+    vcsm_cm_metrics = cluster.vcsm_cm(configs)
+
+    for key in vcsmr_metrics.keys():
+        print(f'{key}: {vcsmr_metrics[key]}')
+    print('\n\n')
+    for key in vcsm_cm_metrics.keys():
+        print(f'{key}: {vcsm_cm_metrics[key]}')
+    print('\n\n')
+
     print(f'n_vehs: {len(cluster.veh_table.ids())}')
     print(f'n_buses: {len(cluster.bus_table.ids())}')
     print(f'avg_chs: {sum(n_chs)/len(n_chs)}')
     print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
+    print(f'connection_evaluation: {sum(connections) / len(connections)}')
     print(f'execution time: {end_time - start_time}')
     # print(f'all the edges: \n{cluster.net_graph.edges()}')
     # print(f'dropped_packers are: {cluster.drops}')

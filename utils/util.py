@@ -64,7 +64,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 )
 
 
-def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
+def initiate_new_veh(veh, zones, zone_id, config, understudied_area, sec):
     """
     this function is for initialing the new vehicle coming to the area
     :param veh:veh extracted from .xml file
@@ -109,7 +109,8 @@ def initiate_new_veh(veh, zones, zone_id, config, understudied_area):
                 mac=mac_address(),
                 counter=config.counter,  # a counter_time to search and join a cluster
                 start_ch_zone=None,  # This is the zone that vehicle starts becoming a ch
-                cluster_record=LinkedList(None, {'start_time': None, 'ef': None, 'timer': None}),  # the linked_list
+                cluster_record=LinkedList(None, {'start_time': sec, 'ef': None, 'timer': 1,
+                                                 'is_ch':False, 'any_member':None}),  # the linked_list
                 # would record the clusters that this vehicle would join. key is the cluster_head which is None when the
                 # vehicle gets initialized, value['ef'] is the "ef" and value['timer] is the amount of time that this
                 # vehicle would remain in that cluster
@@ -126,173 +127,149 @@ def add_member(ch_id, bus_table,
                zone_stand_alone,
                other_vehs):
     """
-    this function is used for adding a vehicle to a cluster as a 'member' not 'sum_member'
-    :param ch_id:
-    :param bus_table:
-    :param veh_id:
-    :param veh_table:
-    :param config:
-    :param ef:
-    :param sec: self.time in the data_cluster.py
-    :param bus_candidates:
-    :param ch_candidates:
-    :param stand_alone:
-    :param zone_stand_alone:
-    :param other_vehs:
-    :return:
+    Add veh_id as a CM of ch_id and record the CM episode.
     """
-    veh_table.values(veh_id)['primary_ch'] = ch_id
 
-    if ch_id == veh_table.values(veh_id)['priority_ch']:
-        veh_table.values(veh_id)['cluster_record'].pop()
-        veh_table.values(veh_id)['cluster_record'].tail.value['timer'] += 1
+    veh_table.values(veh_id)["primary_ch"] = ch_id
 
+    # Record CM episode for the member.
+    _append_cluster_record(
+        veh_table.values(veh_id)["cluster_record"],
+        key=ch_id,
+        sec=sec,
+        ef=ef,
+        is_ch=False,
+        any_member=None,
+    )
+
+    veh_table.values(veh_id)["sub_cluster_members"] = set()
+    veh_table.values(veh_id)["counter"] = config.counter
+    veh_table.values(veh_id)["priority_ch"] = ch_id
+    veh_table.values(veh_id)["priority_counter"] = config.priority_counter
+
+    veh_table.values(veh_id)["other_chs"].update(bus_candidates)
+    veh_table.values(veh_id)["other_chs"].update(ch_candidates)
+
+    # Add member to CH and update CH effective-status if the CH is a vehicle.
+    if "bus" in ch_id:
+        bus_table.values(ch_id)["cluster_members"].add(veh_id)
     else:
-        veh_table.values(veh_id)['cluster_record'].tail.key = ch_id
-        veh_table.values(veh_id)['cluster_record'].tail.value['start_time'] = sec
-        veh_table.values(veh_id)['cluster_record'].tail.value['ef'] = ef
-        veh_table.values(veh_id)['cluster_record'].tail.value['timer'] = 1
+        veh_table.values(ch_id)["cluster_members"].add(veh_id)
+        _mark_ch_participating(veh_table, ch_id)
 
+    # Remove from SA sets safely.
+    stand_alone.discard(veh_id)
+    zone_stand_alone[veh_table.values(veh_id)["zone"]].discard(veh_id)
 
-    veh_table.values(veh_id)['sub_cluster_members'] = set()
-    veh_table.values(veh_id)['counter'] = config.counter
-    veh_table.values(veh_id)['priority_ch'] = ch_id
-    veh_table.values(veh_id)['priority_counter'] = config.priority_counter
-    # bus_candidates.remove(bus_ch)
-    veh_table.values(veh_id)['other_chs']. \
-        update(veh_table.values(veh_id)['other_chs'].union(bus_candidates))
-
-    veh_table.values(veh_id)['other_chs']. \
-        update(veh_table.values(veh_id)['other_chs'].union(ch_candidates))
-    if 'bus' in ch_id:
-        bus_table.values(ch_id)['cluster_members'].add(veh_id)
-
-    else:
-        veh_table.values(ch_id)['cluster_members'].add(veh_id)
-
-    stand_alone.remove(veh_id)
-    zone_stand_alone[veh_table.values(veh_id)['zone']].remove(veh_id)
-
-    return (bus_table, veh_table,
-            stand_alone, zone_stand_alone)
+    return bus_table, veh_table, stand_alone, zone_stand_alone
 
 
 def remove_member(mem, ch_id, veh_table, bus_table, config,
-                  stand_alone, zone_stand_alone,
+                  stand_alone, zone_stand_alone, sec,
                   ch_stays=True, mem_stays=True):
     """
-    This function would remove a cluster member from the cluster
-    :param ch_stays:
-    :type
-    :param mem:
-    :param ch_id:
-    :param veh_table:
-    :param bus_table:
-    :param config:
-    :param stand_alone:
-    :param zone_stand_alone:
-    :param mem_stays:
-    :return:
+    Remove mem from ch_id and record the transition only if the member
+    remains inside the observed area.
     """
-    veh_table.values(mem)['counter'] = config.counter
+
+    veh_table.values(mem)["counter"] = config.counter
+
     if ch_stays is True:
-        veh_table.values(mem)['priority_ch'] = ch_id
+        veh_table.values(mem)["priority_ch"] = ch_id
     else:
-        veh_table.values(mem)['priority_ch'] = None
-    veh_table.values(mem)['priority_counter'] = config.priority_counter
-    if 'bus' in ch_id:
-        bus_table.values(ch_id)['cluster_members'].remove(mem)
+        veh_table.values(mem)["priority_ch"] = None
+
+    veh_table.values(mem)["priority_counter"] = config.priority_counter
+
+    # Remove member from CH.
+    if "bus" in ch_id:
+        bus_table.values(ch_id)["cluster_members"].discard(mem)
     else:
-        veh_table.values(ch_id)['cluster_members'].remove(mem)
+        veh_table.values(ch_id)["cluster_members"].discard(mem)
+
+        # # If this was the last member, split CH record to empty-CH state.
+        # if len(veh_table.values(ch_id)["cluster_members"]) == 0:
+        #     _set_ch_any_member(veh_table, ch_id, sec, False)
+
+    veh_table.values(mem)["primary_ch"] = None
+
+    # Only record SA state if the vehicle stays in the studied area.
     if mem_stays is True:
         stand_alone.add(mem)
-        zone_stand_alone[veh_table.values(mem)['zone']].add(mem)
-    veh_table.values(mem)['primary_ch'] = None
-    veh_table.values(mem)['cluster_record'].append(None, {'is_ch': False, 'start_time': None,
-                                                          'ef': None, 'timer': None})
+        zone_stand_alone[veh_table.values(mem)["zone"]].add(mem)
 
-    return (veh_table, bus_table,
-            stand_alone, zone_stand_alone)
+        _append_cluster_record(
+            veh_table.values(mem)["cluster_record"],
+            key=None,
+            sec=sec,
+            ef=None,
+            is_ch=False,
+            any_member=None,
+        )
 
-    # veh_table.values(mem)['counter'] = config.counter
-    # if ch_stays is True:
-    #     veh_table.values(mem)['priority_ch'] = ch_id
-    # else:
-    #     veh_table.values(mem)['priority_ch'] = None
-    # veh_table.values(mem)['priority_counter'] = config.priority_counter
-    # if 'bus' in ch_id:
-    #     bus_table.values(ch_id)['cluster_members'].remove(mem)
-    # else:
-    #     veh_table.values(ch_id)['cluster_members'].remove(mem)
-    # if mem_stays is True:
-    #     stand_alone.add(mem)
-    #     zone_stand_alone[veh_table.values(mem)['zone']].add(mem)
-    # veh_table.values(mem)['primary_ch'] = None
-    # veh_table.values(mem)['cluster_record'].append(None, {'is_ch': False, 'start_time': None,
-    #                                                       'ef': None, 'timer': None})
-    #
-    # return (veh_table, bus_table,
-    #         stand_alone, zone_stand_alone)
+    return veh_table, bus_table, stand_alone, zone_stand_alone
 
 def set_ch(veh_id, veh_table, all_chs, stand_alone,
-           zone_stand_alone, zone_ch, config, its_sa_clustering=False):
+           zone_stand_alone, zone_ch, config, sec, its_sa_clustering=False):
     """
-    This function would update the information of a vehicle turning into a CH
-    :param veh_id:
-    :param veh_table:
-    :param all_chs:
-    :param stand_alone:
-    :param zone_stand_alone:
-    :param zone_ch:
-    :param config:
-    :param its_sa_clustering:
-    :return:
+    Convert a vehicle to CH and record a CH episode.
     """
-    veh_table.values(veh_id)['cluster_head'] = True
-    veh_table.values(veh_id)['cluster_record'].tail.value['is_ch'] = True
-    veh_table.values(veh_id)['start_ch_zone'] = veh_table.values(veh_id)['zone']
-    all_chs.add(veh_id)
-    zone_ch[veh_table.values(veh_id)['zone']].add(veh_id)
-    veh_table.values(veh_id)['counter'] = config.counter
-    veh_table.values(veh_id)['priority_counter'] = config.priority_counter
-    veh_table.values(veh_id)['priority_ch'] = None
-    if its_sa_clustering is False:
-        stand_alone.remove(veh_id)
-        zone_stand_alone[veh_table.values(veh_id)['zone']].remove(veh_id)
-    else:
-        try:
-            stand_alone.remove(veh_id)
-            zone_stand_alone[veh_table.values(veh_id)['zone']].remove(veh_id)
-        except KeyError:
-            pass
 
-    return (veh_table, all_chs, stand_alone,
-            zone_stand_alone, zone_ch)
+    veh_table.values(veh_id)["cluster_head"] = True
+
+    # New CH starts as empty CH unless a member is added later.
+    _append_cluster_record(
+        veh_table.values(veh_id)["cluster_record"],
+        key=veh_id,
+        sec=sec,
+        ef=None,
+        is_ch=True,
+        any_member=False,
+    )
+
+    veh_table.values(veh_id)["start_ch_zone"] = veh_table.values(veh_id)["zone"]
+
+    all_chs.add(veh_id)
+    zone_ch[veh_table.values(veh_id)["zone"]].add(veh_id)
+
+    veh_table.values(veh_id)["counter"] = config.counter
+    veh_table.values(veh_id)["priority_counter"] = config.priority_counter
+    veh_table.values(veh_id)["priority_ch"] = None
+
+    # Remove from SA sets safely.
+    stand_alone.discard(veh_id)
+    zone_stand_alone[veh_table.values(veh_id)["zone"]].discard(veh_id)
+
+    return veh_table, all_chs, stand_alone, zone_stand_alone, zone_ch
 
 
 def set_ch_to_veh(veh_id, veh_table, zone_ch,
-                  all_chs, stand_alone, zone_stand_alone):
+                  all_chs, stand_alone, zone_stand_alone, sec):
     """
-    This function would set a CH to a stand_alone vehicle
-    :param veh_id:
-    :param veh_table:
-    :param zone_ch:
-    :param all_chs:
-    :param stand_alone:
-    :param zone_stand_alone:
-    :return:
+    Convert an empty CH back to stand-alone vehicle and record the SA episode.
     """
-    veh_table.values(veh_id)['cluster_members'] = set()
-    veh_table.values(veh_id)['cluster_head'] = False
-    veh_table.values(veh_id)['cluster_record'].append(None, {'is_ch': False, 'start_time': None,
-                                                 'ef': None,  'timer': None})
-    veh_table.values(veh_id)['start_ch_zone'] = None
-    zone_ch[veh_table.values(veh_id)['zone']].remove(veh_id)
-    all_chs.remove(veh_id)
+
+    veh_table.values(veh_id)["cluster_members"] = set()
+    veh_table.values(veh_id)["cluster_head"] = False
+
+    _append_cluster_record(
+        veh_table.values(veh_id)["cluster_record"],
+        key=None,
+        sec=sec,
+        ef=None,
+        is_ch=False,
+        any_member=None,
+    )
+
+    veh_table.values(veh_id)["start_ch_zone"] = None
+
+    zone_ch[veh_table.values(veh_id)["zone"]].discard(veh_id)
+    all_chs.discard(veh_id)
+
     stand_alone.add(veh_id)
-    zone_stand_alone[veh_table.values(veh_id)['zone']].add(veh_id)
-    return (veh_table, zone_ch, all_chs,
-            stand_alone, zone_stand_alone)
+    zone_stand_alone[veh_table.values(veh_id)["zone"]].add(veh_id)
+
+    return veh_table, zone_ch, all_chs, stand_alone, zone_stand_alone
 
 
 def mac_address():
@@ -582,6 +559,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
         if veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
             zone_ch[zone_id].add(veh.getAttribute('id'))
+
         elif (veh_table.values(veh.getAttribute('id'))['cluster_head'] is False) and \
                 (veh_table.values(veh.getAttribute('id'))['primary_ch'] is None):
             stand_alone.add(veh.getAttribute('id'))
@@ -592,7 +570,7 @@ def update_veh_table(veh, veh_table, zone_id, understudied_area, zones, config,
 
     else:
         veh_table.set_item(veh.getAttribute('id'), initiate_new_veh(veh, zones, zone_id,
-                                                                    config, understudied_area))
+                                                                    config, understudied_area, current_time))
         veh_table.values(veh.getAttribute('id'))['arrive_time'] = current_time
         zone_vehicles[zone_id].add(veh.getAttribute('id'))
         stand_alone.add(veh.getAttribute('id'))
@@ -1016,3 +994,101 @@ def other_connections_update(veh_table, bus_table, zone_ch,
         bus_table.values(bus)['other_chs'] = det_buses_other_ch(bus, veh_table,bus_table, zone_buses, zone_ch)
 
     return veh_table, bus_table
+
+def _append_cluster_record(record, key, sec, ef=None, is_ch=False, any_member=None):
+    """
+    Append a new cluster-state episode unless the current tail already
+    represents the same state in a continuous interval.
+
+    Record meaning:
+        key = None       -> SA / unclustered
+        key = CH id      -> CM attached to CH, or CH self-record
+        is_ch = False    -> CM or SA
+        is_ch = True     -> CH
+        any_member=True  -> CH currently has at least one member
+    """
+
+    if record.tail is not None:
+        tail = record.tail
+        value = tail.value if hasattr(tail, "value") else {}
+
+        tail_start = value.get("start_time", sec)
+        tail_timer = value.get("timer", 0)
+
+        try:
+            tail_start = int(tail_start)
+            tail_timer = int(tail_timer)
+        except (TypeError, ValueError):
+            tail_start = sec
+            tail_timer = 0
+
+        tail_end_next = tail_start + tail_timer
+
+        same_state = (
+            tail.key == key and
+            bool(value.get("is_ch", False)) == bool(is_ch) and
+            value.get("any_member", None) == any_member
+        )
+
+        # Continue current episode only if it is exactly continuous.
+        if same_state and tail_end_next == sec:
+            value["timer"] = tail_timer + 1
+            return
+
+        # If the current tail already includes this timestep, trim it so
+        # the new episode starts at sec without double-counting sec.
+        if tail_start < sec < tail_end_next:
+            value["timer"] = sec - tail_start
+
+        # If the current tail starts at the same sec, reuse it instead of
+        # creating two records with the same start time.
+        elif tail_start == sec:
+            tail.key = key
+            value["start_time"] = sec
+            value["ef"] = ef
+            value["timer"] = 1
+            value["is_ch"] = is_ch
+            value["any_member"] = any_member
+            return
+
+    record.append(key, {
+        "start_time": sec,
+        "ef": ef,
+        "timer": 1,
+        "is_ch": is_ch,
+        "any_member": any_member,
+    })
+
+
+def _set_ch_any_member(veh_table, ch_id, sec, any_member):
+    """
+    Update CH member-status without rewriting the previous CH duration.
+
+    If a CH was empty and then receives a member, this creates:
+        CH empty episode
+        CH effective episode
+
+    If a CH loses its last member, this creates:
+        CH effective episode
+        CH empty episode
+    """
+
+    _append_cluster_record(
+        veh_table.values(ch_id)["cluster_record"],
+        key=ch_id,
+        sec=sec,
+        ef=None,
+        is_ch=True,
+        any_member=bool(any_member),
+    )
+
+def _mark_ch_participating(veh_table, ch_id):
+    """
+    Mark the current CH episode as participating.
+    any_member=True means the CH served at least one member
+    at some point during this CH episode.
+    """
+    rec = veh_table.values(ch_id)["cluster_record"]
+
+    if rec.tail is not None:
+        rec.tail.value["any_member"] = True

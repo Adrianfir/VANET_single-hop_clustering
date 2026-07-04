@@ -91,7 +91,7 @@ class DataTable:
                 # the veh_table will be initiated here for the very first time self.understudied_area
             else:
                 self.veh_table.set_item(veh.getAttribute('id'), util.initiate_new_veh(veh, zones, zone_id, config,
-                                                                                      self.understudied_area))
+                                                                                      self.understudied_area, self.time))
                 self.veh_table.values(veh.getAttribute('id'))['arrive_time'] = self.time
                 # Here the vehicles will be added to zone_vehicles
                 self.zone_vehicles[zone_id].add(veh.getAttribute('id'))
@@ -210,6 +210,7 @@ class DataTable:
                                                                                self.bus_table, config,
                                                                                self.stand_alone,
                                                                                self.zone_stand_alone,
+                                                                               self.time,
                                                                                ch_stays=False,
                                                                               mem_stays=mem_stays)
                     # since k is not inside the area anymore, the priority_ch must be None
@@ -249,6 +250,7 @@ class DataTable:
                                                                                    self.bus_table, config,
                                                                                    self.stand_alone,
                                                                                    self.zone_stand_alone,
+                                                                                   self.time,
                                                                                    ch_stays=False,
                                                                                    mem_stays=mem_stays)
 
@@ -262,6 +264,7 @@ class DataTable:
                                                                                self.bus_table, config,
                                                                                self.stand_alone,
                                                                                self.zone_stand_alone,
+                                                                               self.time,
                                                                                mem_stays=False)
 
             elif k in self.stand_alone:
@@ -304,7 +307,7 @@ class DataTable:
                     (self.veh_table, self.all_chs, self.stand_alone,
                      self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id, self.veh_table, self.all_chs,
                                                                         self.stand_alone, self.zone_stand_alone,
-                                                                        self.zone_ch, config)
+                                                                        self.zone_ch, config, self.time)
                     continue
 
             elif (self.veh_table.values(veh_id)['in_area'] is True) and \
@@ -320,7 +323,7 @@ class DataTable:
                         (self.veh_table, self.bus_table,
                          self.stand_alone, self.zone_stand_alone) = (
                             util.remove_member(m, veh_id, self.veh_table, self.bus_table, config,
-                                               self.stand_alone, self.zone_stand_alone))
+                                               self.stand_alone, self.zone_stand_alone, self.time))
 
                 # if the veh_id is a ch and does not have any member, after changing its zone, it won't remain as a ch
                 # unless get selected by another vehicles or can't find a cluster head after the counter
@@ -330,10 +333,11 @@ class DataTable:
                     (self.veh_table, self.zone_ch, self.all_chs,
                      self.stand_alone, self.zone_stand_alone) = util.set_ch_to_veh(veh_id, self.veh_table, self.zone_ch,
                                                                                    self.all_chs, self.stand_alone,
-                                                                                   self.zone_stand_alone)
+                                                                                   self.zone_stand_alone, self.time)
                     self.update_cluster([veh_id, ], config, zones)
                 else:
                     self.zone_ch[self.veh_table.values(veh_id)['zone']].add(veh_id)
+                    self.veh_table.values(veh_id)['cluster_record'].tail.value['timer'] += 1
                     self.all_chs.add(veh_id)
                 continue
             # checking if the vehicle is understudied-area and still in transmission range of its current primary_ch
@@ -366,7 +370,8 @@ class DataTable:
                      self.stand_alone, self.zone_stand_alone) = (util.remove_member(veh_id, ch_id,
                                                                                     self.veh_table, self.bus_table,
                                                                                     config, self.stand_alone,
-                                                                                    self.zone_stand_alone))
+                                                                                    self.zone_stand_alone,
+                                                                                    self.time))
                     self.update_cluster([veh_id, ], config, zones)
 
             temp_stand_alone = self.stand_alone.copy()
@@ -447,12 +452,15 @@ class DataTable:
                     (self.veh_table, self.all_chs, self.stand_alone,
                      self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id, self.veh_table, self.all_chs,
                                                                         self.stand_alone, self.zone_stand_alone,
-                                                                        self.zone_ch, configs, its_sa_clustering=True)
+                                                                        self.zone_ch, configs, self.time,
+                                                                        its_sa_clustering=True)
+
 
                     (self.veh_table, self.all_chs, self.stand_alone,
                      self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id_2, self.veh_table, self.all_chs,
                                                                         self.stand_alone, self.zone_stand_alone,
-                                                                        self.zone_ch, configs, its_sa_clustering=True)
+                                                                        self.zone_ch, configs, self.time,
+                                                                        its_sa_clustering=True)
 
                     selected_chs.add(veh_id)
                     selected_chs.add(veh_id_2)
@@ -465,7 +473,8 @@ class DataTable:
                 (self.veh_table, self.all_chs, self.stand_alone,
                  self.zone_stand_alone, self.zone_ch) = util.set_ch(ch, self.veh_table, self.all_chs,
                                                                     self.stand_alone, self.zone_stand_alone,
-                                                                    self.zone_ch, configs, its_sa_clustering=True)
+                                                                    self.zone_ch, configs, self.time,
+                                                                    its_sa_clustering=True)
 
                 (self.bus_table, self.veh_table,
                  self.stand_alone,
@@ -622,6 +631,655 @@ class DataTable:
 
         return total_vcsm / n_vm
 
+    def vcsm_r(self, configs):
+        """
+        Residence-aware VCSM_R + supporting clustering stability metrics.
+
+        Network-level VCSM_R:
+            VCSM_R = sum_i A_i * R_i * Q_i / sum_i P_i
+
+        Supporting metrics returned:
+            AR:
+                AR = sum_i A_i / sum_i P_i
+
+            average_R:
+                average_R = sum_i A_i * R_i / sum_i A_i
+
+            CCR:
+                CCR = sum_i S_i / sum_i max(A_i - 1, 0)
+
+            avg_L_CM:
+                Average uninterrupted CM-to-CH residence duration.
+
+            ECHR:
+                ECHR = empty_CH_time / total_CH_role_time
+
+            avg_ch_lifetime_effective:
+                Average duration of CH episodes during which the CH has
+                at least one member.
+
+        Effective clustered state:
+            - CM: key is not None and is_ch == False
+            - Effective CH: key is not None, is_ch == True, any_member == True
+            - SA or empty CH: effective_cluster_id = None
+        """
+
+        def _node_key(node):
+            if hasattr(node, "key"):
+                return node.key
+            if hasattr(node, "id"):
+                return node.id
+            if hasattr(node, "name"):
+                return node.name
+            return None
+
+        def _safe_timer(value):
+            timer = value.get("timer", 0) if isinstance(value, dict) else 0
+
+            if timer is None:
+                return 0.0
+
+            try:
+                timer = float(timer)
+            except (TypeError, ValueError):
+                return 0.0
+
+            return max(timer, 0.0)
+
+        def _effective_cluster_id(node):
+            key = _node_key(node)
+            value = node.value if hasattr(node, "value") else {}
+
+            is_ch = bool(value.get("is_ch", False))
+            any_member = bool(value.get("any_member", False))
+
+            # SA or unclustered
+            if key is None:
+                return None
+
+            # CH episode
+            if is_ch:
+                if any_member:
+                    return key
+                return None
+
+            # CM episode
+            return key
+
+        def _veh_metrics_one(cluster_record, arrive_time, depart_time):
+            P_i = depart_time - arrive_time
+            if P_i <= 0:
+                P_i = 1.0
+
+            A_i = 0.0
+            residence = {}
+            effective_sequence = []
+
+            # CH lifetime accumulators
+            ch_role_lifetimes = []
+            ch_effective_lifetimes = []
+
+            current_ch_role_run = 0.0
+            current_ch_effective_run = 0.0
+
+            # CM residence accumulators
+            cm_residence_time = 0.0
+            cm_residence_count = 0
+
+            # Empty-CH accumulators
+            total_ch_role_time_raw = 0.0
+            empty_ch_time = 0.0
+
+            temp = cluster_record.head
+
+            while temp:
+                value = temp.value if hasattr(temp, "value") else {}
+                key = _node_key(temp)
+
+                timer = _safe_timer(value)
+
+                is_ch = bool(value.get("is_ch", False))
+                any_member = bool(value.get("any_member", False))
+
+                # ------------------------------------------------------------
+                # 1. CM residence time
+                # ------------------------------------------------------------
+                # A CM residence episode is a continuous interval in which
+                # the vehicle is attached to a CH as a member.
+                if key is not None and (not is_ch) and timer > 0:
+                    cm_residence_time += timer
+                    cm_residence_count += 1
+
+                # ------------------------------------------------------------
+                # 2. CH role-based lifetime
+                # ------------------------------------------------------------
+                if key is not None and is_ch and timer > 0:
+                    current_ch_role_run += timer
+                    total_ch_role_time_raw += timer
+
+                    if not any_member:
+                        empty_ch_time += timer
+                else:
+                    if current_ch_role_run > 0:
+                        ch_role_lifetimes.append(current_ch_role_run)
+                        current_ch_role_run = 0.0
+
+                # ------------------------------------------------------------
+                # 3. Effective CH lifetime
+                # ------------------------------------------------------------
+                if key is not None and is_ch and any_member and timer > 0:
+                    current_ch_effective_run += timer
+                else:
+                    if current_ch_effective_run > 0:
+                        ch_effective_lifetimes.append(current_ch_effective_run)
+                        current_ch_effective_run = 0.0
+
+                # ------------------------------------------------------------
+                # 4. VCSM_R effective association
+                # ------------------------------------------------------------
+                eff_id = _effective_cluster_id(temp)
+
+                if eff_id is not None and timer > 0:
+                    A_i += timer
+                    residence[eff_id] = residence.get(eff_id, 0.0) + timer
+                    effective_sequence.append(eff_id)
+
+                temp = temp.next
+
+            # Close active CH runs
+            if current_ch_role_run > 0:
+                ch_role_lifetimes.append(current_ch_role_run)
+
+            if current_ch_effective_run > 0:
+                ch_effective_lifetimes.append(current_ch_effective_run)
+
+            # ------------------------------------------------------------
+            # If never effectively clustered
+            # ------------------------------------------------------------
+            if A_i <= 0:
+                return {
+                    "P": P_i,
+                    "A": 0.0,
+                    "R": 0.0,
+                    "Q": 0.0,
+                    "S": 0.0,
+                    "switch_den": 0.0,
+                    "contribution": 0.0,
+                    "R_weighted": 0.0,
+
+                    "ch_role_time": sum(ch_role_lifetimes),
+                    "ch_role_count": len(ch_role_lifetimes),
+                    "ch_effective_time": sum(ch_effective_lifetimes),
+                    "ch_effective_count": len(ch_effective_lifetimes),
+
+                    "cm_residence_time": cm_residence_time,
+                    "cm_residence_count": cm_residence_count,
+
+                    "total_ch_role_time_raw": total_ch_role_time_raw,
+                    "empty_ch_time": empty_ch_time,
+                }
+
+            # Residence concentration
+            R_i = sum((theta / A_i) ** 2 for theta in residence.values())
+
+            # Cluster switching count
+            S_i = 0.0
+            for k in range(1, len(effective_sequence)):
+                if effective_sequence[k] != effective_sequence[k - 1]:
+                    S_i += 1.0
+
+            # Switching stability
+            switch_den = max(A_i - 1.0, 0.0)
+
+            if switch_den <= 0:
+                Q_i = 1.0
+            else:
+                Q_i = 1.0 - (S_i / switch_den)
+                Q_i = max(0.0, min(1.0, Q_i))
+
+            contribution = A_i * R_i * Q_i
+
+            return {
+                "P": P_i,
+                "A": A_i,
+                "R": R_i,
+                "Q": Q_i,
+                "S": S_i,
+                "switch_den": switch_den,
+                "contribution": contribution,
+                "R_weighted": A_i * R_i,
+
+                "ch_role_time": sum(ch_role_lifetimes),
+                "ch_role_count": len(ch_role_lifetimes),
+                "ch_effective_time": sum(ch_effective_lifetimes),
+                "ch_effective_count": len(ch_effective_lifetimes),
+
+                "cm_residence_time": cm_residence_time,
+                "cm_residence_count": cm_residence_count,
+
+                "total_ch_role_time_raw": total_ch_role_time_raw,
+                "empty_ch_time": empty_ch_time,
+            }
+
+        total_presence = 0.0
+        total_clustered_time = 0.0
+        total_contribution = 0.0
+
+        total_R_weighted = 0.0
+
+        total_switches = 0.0
+        total_switch_den = 0.0
+
+        total_ch_role_time = 0.0
+        total_ch_role_count = 0
+
+        total_ch_effective_time = 0.0
+        total_ch_effective_count = 0
+
+        total_cm_residence_time = 0.0
+        total_cm_residence_count = 0
+
+        total_ch_role_time_raw = 0.0
+        total_empty_ch_time = 0.0
+
+        # Active vehicles
+        for vid in self.veh_table.ids():
+            v = self.veh_table.values(vid)
+
+            if v.get("depart_time", None) is None:
+                v["depart_time"] = configs.start_time + configs.iter
+
+            result = _veh_metrics_one(
+                cluster_record=v["cluster_record"],
+                arrive_time=v["arrive_time"],
+                depart_time=v["depart_time"],
+            )
+
+            total_presence += result["P"]
+            total_clustered_time += result["A"]
+            total_contribution += result["contribution"]
+
+            total_R_weighted += result["R_weighted"]
+
+            total_switches += result["S"]
+            total_switch_den += result["switch_den"]
+
+            total_ch_role_time += result["ch_role_time"]
+            total_ch_role_count += result["ch_role_count"]
+
+            total_ch_effective_time += result["ch_effective_time"]
+            total_ch_effective_count += result["ch_effective_count"]
+
+            total_cm_residence_time += result["cm_residence_time"]
+            total_cm_residence_count += result["cm_residence_count"]
+
+            total_ch_role_time_raw += result["total_ch_role_time_raw"]
+            total_empty_ch_time += result["empty_ch_time"]
+
+        # Vehicles that already left
+        for vid, v in self.left_veh.items():
+            result = _veh_metrics_one(
+                cluster_record=v["cluster_record"],
+                arrive_time=v["arrive_time"],
+                depart_time=v["depart_time"],
+            )
+
+            total_presence += result["P"]
+            total_clustered_time += result["A"]
+            total_contribution += result["contribution"]
+
+            total_R_weighted += result["R_weighted"]
+
+            total_switches += result["S"]
+            total_switch_den += result["switch_den"]
+
+            total_ch_role_time += result["ch_role_time"]
+            total_ch_role_count += result["ch_role_count"]
+
+            total_ch_effective_time += result["ch_effective_time"]
+            total_ch_effective_count += result["ch_effective_count"]
+
+            total_cm_residence_time += result["cm_residence_time"]
+            total_cm_residence_count += result["cm_residence_count"]
+
+            total_ch_role_time_raw += result["total_ch_role_time_raw"]
+            total_empty_ch_time += result["empty_ch_time"]
+
+        # Main VCSM_R
+        vcsm_r_value = 0.0
+        if total_presence > 0:
+            vcsm_r_value = total_contribution / total_presence
+
+        # Effective attachment ratio
+        AR = 0.0
+        if total_presence > 0:
+            AR = total_clustered_time / total_presence
+
+        # Clustered-time-weighted average residence concentration
+        average_R = 0.0
+        if total_clustered_time > 0:
+            average_R = total_R_weighted / total_clustered_time
+
+        # Cluster-change rate
+        CCR = 0.0
+        if total_switch_den > 0:
+            CCR = total_switches / total_switch_den
+
+        # CH lifetime metrics
+        avg_ch_lifetime_role = 0.0
+        if total_ch_role_count > 0:
+            avg_ch_lifetime_role = total_ch_role_time / total_ch_role_count
+
+        avg_ch_lifetime_effective = 0.0
+        if total_ch_effective_count > 0:
+            avg_ch_lifetime_effective = (
+                    total_ch_effective_time / total_ch_effective_count
+            )
+
+        # Average CM residence time
+        avg_L_CM = 0.0
+        if total_cm_residence_count > 0:
+            avg_L_CM = total_cm_residence_time / total_cm_residence_count
+
+        # Empty-CH ratio
+        ECHR = 0.0
+        if total_ch_role_time_raw > 0:
+            ECHR = total_empty_ch_time / total_ch_role_time_raw
+
+        return {
+            "vcsm_r": vcsm_r_value,
+
+            # Supporting reviewer-facing metrics
+            "AR": AR,
+            "average_R": average_R,
+            "CCR": CCR,
+            "avg_L_CM": avg_L_CM,
+            "ECHR": ECHR,
+
+            # CH lifetime metrics
+            "avg_ch_lifetime_role": avg_ch_lifetime_role,
+            "avg_ch_lifetime_effective": avg_ch_lifetime_effective,
+
+            # Diagnostic counts/totals
+            "num_ch_role_episodes": total_ch_role_count,
+            "num_ch_effective_episodes": total_ch_effective_count,
+            "num_cm_episodes": total_cm_residence_count,
+
+            "total_ch_role_time": total_ch_role_time,
+            "total_ch_effective_time": total_ch_effective_time,
+            "total_ch_role_time_raw": total_ch_role_time_raw,
+            "total_empty_ch_time": total_empty_ch_time,
+
+            "total_presence": total_presence,
+            "total_clustered_time": total_clustered_time,
+            "total_switches": total_switches,
+        }
+
+    def vcsm_cm(self, configs, return_per_vehicle=False):
+        """
+        CM-conditioned residence-aware VCSM.
+
+        This metric measures the stability of established CM-to-CH associations.
+        It excludes vehicles that were never cluster members, including:
+            - vehicles that were always stand-alone (SAV/SA)
+            - vehicles that were only CH and never CM
+
+        For each vehicle i that became CM at least once:
+
+            A_i^CM = total time spent as CM
+            P_i    = total presence time in the observed area
+
+            eta_i^CM = A_i^CM / P_i
+
+            R_i^CM = sum_h (Theta_{i,h}^CM / A_i^CM)^2
+
+            Q_i^CM = 1 - S_i^CM / max(A_i^CM - 1, 1)
+
+        where:
+            Theta_{i,h}^CM = total CM residence time of vehicle i with CH h
+            S_i^CM         = number of CM association changes in the non-null CM sequence
+
+        Network metric:
+
+            VCSM_CM = (1 / |V_CM|) * sum_i eta_i^CM * R_i^CM * Q_i^CM
+
+        This is different from network-level VCSM_R because the denominator is
+        the number of vehicles that became CM at least once, not total vehicle-time.
+        """
+
+        def _node_key(node):
+            if hasattr(node, "key"):
+                return node.key
+            if hasattr(node, "id"):
+                return node.id
+            if hasattr(node, "name"):
+                return node.name
+            return None
+
+        def _safe_timer(value):
+            timer = value.get("timer", 0) if isinstance(value, dict) else 0
+
+            if timer is None:
+                return 0.0
+
+            try:
+                timer = float(timer)
+            except (TypeError, ValueError):
+                return 0.0
+
+            return max(timer, 0.0)
+
+        def _is_cm_episode(node):
+            """
+            A CM episode means the vehicle is a cluster member attached to a CH.
+
+            key is not None:
+                the key is the CH id.
+
+            is_ch is False:
+                the vehicle itself is not a CH.
+            """
+            key = _node_key(node)
+            value = node.value if hasattr(node, "value") else {}
+
+            is_ch = bool(value.get("is_ch", False))
+
+            return (key is not None) and (is_ch is False)
+
+        def _veh_vcsm_cm_one(vid, cluster_record, arrive_time, depart_time):
+            """
+            Compute CM-conditioned VCSM components for one vehicle.
+            """
+
+            P_i = depart_time - arrive_time
+            if P_i <= 0:
+                P_i = 1.0
+
+            A_cm = 0.0
+            residence_cm = {}
+            cm_sequence = []
+
+            temp = cluster_record.head
+
+            while temp:
+                value = temp.value if hasattr(temp, "value") else {}
+                key = _node_key(temp)
+                timer = _safe_timer(value)
+
+                if _is_cm_episode(temp) and timer > 0:
+                    A_cm += timer
+                    residence_cm[key] = residence_cm.get(key, 0.0) + timer
+                    cm_sequence.append(key)
+
+                temp = temp.next
+
+            # Exclude vehicles that were never CM
+            if A_cm <= 0:
+                return None
+
+            # CM attachment ratio of this vehicle
+            eta_cm = A_cm / P_i
+
+            # Residence concentration R_i^CM
+            R_cm = sum((theta / A_cm) ** 2 for theta in residence_cm.values())
+
+            # CM association changes
+            S_cm = 0.0
+            for k in range(1, len(cm_sequence)):
+                if cm_sequence[k] != cm_sequence[k - 1]:
+                    S_cm += 1.0
+
+            # CM switching stability
+            if A_cm <= 1:
+                Q_cm = 1.0
+                switch_den = 0.0
+            else:
+                switch_den = max(A_cm - 1.0, 1.0)
+                Q_cm = 1.0 - (S_cm / switch_den)
+                Q_cm = max(0.0, min(1.0, Q_cm))
+
+            contribution = eta_cm * R_cm * Q_cm
+
+            return {
+                "vid": vid,
+                "P": P_i,
+                "A_CM": A_cm,
+                "eta_CM": eta_cm,
+                "R_CM": R_cm,
+                "Q_CM": Q_cm,
+                "S_CM": S_cm,
+                "switch_den_CM": switch_den,
+                "contribution": contribution,
+                "num_distinct_CH_CM": len(residence_cm),
+            }
+
+        total_contribution = 0.0
+        n_cm_vehicles = 0
+
+        total_A_cm = 0.0
+        total_P_cm_vehicles = 0.0
+
+        total_R_cm = 0.0
+        total_R_cm_weighted = 0.0
+
+        total_switches_cm = 0.0
+        total_switch_den_cm = 0.0
+
+        per_vehicle = {}
+
+        # ------------------------------------------------------------
+        # Active vehicles
+        # ------------------------------------------------------------
+        for vid in self.veh_table.ids():
+            v = self.veh_table.values(vid)
+
+            if v.get("depart_time", None) is None:
+                v["depart_time"] = configs.start_time + configs.iter
+
+            result = _veh_vcsm_cm_one(
+                vid=vid,
+                cluster_record=v["cluster_record"],
+                arrive_time=v["arrive_time"],
+                depart_time=v["depart_time"],
+            )
+
+            if result is None:
+                continue
+
+            total_contribution += result["contribution"]
+            n_cm_vehicles += 1
+
+            total_A_cm += result["A_CM"]
+            total_P_cm_vehicles += result["P"]
+
+            total_R_cm += result["R_CM"]
+            total_R_cm_weighted += result["A_CM"] * result["R_CM"]
+
+            total_switches_cm += result["S_CM"]
+            total_switch_den_cm += result["switch_den_CM"]
+
+            if return_per_vehicle:
+                per_vehicle[vid] = result
+
+        # ------------------------------------------------------------
+        # Vehicles that already left
+        # ------------------------------------------------------------
+        for vid, v in self.left_veh.items():
+            result = _veh_vcsm_cm_one(
+                vid=vid,
+                cluster_record=v["cluster_record"],
+                arrive_time=v["arrive_time"],
+                depart_time=v["depart_time"],
+            )
+
+            if result is None:
+                continue
+
+            total_contribution += result["contribution"]
+            n_cm_vehicles += 1
+
+            total_A_cm += result["A_CM"]
+            total_P_cm_vehicles += result["P"]
+
+            total_R_cm += result["R_CM"]
+            total_R_cm_weighted += result["A_CM"] * result["R_CM"]
+
+            total_switches_cm += result["S_CM"]
+            total_switch_den_cm += result["switch_den_CM"]
+
+            if return_per_vehicle:
+                per_vehicle[vid] = result
+
+        # ------------------------------------------------------------
+        # Final CM-conditioned metrics
+        # ------------------------------------------------------------
+        vcsm_cm_value = 0.0
+        if n_cm_vehicles > 0:
+            vcsm_cm_value = total_contribution / n_cm_vehicles
+
+        # Simple average of R_i^CM across CM-participating vehicles
+        average_R_CM = 0.0
+        if n_cm_vehicles > 0:
+            average_R_CM = total_R_cm / n_cm_vehicles
+
+        # Time-weighted average of R_i^CM across CM residence time
+        average_R_CM_weighted = 0.0
+        if total_A_cm > 0:
+            average_R_CM_weighted = total_R_cm_weighted / total_A_cm
+
+        # CM attachment ratio among vehicles that became CM at least once
+        AR_CM_conditional = 0.0
+        if total_P_cm_vehicles > 0:
+            AR_CM_conditional = total_A_cm / total_P_cm_vehicles
+
+        # CM cluster-change rate
+        CCR_CM = 0.0
+        if total_switch_den_cm > 0:
+            CCR_CM = total_switches_cm / total_switch_den_cm
+
+        output = {
+            "vcsm_cm": vcsm_cm_value,
+
+            # R_i^CM aggregate forms
+            "average_R_CM": average_R_CM,
+            "average_R_CM_weighted": average_R_CM_weighted,
+
+            # Supporting CM-conditioned diagnostics
+            "AR_CM_conditional": AR_CM_conditional,
+            "CCR_CM": CCR_CM,
+
+            # Counts/totals
+            "num_cm_vehicles": n_cm_vehicles,
+            "total_A_CM": total_A_cm,
+            "total_P_CM_vehicles": total_P_cm_vehicles,
+            "total_switches_CM": total_switches_cm,
+        }
+
+        if return_per_vehicle:
+            output["per_vehicle"] = per_vehicle
+
+        return output
+
     def connected_components(self):
         n = 0  # this would return the minimum number of path needed to connect all the clusters
         investigated = set()
@@ -757,44 +1415,44 @@ class DataTable:
         self.bus_table.print_hash_table()
         self.veh_table.print_hash_table()
 
-    def check_general_framework(self, veh_id):
-        """
-        this test is to check if the veh_table is a cluster_head and inside another class at a same time
-        :param veh_id:
-        :return:
-        """
-        try:
-            assert (
-                    ((self.veh_table.values(veh_id)['cluster_head'] is True) and
-                     (self.veh_table.values(veh_id)['primary_ch'] is None)) or
-                    ((self.veh_table.values(veh_id)['cluster_head'] is False) and
-                     (self.veh_table.values(veh_id)['primary_ch'] is not None)) or
-                    ((self.veh_table.values(veh_id)['cluster_head'] is False) and
-                     (self.veh_table.values(veh_id)['primary_ch'] is None) and
-                     (veh_id in self.stand_alone))
-            )
-        except AssertionError:
-            print(f'the error happens for {veh_id} at {self.time} \n'
-                  f'this test is to check if the veh_table is a cluster_head and inside another class at a same time \n'
-                  f'{self.veh_table.values(veh_id)}')
-
-            sys.exit(1)
-
-    def stand_alone_test(self, veh_id):
-        """
-        this test is to check if a stand_alone vehicle is not in a cluster or is a cluster_head
-        :param veh_id:
-        :return:
-        """
-        try:
-            assert ((self.veh_table.values(veh_id)['cluster_head'] is False) and
-                    ((veh_id in self.stand_alone) and
-                     (self.veh_table.values(veh_id)['primary_ch'] is None)))
-        except AssertionError:
-            print(f'the error happens for {veh_id} at {self.time} \n '
-                  f'this test is to check if a stand_alone vehicle is not in a cluster or is a cluster_head \n'
-                  f'{self.veh_table.values(veh_id)}')
-            sys.exit(1)
+    # def check_general_framework(self, veh_id):
+    #     """
+    #     this test is to check if the veh_table is a cluster_head and inside another class at a same time
+    #     :param veh_id:
+    #     :return:
+    #     """
+    #     try:
+    #         assert (
+    #                 ((self.veh_table.values(veh_id)['cluster_head'] is True) and
+    #                  (self.veh_table.values(veh_id)['primary_ch'] is None)) or
+    #                 ((self.veh_table.values(veh_id)['cluster_head'] is False) and
+    #                  (self.veh_table.values(veh_id)['primary_ch'] is not None)) or
+    #                 ((self.veh_table.values(veh_id)['cluster_head'] is False) and
+    #                  (self.veh_table.values(veh_id)['primary_ch'] is None) and
+    #                  (veh_id in self.stand_alone))
+    #         )
+    #     except AssertionError:
+    #         print(f'the error happens for {veh_id} at {self.time} \n'
+    #               f'this test is to check if the veh_table is a cluster_head and inside another class at a same time \n'
+    #               f'{self.veh_table.values(veh_id)}')
+    #
+    #         sys.exit(1)
+    #
+    # def stand_alone_test(self, veh_id):
+    #     """
+    #     this test is to check if a stand_alone vehicle is not in a cluster or is a cluster_head
+    #     :param veh_id:
+    #     :return:
+    #     """
+    #     try:
+    #         assert ((self.veh_table.values(veh_id)['cluster_head'] is False) and
+    #                 ((veh_id in self.stand_alone) and
+    #                  (self.veh_table.values(veh_id)['primary_ch'] is None)))
+    #     except AssertionError:
+    #         print(f'the error happens for {veh_id} at {self.time} \n '
+    #               f'this test is to check if a stand_alone vehicle is not in a cluster or is a cluster_head \n'
+    #               f'{self.veh_table.values(veh_id)}')
+    #         sys.exit(1)
 
     def dsca_clustering(self, configs, zones):
         near_sa = dict()
@@ -836,12 +1494,14 @@ class DataTable:
                     (self.veh_table, self.all_chs, self.stand_alone,
                      self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id, self.veh_table, self.all_chs,
                                                                         self.stand_alone, self.zone_stand_alone,
-                                                                        self.zone_ch, configs, its_sa_clustering=True)
+                                                                        self.zone_ch, configs, self.time,
+                                                                        its_sa_clustering=True)
 
                     (self.veh_table, self.all_chs, self.stand_alone,
                      self.zone_stand_alone, self.zone_ch) = util.set_ch(veh_id_2, self.veh_table, self.all_chs,
                                                                         self.stand_alone, self.zone_stand_alone,
-                                                                        self.zone_ch, configs, its_sa_clustering=True)
+                                                                        self.zone_ch, configs, self.time,
+                                                                        its_sa_clustering=True)
                     selected_chs.add(veh_id)
                     selected_chs.add(veh_id_2)
                     continue
@@ -862,7 +1522,8 @@ class DataTable:
                 (self.veh_table, self.all_chs, self.stand_alone,
                  self.zone_stand_alone, self.zone_ch) = util.set_ch(ch, self.veh_table, self.all_chs,
                                                                     self.stand_alone, self.zone_stand_alone,
-                                                                    self.zone_ch, configs, its_sa_clustering=True)
+                                                                    self.zone_ch, configs, self.time,
+                                                                    its_sa_clustering=True)
 
                 (self.bus_table, self.veh_table,
                  self.stand_alone,
