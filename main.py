@@ -17,113 +17,90 @@ import utils.util_routing as util_routing
 import matplotlib.pyplot as plt
 from qlearning_state import QRoutingHelper
 import xml.dom.minidom
+import pandas as pd
 
 
 if __name__ == "__main__":
-    # Select clustering and routing algorithms
-    clustering = input('please enter 1 for SMZCA or 2 for DCSA: ')
-    routing = input('please enter 1 for NTLCRP, 2 for GPSR, 3 for CGGR, 4 for PDVR, '
-                    ' 5 for training RL-based GPSR, and 6 for ZCGGR: ')
-    training_mode = input('you are up to training the agent: true or false? ')
-    routing_train_mode = True if training_mode=="true" else False
-    clustering_name = 'SMZCA' if clustering == '1' else 'DCSA'
-    routing_name = 'NTLCRP'
-    routing_name = 'GPSR' if routing == '2' else routing_name
-    routing_name = 'CGGR' if routing == '3' else routing_name
-    routing_name = 'PDVR' if routing == '4' else routing_name
-    routing_name = 'RL-based GPSR' if routing == '5' else routing_name
-    routing_name = 'ZCGGR' if routing == '6' else routing_name
     configs = Configs().config
+    dif_tr = [100, ]
+    rsu = False
+    bus = False
+    ########################### Define different weights
+    # Define the size of each list and the step increment
+    list_size = 3
+    step = 1
+
+    # Generate all possible values from 0 to 1 with the given step
+    possible_values = [round(i * step, 1) for i in range(int(1 / step) + 1)]
+
+    # Generate all possible combinations of values with sum equal to 1
+    all_weight_lists = []
+
+    for val1 in possible_values:
+        for val2 in possible_values:
+            remaining = round(1 - val1 - val2, 1)
+            if remaining in possible_values and remaining >= 0:
+                all_weight_lists.append([val1, val2, remaining])
+    ############################
 
     area_zones = ZoneID(configs)  # This is a hash table including all zones and their max and min lat and longs
     area_zones.zones()
-    cluster = DataTable(configs, area_zones, train_mode=routing_train_mode)
-    connections = list()
-    n_chs = list()
-    n_savs = list()
+    num_times = 1
     start_time = time.time()
 
-    for i in range(configs.iter):
-        cluster.update(configs, area_zones)
-        print(cluster.time)
-        cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
-        if clustering == '1':
-            cluster.stand_alones_cluster(configs, area_zones)
-        if clustering == '2':
-            cluster.dsca_clustering(configs, area_zones)
-        cluster.update_other_connections()
-        cluster.form_net_graph()
-        connection_evaluation = cluster.connected_components()
-        connections.append(connection_evaluation)
-        n_chs.append(len(cluster.all_chs))
-        n_savs.append(len(cluster.stand_alone))
+    for configs.veh_trans_range in dif_tr:
+        # cols = ['rsu', 'TR', 'weights', 'n_veh', 'n_buses', 'n_sav', 'n_chs', 'stab_eval']
+        out_put = pd.DataFrame()
+        for configs.weights in all_weight_lists:
 
-        if (cluster.time < configs.start_time + (5/6)*configs.iter) and (cluster.time >= configs.start_time + 5):
-            cluster.read_message(configs)
+            cluster = DataTable(configs, area_zones, train_mode=False)
+            connections = list()
+            n_chs = list()
+            n_savs = list()
+            start_time = time.time()
 
-        if routing == '1':
-            cluster.route_ntlcrp(configs)
-        if routing == '2':
-            cluster.route_gpsr(configs)
-        if routing == '3':
-            cluster.route_cggr(configs, clustering_name)
-        if routing == '4':
-            cluster.route_pdvr(configs)
-        if routing == '5':
-            cluster.route_gpsr_rl(configs)
-        if routing == '6':
-            cluster.route_zcggr(configs, clustering_name, area_zones)
+            for i in range(configs.iter):
+                cluster.update(configs, area_zones)
+                # print(cluster.time)
+                cluster.update_cluster(cluster.veh_table.ids(), configs, area_zones)
+                cluster.stand_alones_cluster(configs, area_zones)
+                cluster.update_other_connections()
+                cluster.form_net_graph()
+                connection_evaluation = cluster.connected_components()
+                connections.append(connection_evaluation)
+                n_chs.append(len(cluster.all_chs))
+                n_savs.append(len(cluster.stand_alone))
 
-    #     cluster.show_graph(configs)
-    #     cluster.save_map_img(1, '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/Graph' + str(i))
-    # #
+            vcsm_metric = dict(vcsm=cluster.vcsm(configs))
+            vcsmr_metrics = cluster.vcsm_r(configs)
+            vcsm_cm_metrics = cluster.vcsm_cm(configs)
+
+            metrics = dict(rsu=rsu, bus=bus, TR=configs.veh_trans_range, weights=configs.weights) | dict(TR=configs.veh_trans_range) |vcsm_metric | vcsmr_metrics | vcsm_cm_metrics
+
+            # print(f'n_vehs: {len(cluster.veh_table.ids())}')
+            # print(f'n_buses: {len(cluster.bus_table.ids())}')
+            # print(f'avg_chs: {sum(n_chs)/len(n_chs)}')
+            # print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
+            # print(f'connection_evaluation: {sum(connections) / len(connections)}')
+
+            print(num_times, configs.veh_trans_range, configs.weights,
+                  len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
+                  len(cluster.stand_alone), len(cluster.all_chs), vcsm_metric, vcsmr_metrics, vcsm_cm_metrics
+              )
+            num_times += 1
+
+            metrics['n_vehs'] = len(cluster.veh_table.ids())
+            metrics['n_buses'] = len(cluster.bus_table.ids())
+            metrics['avg_chs'] = sum(n_chs) / len(n_chs)
+            metrics['avg_savs'] = sum(n_savs) / len(n_savs)
+            metrics['connection_evaluation'] = sum(connections) / len(connections)
+            print(metrics)
+            # new_row = pd.Series(['no', configs.veh_trans_range, configs.weights,
+            #                      len(cluster.veh_table.ids()), len(cluster.bus_table.ids()),
+            #                      sum(n_savs) / len(n_savs), sum(n_chs) / len(n_chs), eval_cluster], index=cols)
+
+            out_put = pd.concat([out_put, pd.DataFrame([metrics])], ignore_index=True)
+
+    out_put.to_csv('results/' + str(configs.veh_trans_range) + '_rsu:' + str(rsu) + '_bus:' + str(bus) + '.csv')
     end_time = time.time()
-    # util.make_slideshow('/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/',
-    #                     '/Users/pouyafirouzmakan/Desktop/slideshow/saved_imgs/slide.mp4', configs.fps)
-    # cluster.print_table()
-    # nx.draw(cluster.ch_net, with_labels=False)
-    # print(f'delivered_packets are: {cluster.delivered_packets}')
-    
-    avg_hops, avg_delay = util_routing.eval_routing(cluster)
-    vcsmr_metrics = cluster.vcsm_r(configs)
-    vcsm_cm_metrics = cluster.vcsm_cm(configs)
-
-    for key in vcsmr_metrics.keys():
-        print(f'{key}: {vcsmr_metrics[key]}')
-    print('\n\n')
-    for key in vcsm_cm_metrics.keys():
-        print(f'{key}: {vcsm_cm_metrics[key]}')
-    print('\n\n')
-
-    print(f'n_vehs: {len(cluster.veh_table.ids())}')
-    print(f'n_buses: {len(cluster.bus_table.ids())}')
-    print(f'avg_chs: {sum(n_chs)/len(n_chs)}')
-    print(f'avg_stand_alones: {sum(n_savs)/len(n_savs)}')
-    print(f'connection_evaluation: {sum(connections) / len(connections)}')
-    print(f'execution time: {end_time - start_time}')
-    # print(f'all the edges: \n{cluster.net_graph.edges()}')
-    # print(f'dropped_packers are: {cluster.drops}')
-    # print(f'delivered_packets are: {cluster.delivered_packets}')
-    print(f'number of generated messages: {cluster.message_count}')
-    print(f'number of generated packets: {cluster.pck_queue}')
-    print(f'number of delivered packets: {len(cluster.delivered_packets)}')
-    non_delivered_packets = list()
-    for i in cluster.veh_table.ids().union(cluster.bus_table.ids()):
-        table = cluster.veh_table if 'veh' in i else cluster.bus_table
-        non_delivered_packets = non_delivered_packets + table.values(i)['packets_to_pass']
-
-    print(f'number of non-delivered packets: {len(non_delivered_packets)}')
-    print(f'number of left-dest packets: {len(cluster.left_dest_pack)}')
-    print(f'number of dropped packets: {len(cluster.drops)}')
-    print(f'delivery ratio: {len(cluster.delivered_packets)/cluster.pck_queue}')
-    print(f'average_hops: {avg_hops}')
-    print(f'average delay: {avg_delay}')
-    print('\n')
-    print(f'clustering algorithm: {clustering_name}')
-    print(f'routing algorithm: {routing_name}')
-    print(f'PeriPerDel: {cluster.n_perimeter/len(cluster.delivered_packets)}')
-    if routing_train_mode is True:
-        cluster.agent.save("checkpoints/dqn_vanet_tr300_alpha0.5_tick1400_to_tick1600")
-    # print(cluster.actions_review)
-    # plt.plot([sum(cluster.train_reward_log[0:i]) for i in range(len(cluster.train_reward_log))])
-    # plt.show()
+    print("execution time: ", end_time - start_time)
