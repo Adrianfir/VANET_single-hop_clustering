@@ -146,137 +146,393 @@ class DataTable:
         """
         this method updates the bus_table and veh_table values for the current interval.
         Attention: The properties related to clusters and ip addresses are going to be updated here
+
+        Important:
+        All the vehicles/buses that have left are first detected and their relationships
+        are cleaned. They are removed from the tables only after all the cleanup is done.
+
         :return:
         """
+
         self.time += 1
+
         bus_ids = set()
         veh_ids = set()
+
+        # removing all the edges since the connections are going to be updated again
         self.net_graph.remove_edges_from(self.net_graph.edges())
+
+        # -------------------------------------------------------------------------
+        # updating the vehicles and buses that exist in the current XML timestep
+        # -------------------------------------------------------------------------
         for veh in config.sumo_trace.documentElement.getElementsByTagName('timestep')[self.time].childNodes[
-                   1::2]:
-            zone_id = zones.det_zone(float(veh.getAttribute('y')),  # determine the zone_id of the car (bus | veh)
+            1::2]:
+
+            zone_id = zones.det_zone(float(veh.getAttribute('y')),
                                      float(veh.getAttribute('x'))
                                      )
 
-            # update the bus_table for the time step
+            # ---------------------------------------------------------------------
+            # update the bus_table for the current timestep
+            # ---------------------------------------------------------------------
             if 'bus' in veh.getAttribute('id'):
+
                 bus_ids.add(veh.getAttribute('id'))
-                self.bus_table, self.zone_buses, self.zone_ch = util.update_bus_table(veh, self.bus_table, zone_id,
-                                                                                      self.understudied_area, zones,
-                                                                                      config, self.zone_buses,
-                                                                                      self.zone_ch, self.time)
+
+                self.bus_table, self.zone_buses, self.zone_ch = \
+                    util.update_bus_table(veh, self.bus_table, zone_id,
+                                          self.understudied_area, zones,
+                                          config, self.zone_buses,
+                                          self.zone_ch, self.time)
+
                 self.all_chs.add(veh.getAttribute('id'))
 
+            # ---------------------------------------------------------------------
+            # update the veh_table for the current timestep
+            # ---------------------------------------------------------------------
             else:
+
                 veh_ids.add(veh.getAttribute('id'))
+
                 self.veh_table, self.zone_vehicles, self.zone_ch, self.stand_alone, \
-                self.zone_stand_alone = util.update_veh_table(veh, self.veh_table, zone_id, self.understudied_area,
-                                                              zones, config, self.zone_vehicles, self.zone_ch,
-                                                              self.stand_alone, self.zone_stand_alone, self.time)
+                    self.zone_stand_alone = \
+                    util.update_veh_table(veh, self.veh_table, zone_id,
+                                          self.understudied_area,
+                                          zones, config,
+                                          self.zone_vehicles,
+                                          self.zone_ch,
+                                          self.stand_alone,
+                                          self.zone_stand_alone,
+                                          self.time)
+
                 if self.veh_table.values(veh.getAttribute('id'))['cluster_head'] is True:
                     self.all_chs.add(veh.getAttribute('id'))
-            # add the vertex to the graph
+
+            # ---------------------------------------------------------------------
+            # update the node position in the network graph
+            # ---------------------------------------------------------------------
             try:
-                self.net_graph.nodes[veh.getAttribute('id')]['pos'] = (float(veh.getAttribute('y')),
-                                                                       float(veh.getAttribute('x'))
-                                                                       )
+                self.net_graph.nodes[veh.getAttribute('id')]['pos'] = \
+                    (float(veh.getAttribute('y')),
+                     float(veh.getAttribute('x')))
 
             except KeyError:
 
-                self.net_graph.add_node(veh.getAttribute('id'), pos=(float(veh.getAttribute('y')),
-                                                                     float(veh.getAttribute('x'))
-                                                                     )
+                self.net_graph.add_node(veh.getAttribute('id'),
+                                        pos=(float(veh.getAttribute('y')),
+                                             float(veh.getAttribute('x')))
                                         )
-        # removing the buses, that have left the understudied area, from self.bus_table and self.zone_buses
+
+        # =========================================================================
+        # determining which vehicles and buses have left
+        # =========================================================================
+
         temp_left_buses = self.bus_table.ids() - bus_ids
         temp_left_vehs = self.veh_table.ids() - veh_ids
-        for k in temp_left_buses:
-            k_values = self.bus_table.values(k)
-            ##pass packets:
-            (self.veh_table, self.bus_table, k_values,
+
+        # At this point, IMPORTANTLY, all leaving nodes are still inside the tables.
+        # Nothing has been removed yet.
+
+        # =========================================================================
+        # PHASE 1: handle packets of the nodes that are leaving
+        # =========================================================================
+
+        # -------------------------------------------------------------------------
+        # vehicles
+        # -------------------------------------------------------------------------
+        for k in temp_left_vehs:
+
+            k_values = self.veh_table.values(k)
+
+            if k_values is None:
+                continue
+
+            # if this vehicle has packets, it must exist in nodes_with_pack
+            if k_values['packets_to_pass']:
+                self.nodes_with_pack.add(k)
+
+            # Copy is used here because if the primary CH is also leaving,
+            # it must not be selected as the next node for the packets.
+            routing_values = k_values.copy()
+
+            if routing_values['primary_ch'] is not None:
+
+                if ((routing_values['primary_ch'] in temp_left_vehs) or
+                        (routing_values['primary_ch'] in temp_left_buses)):
+                    routing_values['primary_ch'] = None
+
+            (self.veh_table, self.bus_table, _,
              self.nodes_with_pack, self.delivered_packets,
-             self.link_cap) = util_routing.removed_nodes_packets(k, k_values, self.veh_table, self.bus_table,
-                                                                 temp_left_vehs, temp_left_buses,
-                                                                 self.drops, self.nodes_with_pack, self.delivered_packets,
-                                                                 config, self.link_cap, self.time, node_is_veh=False)
+             self.link_cap) = \
+                util_routing.removed_nodes_packets(
+                    k,
+                    routing_values,
+                    self.veh_table,
+                    self.bus_table,
+                    temp_left_vehs,
+                    temp_left_buses,
+                    self.drops,
+                    self.nodes_with_pack,
+                    self.delivered_packets,
+                    config,
+                    self.link_cap,
+                    self.time
+                )
+
+            # k is leaving. It must never remain inside nodes_with_pack.
+            self.nodes_with_pack.discard(k)
+
+        # -------------------------------------------------------------------------
+        # buses
+        # -------------------------------------------------------------------------
+        for k in temp_left_buses:
+
+            k_values = self.bus_table.values(k)
+
+            if k_values is None:
+                continue
+
+            if k_values['packets_to_pass']:
+                self.nodes_with_pack.add(k)
+
+            (self.veh_table, self.bus_table, _,
+             self.nodes_with_pack, self.delivered_packets,
+             self.link_cap) = \
+                util_routing.removed_nodes_packets(
+                    k,
+                    k_values,
+                    self.veh_table,
+                    self.bus_table,
+                    temp_left_vehs,
+                    temp_left_buses,
+                    self.drops,
+                    self.nodes_with_pack,
+                    self.delivered_packets,
+                    config,
+                    self.link_cap,
+                    self.time,
+                    node_is_veh=False
+                )
+
+            # the bus is leaving, therefore it cannot remain here
+            self.nodes_with_pack.discard(k)
+
+        # =========================================================================
+        # PHASE 2: clean all clustering relationships
+        #
+        # IMPORTANT:
+        # no veh_table.remove() or bus_table.remove() is done in this phase.
+        # Therefore, remove_member() can safely access both CH and CM records.
+        # =========================================================================
+
+        # -------------------------------------------------------------------------
+        # buses that are leaving
+        # -------------------------------------------------------------------------
+        for k in temp_left_buses:
+
+            k_values = self.bus_table.values(k)
+
+            if k_values is None:
+                continue
+
             cm_temp = k_values['cluster_members'].copy()
+
             for m in cm_temp:
-                if m not in temp_left_vehs:  # this must be veh_ids not self.veh_table.ids()
+
+                # theoretically m must exist here because no vehicle has been
+                # deleted yet. This check protects against an already stale member.
+                if m not in self.veh_table.ids():
+                    k_values['cluster_members'].discard(m)
+                    continue
+
+                # if m exists in the current XML, it stays in the simulation
+                if m in veh_ids:
                     mem_stays = True
                 else:
                     mem_stays = False
-                (self.veh_table, self.bus_table,
-                 self.stand_alone, self.zone_stand_alone) = util.remove_member(m, k, self.veh_table,
-                                                                               self.bus_table, config,
-                                                                               self.stand_alone,
-                                                                               self.zone_stand_alone,
-                                                                               self.time,
-                                                                               ch_stays=False,
-                                                                              mem_stays=mem_stays)
-                    # since k is not inside the area anymore, the priority_ch must be None
-                    # self.veh_table.values(m)['priority_ch'] = None
-                    # self.veh_table.values(m)['priority_counter'] = config.priority_counter
 
-            self.zone_buses[k_values['zone']].remove(k)
-            self.zone_ch[self.bus_table.values(k)['zone']].remove(k)
-            self.all_chs.remove(k)
+                (self.veh_table,
+                 self.bus_table,
+                 self.stand_alone,
+                 self.zone_stand_alone) = \
+                    util.remove_member(
+                        m,
+                        k,
+                        self.veh_table,
+                        self.bus_table,
+                        config,
+                        self.stand_alone,
+                        self.zone_stand_alone,
+                        self.time,
+                        ch_stays=False,
+                        mem_stays=mem_stays
+                    )
+
+            # removing the bus from the auxiliary structures
+            self.zone_buses[k_values['zone']].discard(k)
+            self.zone_ch[k_values['zone']].discard(k)
+            self.all_chs.discard(k)
+
             self.bus_table.values(k)['depart_time'] = self.time - 1
             self.left_bus[k] = self.bus_table.values(k)
 
-            # for drop in self.bus_table.values(k)['packets_to_pass']:
-            #     self.drops.append(drop)
-            self.bus_table.remove(k)
-            self.net_graph.remove_node(k)
-
-        # removing the vehicles, that have left the understudied area, from self.veh_table and self.zone_vehicles
+        # -------------------------------------------------------------------------
+        # vehicles that are leaving
+        # -------------------------------------------------------------------------
         for k in temp_left_vehs:
+
             k_values = self.veh_table.values(k)
-            #### pass the packets
-            (self.veh_table, self.bus_table, k_values,
-             self.nodes_with_pack, self.delivered_packets,
-             self.link_cap) = util_routing.removed_nodes_packets(k, k_values, self.veh_table, self.bus_table,
-                                                                 temp_left_vehs, temp_left_buses,
-                                                                 self.drops, self.nodes_with_pack, self.delivered_packets,
-                                                                 config, self.link_cap, self.time)
+
+            if k_values is None:
+                continue
+
+            # ---------------------------------------------------------------------
+            # the leaving vehicle is a cluster head
+            # ---------------------------------------------------------------------
             if k_values['cluster_head'] is True:
+
                 temp_cluster_members = k_values['cluster_members'].copy()
+
                 for m in temp_cluster_members:
-                    if m in veh_ids:  # this must be veh_ids not self.veh_table.ids()
+
+                    # protecting against a stale cluster member
+                    if m not in self.veh_table.ids():
+                        k_values['cluster_members'].discard(m)
+                        continue
+
+                    # current XML is the ground truth for whether the member stays
+                    if m in veh_ids:
                         mem_stays = True
                     else:
                         mem_stays = False
-                    (self.veh_table, self.bus_table,
-                     self.stand_alone, self.zone_stand_alone) = util.remove_member(m, k, self.veh_table,
-                                                                                   self.bus_table, config,
-                                                                                   self.stand_alone,
-                                                                                   self.zone_stand_alone,
-                                                                                   self.time,
-                                                                                   ch_stays=False,
-                                                                                   mem_stays=mem_stays)
 
-                self.zone_ch[k_values['zone']].remove(k)
-                self.all_chs.remove(k)
+                    (self.veh_table,
+                     self.bus_table,
+                     self.stand_alone,
+                     self.zone_stand_alone) = \
+                        util.remove_member(
+                            m,
+                            k,
+                            self.veh_table,
+                            self.bus_table,
+                            config,
+                            self.stand_alone,
+                            self.zone_stand_alone,
+                            self.time,
+                            ch_stays=False,
+                            mem_stays=mem_stays
+                        )
 
+                self.zone_ch[k_values['zone']].discard(k)
+                self.all_chs.discard(k)
+
+            # ---------------------------------------------------------------------
+            # the leaving vehicle is a cluster member
+            # ---------------------------------------------------------------------
             elif k_values['primary_ch'] is not None:
+
                 k_ch = k_values['primary_ch']
-                (self.veh_table, self.bus_table,
-                 self.stand_alone, self.zone_stand_alone) = util.remove_member(k, k_ch, self.veh_table,
-                                                                               self.bus_table, config,
-                                                                               self.stand_alone,
-                                                                               self.zone_stand_alone,
-                                                                               self.time,
-                                                                               mem_stays=False)
 
+                if 'bus' in k_ch:
+                    ch_exists = k_ch in self.bus_table.ids()
+                else:
+                    ch_exists = k_ch in self.veh_table.ids()
+
+                # Because deletion has not happened yet, normally ch_exists
+                # must be True. This condition protects against an old stale state.
+                if ch_exists is True:
+
+                    (self.veh_table,
+                     self.bus_table,
+                     self.stand_alone,
+                     self.zone_stand_alone) = \
+                        util.remove_member(
+                            k,
+                            k_ch,
+                            self.veh_table,
+                            self.bus_table,
+                            config,
+                            self.stand_alone,
+                            self.zone_stand_alone,
+                            self.time,
+                            mem_stays=False
+                        )
+
+                else:
+                    # the CH does not exist anymore, so just clean the reference
+                    self.veh_table.values(k)['primary_ch'] = None
+                    self.veh_table.values(k)['priority_ch'] = None
+
+            # ---------------------------------------------------------------------
+            # the leaving vehicle is stand-alone
+            # ---------------------------------------------------------------------
             elif k in self.stand_alone:
-                self.stand_alone.remove(k)
-                self.zone_stand_alone[k_values['zone']].remove(k)
 
-            self.zone_vehicles[self.veh_table.values(k)['zone']].remove(k)
+                self.stand_alone.discard(k)
+                self.zone_stand_alone[k_values['zone']].discard(k)
+
+            # removing the vehicle from its zone
+            self.zone_vehicles[k_values['zone']].discard(k)
+
             self.veh_table.values(k)['depart_time'] = self.time - 1
             self.left_veh[k] = self.veh_table.values(k)
 
-            self.veh_table.remove(k)
-            self.net_graph.remove_node(k)
+            # it must not remain in any of these sets
+            self.stand_alone.discard(k)
+            self.all_chs.discard(k)
+            self.nodes_with_pack.discard(k)
+
+            self.zone_stand_alone[k_values['zone']].discard(k)
+            self.zone_ch[k_values['zone']].discard(k)
+
+        # =========================================================================
+        # PHASE 3: now all relationships are clean.
+        # The leaving nodes can finally be physically removed from the tables.
+        # =========================================================================
+
+        # -------------------------------------------------------------------------
+        # removing buses
+        # -------------------------------------------------------------------------
+        for k in temp_left_buses:
+
+            if k in self.bus_table.ids():
+                self.bus_table.remove(k)
+
+            if k in self.net_graph:
+                self.net_graph.remove_node(k)
+
+        # -------------------------------------------------------------------------
+        # removing vehicles
+        # -------------------------------------------------------------------------
+        for k in temp_left_vehs:
+
+            if k in self.veh_table.ids():
+                self.veh_table.remove(k)
+
+            if k in self.net_graph:
+                self.net_graph.remove_node(k)
+        # -------------------------------------------------------------------------
+        # final cleanup of cluster member references before deleting vehicles
+        # -------------------------------------------------------------------------
+
+        if temp_left_vehs:
+
+            # vehicle CHs
+            for ch in self.veh_table.ids():
+
+                if ch in temp_left_vehs:
+                    continue
+
+                ch_values = self.veh_table.values(ch)
+
+                if ch_values['cluster_head'] is True:
+                    ch_values['cluster_members'].difference_update(temp_left_vehs)
+
+            # bus CHs
+            for bus in self.bus_table.ids():
+                self.bus_table.values(bus)['cluster_members'].difference_update(
+                    temp_left_vehs
+                )
 
     def update_cluster(self, veh_ids, config, zones):
 
@@ -374,19 +630,19 @@ class DataTable:
                                                                                     self.time))
                     self.update_cluster([veh_id, ], config, zones)
 
-            temp_stand_alone = self.stand_alone.copy()
-            for veh_id in temp_stand_alone:
-                self.veh_table.values(veh_id)['other_chs'] = set()
-                self.veh_table.values(veh_id)['gates'] = dict()
-                self.veh_table.values(veh_id)['gate_chs'] = set()
-                self.veh_table.values(veh_id)['other_vehs'] = set()
+        temp_stand_alone = self.stand_alone.copy()
+        for veh_id in temp_stand_alone:
+            self.veh_table.values(veh_id)['other_chs'] = set()
+            self.veh_table.values(veh_id)['gates'] = dict()
+            self.veh_table.values(veh_id)['gate_chs'] = set()
+            self.veh_table.values(veh_id)['other_vehs'] = set()
 
-                # determining the buses and cluster_head in neighbor zones
-                (bus_candidates, ch_candidates, other_vehs) = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
-                                                                   self.zone_buses, self.zone_vehicles)
+            # determining the buses and cluster_head in neighbor zones
+            (bus_candidates, ch_candidates, other_vehs) = util.det_near_ch(veh_id, self.veh_table, self.bus_table,
+                                                               self.zone_buses, self.zone_vehicles)
 
-                self.single_hop(veh_id, config, zones,
-                                bus_candidates, ch_candidates, other_vehs)
+            self.single_hop(veh_id, config, zones,
+                            bus_candidates, ch_candidates, other_vehs)
 
     def single_hop(self, veh_id, config, zones,
                    bus_candidates, ch_candidates, other_vehs):

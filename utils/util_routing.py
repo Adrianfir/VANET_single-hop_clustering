@@ -238,7 +238,7 @@ def removed_nodes_packets(k, k_values, veh_table, bus_table, temp_left_vehs, tem
              link_cap, any_pck_transmitted) = pass_packet(k, pot_next_node, veh_table, bus_table, nodes_with_pack,
                                                           delivered_packets, link_cap, any_pck_transmitted, pck,
                                                           time)
-
+    nodes_with_pack.discard(k)
     return veh_table, bus_table, k_values, nodes_with_pack, delivered_packets, link_cap
 
 def intra_q_link(current_node, ch_id, veh_table, table, configs):
@@ -1253,7 +1253,7 @@ def greedy_zcggr(
         if is_bus(nid):
             return True
         v = veh_table.values(nid)
-        return bool(v.get("cluster_head", False)) or (v.get("primary_ch", None) is not None)
+        return bool(v["cluster_head"] is True) or bool(v["primary_ch"] is not None)
 
     # --- destination info from packet ---
     d_zone = to_zone_str(packet.get("d_zone", None))
