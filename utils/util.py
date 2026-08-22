@@ -50,6 +50,7 @@ def initiate_new_bus(veh, zones, zone_id, config, understudied_area):
                 depart_time=None,
                 trans_range=config.bus_trans_range,
                 cluster_head=True,
+                primary_ch=None,
                 other_chs=set(),  # other chs in the trans range of veh.getAttribute('id)
                 cluster_members=set(),
                 gate_chs=set(),
