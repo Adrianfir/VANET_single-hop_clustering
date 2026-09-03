@@ -54,8 +54,12 @@ def gen_message(veh_table,sent_messages, message_count,
                             d_loc = dict(lat=veh_table.values(message['dest'])['lat'],
                                          long=veh_table.values(message['dest'])['long']),
                             d_zone = veh_table.values(message['dest'])['zone'],
-                            d_update=5, last_dir=None, tabu_dir=None, tabu_zone=list()
-                            )
+                            d_update=configs.des_address_update, last_dir=None, tabu_dir=None,
+                            tabu_zone=list(),
+            # CGCGR recovery state
+            cgcgr_recovery_active = False,
+            cgcgr_recovery_anchor = None
+            )
             pck_dict['size'] = random.randint(configs.header_size + 1, configs.mtu) if pck == configs.messages[time][i]['mess'][-1] \
                 else configs.mtu  # the last packet of the message can have a size
             # between configs.header_size+1 and configs.mtu
@@ -410,9 +414,9 @@ def gate_chs_mem(node, veh_table, bus_table):
                      table.values(node)['gate_chs'].union(table.values(node)['other_chs']))):
                 gate_gate_chs.add(veh_table.values(ov)['primary_ch'])
                 if 'veh' in veh_table.values(ov)['primary_ch']:
-                    gate_chs_members.union(veh_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
+                    gate_chs_members = gate_chs_members.union(veh_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
                 else:
-                    gate_chs_members.union(bus_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
+                    gate_chs_members = gate_chs_members.union(bus_table.values(veh_table.values(ov)['primary_ch'])['cluster_members'])
 
     return gate_gate_chs, gate_chs_members, other_other_vehs
 
@@ -1514,3 +1518,1928 @@ def perimeter_zcggr(
             best = nid
 
     return best
+
+# ============================================================
+# CGCGR
+# Cone-Guided Cluster-Aware Geographic Routing
+# ============================================================
+
+_CGCGR_CONE_ORDER_CW = (
+    "NW",
+    "NE",
+    "EN",
+    "ES",
+    "SE",
+    "SW",
+    "WS",
+    "WN",
+)
+
+
+# A cone is identified by the two reference-boundary rays
+# enclosing it.
+_CGCGR_CONE_FROM_BOUNDARY_PAIR = {
+
+    frozenset(("NW", "N")): "NW",
+
+    frozenset(("N", "NE")): "NE",
+
+    frozenset(("NE", "E")): "EN",
+
+    frozenset(("E", "SE")): "ES",
+
+    frozenset(("SE", "S")): "SE",
+
+    frozenset(("S", "SW")): "SW",
+
+    frozenset(("SW", "W")): "WS",
+
+    frozenset(("W", "NW")): "WN",
+}
+
+
+_CGCGR_CONE_BOUNDARIES = {
+
+    "NW": ("NW", "N"),
+
+    "NE": ("N", "NE"),
+
+    "EN": ("NE", "E"),
+
+    "ES": ("E", "SE"),
+
+    "SE": ("SE", "S"),
+
+    "SW": ("S", "SW"),
+
+    "WS": ("SW", "W"),
+
+    "WN": ("W", "NW"),
+}
+
+
+# ============================================================
+# BASIC ACCESS HELPERS
+# ============================================================
+
+def _cgcgr_is_bus(node_id):
+
+    return str(node_id).startswith("bus")
+
+
+def _cgcgr_table(
+        node_id,
+        veh_table,
+        bus_table
+):
+
+    if _cgcgr_is_bus(node_id):
+        return bus_table
+
+    return veh_table
+
+
+def _cgcgr_values(
+        node_id,
+        veh_table,
+        bus_table
+):
+
+    return _cgcgr_table(
+        node_id,
+        veh_table,
+        bus_table
+    ).values(node_id)
+
+
+# ============================================================
+# ANGLE HELPERS
+# ============================================================
+
+def _cgcgr_wrap_pi(angle):
+    """
+    Return angle in [-pi, pi).
+    """
+
+    return (
+        angle + math.pi
+    ) % (
+        2.0 * math.pi
+    ) - math.pi
+
+
+def _cgcgr_norm_2pi(angle):
+    """
+    Return angle in [0, 2*pi).
+    """
+
+    return angle % (
+        2.0 * math.pi
+    )
+
+
+# ============================================================
+# FIXED LOCAL CARTESIAN FRAME + REFERENCE ENVELOPE
+# ============================================================
+
+def _cgcgr_projection_context(configs):
+    """
+    Construct and cache the fixed local Cartesian reference frame.
+
+    x = East
+    y = North
+
+    The actual simulation coordinates are stored as latitude /
+    longitude. CGCGR converts them to one local metric Cartesian
+    frame before performing angular and penetration geometry.
+
+    The reference envelope is also constructed here once and
+    cached for the entire simulation.
+    """
+
+    cached = getattr(
+        configs,
+        "_cgcgr_projection_cache",
+        None
+    )
+
+    if cached is not None:
+        return cached
+
+
+    study = configs.area
+
+    explicit_ref = getattr(
+        configs,
+        "cgcgr_reference_area",
+        None
+    )
+
+    margin_m = float(
+        getattr(
+            configs,
+            "cgcgr_reference_margin_m",
+            1600.0
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # Projection origin: fixed centre of studied region.
+    # --------------------------------------------------------
+
+    lat0_deg = 0.5 * (
+        float(study["min_lat"])
+        +
+        float(study["max_lat"])
+    )
+
+    lon0_deg = 0.5 * (
+        float(study["min_long"])
+        +
+        float(study["max_long"])
+    )
+
+    lat0 = math.radians(
+        lat0_deg
+    )
+
+    lon0 = math.radians(
+        lon0_deg
+    )
+
+    earth_radius = 6371000.0
+
+    cos_lat0 = math.cos(
+        lat0
+    )
+
+
+    def project(lat, lon):
+        """
+        Local equirectangular projection.
+
+        Sufficient for the geographic scale of the
+        Richmond Hill simulation.
+        """
+
+        lat_r = math.radians(
+            float(lat)
+        )
+
+        lon_r = math.radians(
+            float(lon)
+        )
+
+        x = (
+            earth_radius
+            *
+            cos_lat0
+            *
+            (lon_r - lon0)
+        )
+
+        y = (
+            earth_radius
+            *
+            (lat_r - lat0)
+        )
+
+        return x, y
+
+
+    # --------------------------------------------------------
+    # Studied-area bounds in metric Cartesian coordinates.
+    # --------------------------------------------------------
+
+    sx0, sy0 = project(
+        study["min_lat"],
+        study["min_long"]
+    )
+
+    sx1, sy1 = project(
+        study["max_lat"],
+        study["max_long"]
+    )
+
+    study_xmin = min(
+        sx0,
+        sx1
+    )
+
+    study_xmax = max(
+        sx0,
+        sx1
+    )
+
+    study_ymin = min(
+        sy0,
+        sy1
+    )
+
+    study_ymax = max(
+        sy0,
+        sy1
+    )
+
+
+    # --------------------------------------------------------
+    # Outer CGCGR reference envelope.
+    # --------------------------------------------------------
+
+    if explicit_ref is None:
+
+        xmin = (
+            study_xmin
+            -
+            margin_m
+        )
+
+        xmax = (
+            study_xmax
+            +
+            margin_m
+        )
+
+        ymin = (
+            study_ymin
+            -
+            margin_m
+        )
+
+        ymax = (
+            study_ymax
+            +
+            margin_m
+        )
+
+    else:
+
+        rx0, ry0 = project(
+            explicit_ref["min_lat"],
+            explicit_ref["min_long"]
+        )
+
+        rx1, ry1 = project(
+            explicit_ref["max_lat"],
+            explicit_ref["max_long"]
+        )
+
+        ref_xmin = min(
+            rx0,
+            rx1
+        )
+
+        ref_xmax = max(
+            rx0,
+            rx1
+        )
+
+        ref_ymin = min(
+            ry0,
+            ry1
+        )
+
+        ref_ymax = max(
+            ry0,
+            ry1
+        )
+
+
+        # Minimum-margin safeguard.
+        xmin = min(
+            ref_xmin,
+            study_xmin - margin_m
+        )
+
+        xmax = max(
+            ref_xmax,
+            study_xmax + margin_m
+        )
+
+        ymin = min(
+            ref_ymin,
+            study_ymin - margin_m
+        )
+
+        ymax = max(
+            ref_ymax,
+            study_ymax + margin_m
+        )
+
+
+    xm = 0.5 * (
+        xmin + xmax
+    )
+
+    ym = 0.5 * (
+        ymin + ymax
+    )
+
+
+    # Four corners + four side midpoints.
+    refs = {
+
+        "NW": (
+            xmin,
+            ymax
+        ),
+
+        "N": (
+            xm,
+            ymax
+        ),
+
+        "NE": (
+            xmax,
+            ymax
+        ),
+
+        "E": (
+            xmax,
+            ym
+        ),
+
+        "SE": (
+            xmax,
+            ymin
+        ),
+
+        "S": (
+            xm,
+            ymin
+        ),
+
+        "SW": (
+            xmin,
+            ymin
+        ),
+
+        "W": (
+            xmin,
+            ym
+        ),
+    }
+
+
+    context = {
+
+        "project": project,
+
+        "bounds": (
+            xmin,
+            xmax,
+            ymin,
+            ymax
+        ),
+
+        "refs": refs
+    }
+
+
+    setattr(
+        configs,
+        "_cgcgr_projection_cache",
+        context
+    )
+
+    return context
+
+
+def _cgcgr_xy_record(
+        record,
+        configs
+):
+
+    project = (
+        _cgcgr_projection_context(
+            configs
+        )["project"]
+    )
+
+    return project(
+        record["lat"],
+        record["long"]
+    )
+
+
+def _cgcgr_xy_location(
+        location,
+        configs
+):
+
+    project = (
+        _cgcgr_projection_context(
+            configs
+        )["project"]
+    )
+
+    return project(
+        location["lat"],
+        location["long"]
+    )
+
+
+# ============================================================
+# DYNAMIC CONE GEOMETRY
+# ============================================================
+
+def _cgcgr_build_node_geometry(
+        current_xy,
+        configs
+):
+    """
+    Build the eight reference-ray bearings ONCE for one
+    current routing decision.
+
+    This is deliberately separated from candidate evaluation
+    so we do not sort the eight reference rays for every
+    candidate and every metric.
+    """
+
+    cx, cy = current_xy
+
+    refs = (
+        _cgcgr_projection_context(
+            configs
+        )["refs"]
+    )
+
+    rays = []
+
+    boundary_angles = {}
+
+
+    for name, (
+            rx,
+            ry
+    ) in refs.items():
+
+        angle = _cgcgr_norm_2pi(
+
+            math.atan2(
+                ry - cy,
+                rx - cx
+            )
+        )
+
+        rays.append(
+            (
+                angle,
+                name
+            )
+        )
+
+        boundary_angles[
+            name
+        ] = angle
+
+
+    rays.sort(
+        key=lambda x: x[0]
+    )
+
+
+    return {
+
+        "current_xy":
+            current_xy,
+
+        "rays":
+            rays,
+
+        "boundary_angles":
+            boundary_angles
+    }
+
+
+def _cgcgr_cone_label_fast(
+        point_xy,
+        geometry
+):
+    """
+    Determine the dynamic cone containing point_xy using
+    already-computed current-node boundary rays.
+    """
+
+    cx, cy = (
+        geometry["current_xy"]
+    )
+
+    px, py = point_xy
+
+    if (
+        px == cx
+        and py == cy
+    ):
+        return None
+
+
+    theta = _cgcgr_norm_2pi(
+
+        math.atan2(
+            py - cy,
+            px - cx
+        )
+    )
+
+
+    rays = geometry["rays"]
+
+    n = len(rays)
+
+
+    for i in range(n):
+
+        angle_0, name_0 = (
+            rays[i]
+        )
+
+        angle_1, name_1 = (
+            rays[
+                (i + 1) % n
+            ]
+        )
+
+
+        if i == n - 1:
+
+            inside = (
+                theta >= angle_0
+                or
+                theta < angle_1
+            )
+
+        else:
+
+            inside = (
+                angle_0
+                <= theta
+                < angle_1
+            )
+
+
+        if inside:
+
+            return (
+                _CGCGR_CONE_FROM_BOUNDARY_PAIR[
+                    frozenset(
+                        (
+                            name_0,
+                            name_1
+                        )
+                    )
+                ]
+            )
+
+
+    return None
+
+
+def _cgcgr_cone_distance(
+        cone_a,
+        cone_b
+):
+    """
+    Circular cone distance:
+
+    NW -> NE -> EN -> ES ->
+    SE -> SW -> WS -> WN -> NW
+    """
+
+    if (
+        cone_a is None
+        or
+        cone_b is None
+    ):
+        return 4
+
+
+    ia = (
+        _CGCGR_CONE_ORDER_CW
+        .index(
+            cone_a
+        )
+    )
+
+    ib = (
+        _CGCGR_CONE_ORDER_CW
+        .index(
+            cone_b
+        )
+    )
+
+
+    diff = abs(
+        ia - ib
+    )
+
+
+    return min(
+        diff,
+        8 - diff
+    )
+
+
+# ============================================================
+# DYNAMIC NORMALIZED ANGULAR DEVIATION
+# ============================================================
+
+def _cgcgr_kappa_fast(
+        dest_xy,
+        witness_xy,
+        witness_cone,
+        geometry,
+        configs
+):
+    """
+    Dynamically normalized angular deviation.
+
+    kappa = angular deviation from destination
+            ----------------------------------
+            angular distance to relevant outer
+            reference boundary
+
+    Smaller is better.
+    """
+
+    if witness_cone is None:
+        return float("inf")
+
+
+    cx, cy = (
+        geometry["current_xy"]
+    )
+
+    dx, dy = dest_xy
+
+    ux, uy = witness_xy
+
+
+    eps = float(
+        getattr(
+            configs,
+            "cgcgr_geom_eps",
+            1e-9
+        )
+    )
+
+
+    theta_d = math.atan2(
+        dy - cy,
+        dx - cx
+    )
+
+    theta_u = math.atan2(
+        uy - cy,
+        ux - cx
+    )
+
+
+    delta_u = _cgcgr_wrap_pi(
+        theta_u - theta_d
+    )
+
+
+    if abs(delta_u) <= eps:
+        return 0.0
+
+
+    boundary_1, boundary_2 = (
+        _CGCGR_CONE_BOUNDARIES[
+            witness_cone
+        ]
+    )
+
+
+    theta_b1 = (
+        geometry[
+            "boundary_angles"
+        ][boundary_1]
+    )
+
+    theta_b2 = (
+        geometry[
+            "boundary_angles"
+        ][boundary_2]
+    )
+
+
+    d1 = _cgcgr_wrap_pi(
+        theta_b1 - theta_d
+    )
+
+    d2 = _cgcgr_wrap_pi(
+        theta_b2 - theta_d
+    )
+
+
+    boundary_diffs = [
+        d1,
+        d2
+    ]
+
+
+    # --------------------------------------------------------
+    # Candidate is counter-clockwise from destination.
+    # Use the outer boundary on that same side.
+    # --------------------------------------------------------
+
+    if delta_u > 0:
+
+        same_side = [
+
+            d for d
+            in boundary_diffs
+
+            if d > eps
+        ]
+
+
+        if same_side:
+
+            boundary_delta = max(
+                same_side
+            )
+
+        else:
+
+            boundary_delta = max(
+                boundary_diffs,
+                key=abs
+            )
+
+
+    # --------------------------------------------------------
+    # Candidate is clockwise from destination.
+    # --------------------------------------------------------
+
+    else:
+
+        same_side = [
+
+            d for d
+            in boundary_diffs
+
+            if d < -eps
+        ]
+
+
+        if same_side:
+
+            boundary_delta = min(
+                same_side
+            )
+
+        else:
+
+            boundary_delta = max(
+                boundary_diffs,
+                key=abs
+            )
+
+
+    denominator = abs(
+        boundary_delta
+    )
+
+
+    if denominator <= eps:
+        return float("inf")
+
+
+    return (
+        abs(delta_u)
+        /
+        (
+            denominator
+            +
+            eps
+        )
+    )
+
+
+# ============================================================
+# BOUNDARY PENETRATION
+# ============================================================
+
+def _cgcgr_penetration_fast(
+        current_xy,
+        witness_xy,
+        configs
+):
+    """
+    Normalized radial penetration through the current
+    boundary-referenced direction.
+
+        0 -> shallow candidate
+        1 -> reference boundary
+    """
+
+    cx, cy = current_xy
+
+    ux, uy = witness_xy
+
+
+    vx = ux - cx
+
+    vy = uy - cy
+
+
+    eps = float(
+        getattr(
+            configs,
+            "cgcgr_geom_eps",
+            1e-9
+        )
+    )
+
+
+    if math.hypot(
+        vx,
+        vy
+    ) <= eps:
+
+        return 0.0
+
+
+    (
+        xmin,
+        xmax,
+        ymin,
+        ymax
+
+    ) = _cgcgr_projection_context(
+        configs
+    )["bounds"]
+
+
+    boundary_parameters = []
+
+
+    if vx > eps:
+
+        boundary_parameters.append(
+            (
+                xmax - cx
+            ) / vx
+        )
+
+    elif vx < -eps:
+
+        boundary_parameters.append(
+            (
+                xmin - cx
+            ) / vx
+        )
+
+
+    if vy > eps:
+
+        boundary_parameters.append(
+            (
+                ymax - cy
+            ) / vy
+        )
+
+    elif vy < -eps:
+
+        boundary_parameters.append(
+            (
+                ymin - cy
+            ) / vy
+        )
+
+
+    boundary_parameters = [
+
+        t for t
+        in boundary_parameters
+
+        if t > eps
+    ]
+
+
+    if not boundary_parameters:
+
+        return 0.0
+
+
+    t_boundary = min(
+        boundary_parameters
+    )
+
+
+    # q = c + t(v)
+    #
+    # ||u-c|| / ||q-c|| = 1/t
+    penetration = (
+        1.0 /
+        t_boundary
+    )
+
+
+    return max(
+        0.0,
+        min(
+            1.0,
+            penetration
+        )
+    )
+
+
+# ============================================================
+# CLUSTER-WITNESS PAIRS
+# ============================================================
+
+def cgcgr_cluster_pairs(
+        current_node,
+        candidate_ids,
+        veh_table,
+        bus_table
+):
+    """
+    Convert candidate witness nodes into
+
+        (logical_cluster, geometric_witness)
+
+    pairs.
+
+    A CH represents itself.
+
+    A CM is mapped to its primary CH.
+
+    Members of the CURRENT cluster are not valid independent
+    inter-cluster targets.
+    """
+
+    all_ids = (
+
+        set(
+            veh_table.ids()
+        )
+
+        .union(
+
+            set(
+                bus_table.ids()
+            )
+        )
+    )
+
+
+    pairs = set()
+
+
+    for witness in set(
+        candidate_ids
+    ):
+
+        if (
+            witness is None
+            or
+            witness == current_node
+            or
+            witness not in all_ids
+        ):
+            continue
+
+
+        rec = _cgcgr_values(
+            witness,
+            veh_table,
+            bus_table
+        )
+
+
+        if bool(
+            rec.get(
+                "cluster_head",
+                False
+            )
+        ):
+
+            cluster_id = witness
+
+        else:
+
+            cluster_id = rec.get(
+                "primary_ch"
+            )
+
+
+        if cluster_id is None:
+            continue
+
+
+        if cluster_id == current_node:
+            continue
+
+
+        if cluster_id not in all_ids:
+            continue
+
+
+        pairs.add(
+            (
+                cluster_id,
+                witness
+            )
+        )
+
+
+    return pairs
+
+
+# ============================================================
+# COMPLETE CGCGR SELECTION
+# ============================================================
+
+def cgcgr_select_pair(
+        current_node,
+        packet,
+        candidate_pairs,
+        veh_table,
+        bus_table,
+        configs,
+        gate_cost_fn=None
+):
+    """
+    Select one logical cluster / witness pair.
+
+    Returns
+
+        target_cluster,
+        witness,
+        mode,
+        entered_recovery
+
+    mode is either
+
+        "forward"
+        "recovery"
+
+    This function does NOT compute shortest paths for every
+    candidate.
+
+    gate_cost_fn is optional and is called ONLY if the complete
+    geometric hierarchy ends with multiple tied candidates.
+    """
+
+    pairs = list(
+        candidate_pairs
+    )
+
+
+    if not pairs:
+
+        return (
+            None,
+            None,
+            None,
+            False
+        )
+
+
+    current_rec = _cgcgr_values(
+        current_node,
+        veh_table,
+        bus_table
+    )
+
+
+    current_xy = _cgcgr_xy_record(
+        current_rec,
+        configs
+    )
+
+
+    d_loc = packet.get(
+        "d_loc"
+    )
+
+
+    if (
+        not d_loc
+        or
+        "lat" not in d_loc
+        or
+        "long" not in d_loc
+    ):
+
+        return (
+            None,
+            None,
+            None,
+            False
+        )
+
+
+    dest_xy = _cgcgr_xy_location(
+        d_loc,
+        configs
+    )
+
+
+    eps = float(
+        getattr(
+            configs,
+            "cgcgr_geom_eps",
+            1e-9
+        )
+    )
+
+
+    current_distance = math.hypot(
+
+        current_xy[0]
+        -
+        dest_xy[0],
+
+        current_xy[1]
+        -
+        dest_xy[1]
+    )
+
+
+    if current_distance <= eps:
+
+        return (
+            None,
+            None,
+            None,
+            False
+        )
+
+
+    tau = float(
+        getattr(
+            configs,
+            "cgcgr_progress_tau",
+            0.0
+        )
+    )
+
+
+    eps_kappa = float(
+        getattr(
+            configs,
+            "cgcgr_eps_kappa",
+            0.10
+        )
+    )
+
+
+    eps_pi = float(
+        getattr(
+            configs,
+            "cgcgr_eps_pi",
+            0.15
+        )
+    )
+
+
+    eps_rho = float(
+        getattr(
+            configs,
+            "cgcgr_eps_rho",
+            1e-6
+        )
+    )
+
+
+    recovery_tau = float(
+        getattr(
+            configs,
+            "cgcgr_recovery_tau_m",
+            25.0
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # Build current-node cone geometry ONCE.
+    # --------------------------------------------------------
+
+    geometry = _cgcgr_build_node_geometry(
+        current_xy,
+        configs
+    )
+
+
+    destination_cone = (
+        _cgcgr_cone_label_fast(
+            dest_xy,
+            geometry
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # Evaluate all candidate pairs.
+    # --------------------------------------------------------
+
+    metrics = []
+
+
+    for (
+            cluster_id,
+            witness
+    ) in pairs:
+
+
+        witness_rec = _cgcgr_values(
+            witness,
+            veh_table,
+            bus_table
+        )
+
+
+        witness_xy = _cgcgr_xy_record(
+            witness_rec,
+            configs
+        )
+
+
+        witness_distance = math.hypot(
+
+            witness_xy[0]
+            -
+            dest_xy[0],
+
+            witness_xy[1]
+            -
+            dest_xy[1]
+        )
+
+
+        rho = (
+            witness_distance
+            /
+            (
+                current_distance
+                +
+                eps
+            )
+        )
+
+
+        witness_cone = (
+            _cgcgr_cone_label_fast(
+                witness_xy,
+                geometry
+            )
+        )
+
+
+        cone_distance = (
+            _cgcgr_cone_distance(
+                witness_cone,
+                destination_cone
+            )
+        )
+
+
+        kappa = _cgcgr_kappa_fast(
+            dest_xy,
+            witness_xy,
+            witness_cone,
+            geometry,
+            configs
+        )
+
+
+        penetration = (
+            _cgcgr_penetration_fast(
+                current_xy,
+                witness_xy,
+                configs
+            )
+        )
+
+
+        metrics.append(
+
+            {
+                "pair":
+                    (
+                        cluster_id,
+                        witness
+                    ),
+
+                "rho":
+                    rho,
+
+                "witness_distance":
+                    witness_distance,
+
+                "cone_distance":
+                    cone_distance,
+
+                "kappa":
+                    kappa,
+
+                "penetration":
+                    penetration
+            }
+        )
+
+
+    # ========================================================
+    # STRICT NORMAL-FORWARDING GUARDRAIL
+    # ========================================================
+
+    progressive = [
+
+        m for m
+        in metrics
+
+        if (
+            m["rho"]
+            <
+            1.0 - tau
+        )
+    ]
+
+
+    recovery_active = bool(
+
+        packet.get(
+            "cgcgr_recovery_active",
+            False
+        )
+    )
+
+
+    anchor = packet.get(
+        "cgcgr_recovery_anchor"
+    )
+
+
+    # ========================================================
+    # RECOVERY EXIT TEST
+    # ========================================================
+
+    if (
+        recovery_active
+        and
+        anchor is not None
+        and
+        progressive
+    ):
+
+
+        anchor_xy = _cgcgr_xy_location(
+            anchor,
+            configs
+        )
+
+
+        anchor_distance = math.hypot(
+
+            anchor_xy[0]
+            -
+            dest_xy[0],
+
+            anchor_xy[1]
+            -
+            dest_xy[1]
+        )
+
+
+        if (
+            current_distance
+            <
+            anchor_distance
+            -
+            recovery_tau
+        ):
+
+            packet[
+                "cgcgr_recovery_active"
+            ] = False
+
+            packet[
+                "cgcgr_recovery_anchor"
+            ] = None
+
+            recovery_active = False
+
+            anchor = None
+
+
+    # ========================================================
+    # FINAL TIE BREAK HELPER
+    # ========================================================
+
+    def choose_final(
+            final_set
+    ):
+        """
+        Usually final_set contains one candidate.
+
+        Only when multiple candidates survive the complete
+        geometry do we evaluate gate-path cost.
+        """
+
+        if len(final_set) == 1:
+
+            return final_set[0]
+
+
+        # ----------------------------------------------------
+        # Exact gate-path tie break, but ONLY for final ties.
+        # ----------------------------------------------------
+
+        if gate_cost_fn is not None:
+
+            candidates_with_cost = []
+
+
+            for m in final_set:
+
+                target = (
+                    m["pair"][0]
+                )
+
+
+                try:
+
+                    cost = float(
+                        gate_cost_fn(
+                            target
+                        )
+                    )
+
+                except Exception:
+
+                    cost = float(
+                        "inf"
+                    )
+
+
+                candidates_with_cost.append(
+                    (
+                        cost,
+                        str(
+                            m["pair"][0]
+                        ),
+                        str(
+                            m["pair"][1]
+                        ),
+                        m
+                    )
+                )
+
+
+            candidates_with_cost.sort(
+                key=lambda x: (
+                    x[0],
+                    x[1],
+                    x[2]
+                )
+            )
+
+
+            return (
+                candidates_with_cost[
+                    0
+                ][3]
+            )
+
+
+        # Deterministic fallback.
+        return min(
+
+            final_set,
+
+            key=lambda m: (
+
+                str(
+                    m["pair"][0]
+                ),
+
+                str(
+                    m["pair"][1]
+                )
+            )
+        )
+
+
+    # ========================================================
+    # NORMAL FORWARDING
+    # ========================================================
+
+    if (
+        not recovery_active
+        and
+        progressive
+    ):
+
+        # ----------------------------------------------------
+        # Stage 1:
+        # closest available cone layer
+        # ----------------------------------------------------
+
+        delta_min = min(
+
+            m["cone_distance"]
+            for m
+            in progressive
+        )
+
+
+        cone_set = [
+
+            m for m
+            in progressive
+
+            if (
+                m["cone_distance"]
+                ==
+                delta_min
+            )
+        ]
+
+
+        # ----------------------------------------------------
+        # Stage 2:
+        # dynamic normalized direction
+        # ----------------------------------------------------
+
+        kappa_min = min(
+
+            m["kappa"]
+            for m
+            in cone_set
+        )
+
+
+        angular_set = [
+
+            m for m
+            in cone_set
+
+            if (
+                m["kappa"]
+                <=
+                kappa_min
+                +
+                eps_kappa
+            )
+        ]
+
+
+        # ----------------------------------------------------
+        # Stage 3:
+        # penetration admissibility
+        # ----------------------------------------------------
+
+        pi_max = max(
+
+            m["penetration"]
+            for m
+            in angular_set
+        )
+
+
+        penetration_set = [
+
+            m for m
+            in angular_set
+
+            if (
+                m["penetration"]
+                >=
+                pi_max
+                -
+                eps_pi
+            )
+        ]
+
+
+        # ----------------------------------------------------
+        # Stage 4:
+        # exact geographic destination progress
+        # ----------------------------------------------------
+
+        rho_min = min(
+
+            m["rho"]
+            for m
+            in penetration_set
+        )
+
+
+        geographic_set = [
+
+            m for m
+            in penetration_set
+
+            if (
+                m["rho"]
+                <=
+                rho_min
+                +
+                eps_rho
+            )
+        ]
+
+
+        best = choose_final(
+            geographic_set
+        )
+
+
+        return (
+            best["pair"][0],
+            best["pair"][1],
+            "forward",
+            False
+        )
+
+
+    # ========================================================
+    # ENTER RECOVERY
+    # ========================================================
+
+    entered_recovery = False
+
+
+    if not recovery_active:
+
+        packet[
+            "cgcgr_recovery_active"
+        ] = True
+
+
+        # Store recovery-anchor POSITION.
+        packet[
+            "cgcgr_recovery_anchor"
+        ] = {
+
+            "lat":
+                float(
+                    current_rec["lat"]
+                ),
+
+            "long":
+                float(
+                    current_rec["long"]
+                )
+        }
+
+
+        recovery_active = True
+
+        anchor = packet[
+            "cgcgr_recovery_anchor"
+        ]
+
+        entered_recovery = True
+
+
+    # ========================================================
+    # RECOVERY MODE
+    # ========================================================
+
+    recovery_pool = metrics
+
+
+    if not recovery_pool:
+
+        return (
+            None,
+            None,
+            "recovery",
+            entered_recovery
+        )
+
+
+    # --------------------------------------------------------
+    # Five-cone preferred PAIR pool.
+    #
+    # Destination cone + two cone layers on each side.
+    # --------------------------------------------------------
+
+    five_cone_pool = [
+
+        m for m
+        in recovery_pool
+
+        if (
+            m["cone_distance"]
+            <= 2
+        )
+    ]
+
+
+    if five_cone_pool:
+
+        active_pool = (
+            five_cone_pool
+        )
+
+    else:
+
+        # Eight-cone fallback.
+        active_pool = (
+            recovery_pool
+        )
+
+
+    # --------------------------------------------------------
+    # Recovery Stage 1:
+    # minimum discrete cone separation
+    # --------------------------------------------------------
+
+    delta_min = min(
+
+        m["cone_distance"]
+        for m
+        in active_pool
+    )
+
+
+    cone_set = [
+
+        m for m
+        in active_pool
+
+        if (
+            m["cone_distance"]
+            ==
+            delta_min
+        )
+    ]
+
+
+    # --------------------------------------------------------
+    # Recovery Stage 2:
+    # normalized angular admissibility
+    # --------------------------------------------------------
+
+    kappa_min = min(
+
+        m["kappa"]
+        for m
+        in cone_set
+    )
+
+
+    angular_set = [
+
+        m for m
+        in cone_set
+
+        if (
+            m["kappa"]
+            <=
+            kappa_min
+            +
+            eps_kappa
+        )
+    ]
+
+
+    # --------------------------------------------------------
+    # Recovery Stage 3:
+    # penetration admissibility
+    # --------------------------------------------------------
+
+    pi_max = max(
+
+        m["penetration"]
+        for m
+        in angular_set
+    )
+
+
+    penetration_set = [
+
+        m for m
+        in angular_set
+
+        if (
+            m["penetration"]
+            >=
+            pi_max
+            -
+            eps_pi
+        )
+    ]
+
+
+    # --------------------------------------------------------
+    # Recovery Stage 4:
+    # moving-destination anchor-relative progress
+    # --------------------------------------------------------
+
+    anchor_xy = _cgcgr_xy_location(
+        anchor,
+        configs
+    )
+
+
+    anchor_distance = math.hypot(
+
+        anchor_xy[0]
+        -
+        dest_xy[0],
+
+        anchor_xy[1]
+        -
+        dest_xy[1]
+    )
+
+
+    for m in penetration_set:
+
+        m[
+            "rho_recovery"
+        ] = (
+
+            m["witness_distance"]
+            /
+            (
+                anchor_distance
+                +
+                eps
+            )
+        )
+
+
+    rho_recovery_min = min(
+
+        m["rho_recovery"]
+        for m
+        in penetration_set
+    )
+
+
+    geographic_set = [
+
+        m for m
+        in penetration_set
+
+        if (
+            m["rho_recovery"]
+            <=
+            rho_recovery_min
+            +
+            eps_rho
+        )
+    ]
+
+
+    best = choose_final(
+        geographic_set
+    )
+
+
+    return (
+        best["pair"][0],
+        best["pair"][1],
+        "recovery",
+        entered_recovery
+    )

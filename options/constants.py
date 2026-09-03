@@ -16,13 +16,13 @@ class Inputs:
         ####### Clustering Constants that we need to pass as arguments
         # _no_bus_and_rsu
         trace_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'sumoTrace_no_bus_and_rsu.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'sumoTrace_no_bus_and_rsu.xml'))
         sumo_edge_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm.net.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'osm.net.xml'))
         sumo_node_path = str(pathlib.Path(__file__).parent.parent.parent.absolute().
-                         joinpath('traffic_data', 'final_data_Richmondhill_smallsize', 'osm_bbox.osm.xml'))
+                         joinpath('traffic_data', 'final_data_Richmondhill_largesize', 'osm_bbox.osm.xml'))
 
-        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_smallsize.yaml"
+        messages_path = "/Users/pouyafirouzmakan/Desktop/traffic_data/Generated_messages/testing_RL/messages_largesize.yaml"
         sumo_trace = xml.dom.minidom.parse(trace_path)
         sumo_edge = xml.dom.minidom.parse(sumo_edge_path)
         sumo_node = xml.dom.minidom.parse(sumo_node_path)
@@ -35,7 +35,7 @@ class Inputs:
         alpha = 0.8
         veh_trans_range = 300
         bus_trans_range = 800
-        start_time = 1600
+        start_time = 1500
         iter = 200
         counter = 4
         priority_counter = 0   # this is not used for decision-making to join a cluster in single-hop algorithm
@@ -49,7 +49,7 @@ class Inputs:
         ####### Routing Constants that we need to pass as arguments
         mess_gen_repeat = 5    # number of times at each interval that we do the message generation
         link_limit_bit = 500000      # the link capacity based on bps
-        drop_count = 15     # after this amount of iteration, the packet would be dropped
+        drop_count = 1000     # after this amount of iteration, the packet would be dropped
         qol_thresh = 0.7    # threshold for quality of link
         mtu = 1500          # Maximum Transmission Unit which is the maximum size of each packet based on byte
         header_size = 70    # the header_size of each packet can be around 58-70 bytes
@@ -58,7 +58,7 @@ class Inputs:
         max_hop = 5         # maximum number of hops that a packet can travel per tick. this number is because if there
         link_limit = link_limit_bit / 8
 
-        des_address_update = 3      #for SMZC-RA, there is a counter that the destiation of each packet would be
+        des_address_update = 5      #for SMZC-RA, there is a counter that the destiation of each packet would be
         # updateded after this amount of ticks
         # is a path through gates between CHs, this path is maximum 4 hops in single-hop clustering
         with open(messages_path, 'r') as f:
@@ -100,8 +100,49 @@ class Inputs:
         drop_penalty = 0.0  # or at most -1.0 if you want a tiny push
         trained_agent_path = 'checkpoints/dqn_vanet_tr300_alpha0.5_tick1400_to_tick1600'
 
+        # ============================================================
+        # CGCGR ROUTING PARAMETERS
+        # ============================================================
 
+        # Optional explicitly fixed outer reference rectangle.
+        #
+        # For now, None means that CGCGR automatically constructs
+        # the reference envelope by padding the actual studied area.
+        #
+        # For final paper experiments, this can later be replaced by
+        # one fixed Richmond-Hill-wide reference rectangle.
+        cgcgr_reference_area = None
 
+        # Minimum clearance between the actual studied area and the
+        # CGCGR reference boundary.
+        #
+        # This prevents vehicles near the studied-area boundary from
+        # generating excessively compressed boundary-induced cones.
+        #
+        # Keep this value fixed across all experiments.
+        cgcgr_reference_margin_m = 1600.0
+
+        # Strict normal-forwarding geographic progress margin.
+        #
+        # rho < 1 - tau
+        #
+        # tau = 0.0 means strictly closer to destination.
+        cgcgr_progress_tau = 0.0
+
+        # Angular admissibility tolerance.
+        cgcgr_eps_kappa = 0.10
+
+        # Penetration admissibility tolerance.
+        cgcgr_eps_pi = 0.15
+
+        # Residual-distance numerical tie tolerance.
+        cgcgr_eps_rho = 1e-6
+
+        # Recovery-anchor hysteresis in metres.
+        cgcgr_recovery_tau_m = 25.0
+
+        # Numerical protection.
+        cgcgr_geom_eps = 1e-9
 
 
         parser = argparse.ArgumentParser()
@@ -218,6 +259,63 @@ class Inputs:
                                  'r_dist = distance_weight * (prev_dist_norm - new_dist_norm)')
         parser.add_argument('--trained_agent_path', type=str, default=trained_agent_path,
                             help='trained model directory')
+
+# CGCGR
+        parser.add_argument(
+            '--cgcgr_reference_area',
+            type=dict,
+            default=cgcgr_reference_area,
+            help='Fixed outer geographic reference envelope used by CGCGR.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_reference_margin_m',
+            type=float,
+            default=cgcgr_reference_margin_m,
+            help='Minimum CGCGR reference-boundary margin around the studied area in metres.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_progress_tau',
+            type=float,
+            default=cgcgr_progress_tau,
+            help='Strict geographic-progress margin for CGCGR normal forwarding.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_eps_kappa',
+            type=float,
+            default=cgcgr_eps_kappa,
+            help='CGCGR normalized-direction admissibility tolerance.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_eps_pi',
+            type=float,
+            default=cgcgr_eps_pi,
+            help='CGCGR penetration admissibility tolerance.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_eps_rho',
+            type=float,
+            default=cgcgr_eps_rho,
+            help='CGCGR residual-distance tie tolerance.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_recovery_tau_m',
+            type=float,
+            default=cgcgr_recovery_tau_m,
+            help='CGCGR recovery-anchor hysteresis in metres.'
+        )
+
+        parser.add_argument(
+            '--cgcgr_geom_eps',
+            type=float,
+            default=cgcgr_geom_eps,
+            help='Numerical protection for CGCGR geometric calculations.'
+        )
 
 
         self.parser = parser
